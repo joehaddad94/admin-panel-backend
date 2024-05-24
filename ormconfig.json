@@ -1,0 +1,14 @@
+{
+  "type": "postgres",
+  "host": "app-90137383-a8e1-44a9-91d9-18f3477e1f7e-do-user-12016244-0.c.db.ondigitalocean.com",
+  "port": 25060,
+  "username": "db",
+  "password": "AVNS_kQdtkZtORybjdLXb6Cv",
+  "database": "db",
+  "entities": ["dist/core/data/database/**/*.entity{.ts,.js}"],
+  "synchronize": false,
+  "ssl": {
+    "require": true,
+    "rejectUnauthorized": false
+  }
+}
