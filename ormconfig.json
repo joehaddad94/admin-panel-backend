@@ -1,9 +1,9 @@
 {
   "type": "postgres",
-  "host": "app-90137383-a8e1-44a9-91d9-18f3477e1f7e-do-user-12016244-0.c.db.ondigitalocean.com",
+  "host": "app-7dddc0ad-0fec-473e-8f57-4e0babf20b34-do-user-12016244-0.c.db.ondigitalocean.com",
   "port": 25060,
   "username": "db",
-  "password": "AVNS_kQdtkZtORybjdLXb6Cv",
+  "password": "AVNS_ue3s9NVuJRUoQ5zQiea",
   "database": "db",
   "entities": ["dist/core/data/database/**/*.entity{.ts,.js}"],
   "synchronize": false,
