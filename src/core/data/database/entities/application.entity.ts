@@ -59,7 +59,6 @@ export class Application extends BaseEntity {
   @OneToMany(
     () => ApplicationInfo,
     (applicationInfo) => applicationInfo.application,
-    { eager: true },
   )
   applicationInfo: ApplicationInfo[];
 

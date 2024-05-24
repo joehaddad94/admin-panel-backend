@@ -5,9 +5,11 @@ import {
   Column,
   ManyToOne,
   JoinColumn,
+  OneToMany,
 } from 'typeorm';
 import { Application } from '../entities/application.entity';
 import { Information } from '../entities/information.entity';
+import { ApplicationProgram } from '../relations/application-program.entity';
 
 @Entity('application_news_information_id_links')
 export class ApplicationInfo extends BaseEntity {
@@ -23,7 +25,9 @@ export class ApplicationInfo extends BaseEntity {
   @Column({ type: 'int' })
   application_new_order: number;
 
-  @ManyToOne(() => Application, (application) => application.applicationInfo)
+  @ManyToOne(() => Application, (application) => application.applicationInfo, {
+    eager: true,
+  })
   @JoinColumn({ name: 'application_new_id' })
   application: Application;
 
@@ -32,4 +36,10 @@ export class ApplicationInfo extends BaseEntity {
   })
   @JoinColumn({ name: 'info_id' })
   info: Information;
+
+  @OneToMany(
+    () => ApplicationProgram,
+    (applicationProgram) => applicationProgram.application,
+  )
+  applicationProgram: ApplicationProgram[];
 }

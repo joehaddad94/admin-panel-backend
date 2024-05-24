@@ -7,7 +7,12 @@ export class ReportController {
   constructor(private readonly mediator: ReportMediator) {}
 
   @Post('applications')
-  applicationReport(@Body() filters: FiltersDto) {
-    return this.mediator.applicationReport(filters);
+  applicationReport(@Body() FiltersDto: FiltersDto) {
+    return this.mediator.applicationReport(FiltersDto);
+  }
+
+  @Post('information')
+  informationReport(@Body() FiltersDto: FiltersDto) {
+    return this.mediator.informationReport(FiltersDto);
   }
 }

@@ -9,5 +9,5 @@ export type GlobalEntities =
   | 'quizes'
   | 'applicationInfo'
   | 'applicationProgram'
-  | 'applicationUser';
-  
+  | 'applicationUser'
+  | 'informationUser';

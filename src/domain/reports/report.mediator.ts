@@ -9,7 +9,7 @@ import { FiltersDto } from './dtos/filters.dto';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Application } from '@core/data/database/entities/application.entity';
 import { ApplicationRepository } from '@domain/applications/application.repository';
-import { Between, LessThanOrEqual, MoreThanOrEqual } from 'typeorm';
+import { Between, Filter, LessThanOrEqual, MoreThanOrEqual } from 'typeorm';
 
 @Injectable()
 export class ReportMediator {
@@ -23,9 +23,9 @@ export class ReportMediator {
     private readonly userService: UserService,
   ) {}
 
-  applicationReport = async (filters: FiltersDto) => {
+  applicationReport = async (filtersDto: FiltersDto) => {
     return catcher(async () => {
-      const { fromDate, toDate, programId } = filters;
+      const { fromDate, toDate, programId } = filtersDto;
       const options: GlobalEntities[] = [
         'applicationInfo',
         'applicationProgram',
@@ -102,6 +102,34 @@ export class ReportMediator {
       }));
 
       return mappedApplications;
+    });
+  };
+
+  informationReport = async (filtersDto: FiltersDto) => {
+    return catcher(async () => {
+      const { fromDate, toDate } = filtersDto;
+      const options: GlobalEntities[] = ['applicationInfo', 'informationUser'];
+      const whereConditions: any = {};
+
+      if (fromDate && toDate) {
+        whereConditions.created_at = Between(fromDate, toDate);
+      } else if (fromDate) {
+        whereConditions.created_at = MoreThanOrEqual(fromDate);
+      } else if (toDate) {
+        whereConditions.created_at = LessThanOrEqual(toDate);
+      }
+
+      const information = await this.informationService.findMany(
+        whereConditions,
+        options,
+      );
+
+      throwNotFound({
+        entity: 'informationReport',
+        errorCheck: !information,
+      });
+
+      return information;
     });
   };
 }
