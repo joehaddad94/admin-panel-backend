@@ -132,4 +132,28 @@ export class ReportMediator {
       return information;
     });
   };
+
+  usersReport = async (filtersDto: FiltersDto) => {
+    return catcher(async () => {
+      const { fromDate, toDate } = filtersDto;
+      const whereConditions: any = {};
+
+      if (fromDate && toDate) {
+        whereConditions.created_at = Between(fromDate, toDate);
+      } else if (fromDate) {
+        whereConditions.created_at = MoreThanOrEqual(fromDate);
+      } else if (toDate) {
+        whereConditions.created_at = LessThanOrEqual(toDate);
+      }
+
+      const users = await this.userService.findMany(whereConditions);
+
+      throwNotFound({
+        entity: 'usersReport',
+        errorCheck: !users,
+      });
+
+      return users;
+    });
+  };
 }
