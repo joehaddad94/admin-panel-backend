@@ -9,7 +9,7 @@ import { FiltersDto } from './dtos/filters.dto';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Application } from '@core/data/database/entities/application.entity';
 import { ApplicationRepository } from '@domain/applications/application.repository';
-import { Between, Filter, LessThanOrEqual, MoreThanOrEqual } from 'typeorm';
+import { Between, LessThanOrEqual, MoreThanOrEqual } from 'typeorm';
 
 @Injectable()
 export class ReportMediator {
