@@ -1,4 +1,5 @@
 import { ApiProperty } from '@nestjs/swagger';
+import { ReportType } from './report-type.enum';
 
 export class FiltersDto {
   @ApiProperty()
@@ -9,4 +10,7 @@ export class FiltersDto {
 
   @ApiProperty()
   programId?: number;
+
+  @ApiProperty({ enum: ReportType })
+  reportType?: ReportType;
 }

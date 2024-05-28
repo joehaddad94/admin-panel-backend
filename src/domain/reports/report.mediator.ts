@@ -9,7 +9,7 @@ import { FiltersDto } from './dtos/filters.dto';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Application } from '@core/data/database/entities/application.entity';
 import { ApplicationRepository } from '@domain/applications/application.repository';
-import { Between, Filter, LessThanOrEqual, MoreThanOrEqual } from 'typeorm';
+import { Between, LessThanOrEqual, MoreThanOrEqual } from 'typeorm';
 
 @Injectable()
 export class ReportMediator {
@@ -130,6 +130,30 @@ export class ReportMediator {
       });
 
       return information;
+    });
+  };
+
+  usersReport = async (filtersDto: FiltersDto) => {
+    return catcher(async () => {
+      const { fromDate, toDate } = filtersDto;
+      const whereConditions: any = {};
+
+      if (fromDate && toDate) {
+        whereConditions.created_at = Between(fromDate, toDate);
+      } else if (fromDate) {
+        whereConditions.created_at = MoreThanOrEqual(fromDate);
+      } else if (toDate) {
+        whereConditions.created_at = LessThanOrEqual(toDate);
+      }
+
+      const users = await this.userService.findMany(whereConditions);
+
+      throwNotFound({
+        entity: 'usersReport',
+        errorCheck: !users,
+      });
+
+      return users;
     });
   };
 }
