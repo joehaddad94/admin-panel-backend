@@ -1,5 +1,5 @@
-import { AdminRole, adminRoleValues } from 'src/core/data/types/admin/roles';
 import { BaseEntity, Column, Entity, PrimaryGeneratedColumn } from 'typeorm';
+import { adminRoleValues, AdminRole } from '../../types';
 
 @Entity()
 export class Admin extends BaseEntity {

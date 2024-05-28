@@ -1,5 +1,5 @@
-import { AdminRole, adminRoleValues } from 'src/core/data/types/admin/roles';
 import { ApiProperty } from '@nestjs/swagger';
+import { adminRoleValues, AdminRole } from '../../../core/data/types';
 
 export class ManualCreateDto {
   @ApiProperty()

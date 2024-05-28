@@ -1,7 +1,8 @@
 import { Injectable } from '@nestjs/common';
-import { BaseService } from 'src/core/settings/base/service/base.service';
-import { Application } from 'src/core/data/database/entities/application.entity';
+
 import { ApplicationRepository } from './application.repository';
+import { BaseService } from '../../core/settings/base/service/base.service';
+import { Application } from '../../core/data/database/entities/application.entity';
 
 @Injectable()
 export class ApplicationService extends BaseService<

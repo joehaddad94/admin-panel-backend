@@ -1,7 +1,7 @@
-import { BaseService } from 'src/core/settings/base/service/base.service';
-import { QuestionRepository } from 'src/domain/questions/question.repository';
 import { Injectable } from '@nestjs/common';
-import { Question } from 'src/core/data/database';
+import { QuestionRepository } from './question.repository';
+import { Question } from '../../core/data/database';
+import { BaseService } from '../../core/settings/base/service/base.service';
 
 @Injectable()
 export class QuestionService extends BaseService<QuestionRepository, Question> {

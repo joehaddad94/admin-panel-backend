@@ -4,7 +4,7 @@ import {
   BaseErrorParams,
   ForbiddenParams,
   NotFoundParams,
-} from 'src/core/data/types/errors/base.error.types';
+} from '../../../data/types';
 
 export const throwInternalError = (data?: BaseErrorParams) => {
   const { message } = data;
