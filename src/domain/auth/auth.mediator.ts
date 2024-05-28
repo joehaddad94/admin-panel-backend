@@ -1,14 +1,14 @@
 import { Injectable } from '@nestjs/common';
-import { LoginDto, InviteDto } from '@domain/auth';
+import { LoginDto, InviteDto } from 'src/domain/auth';
 import {
   throwBadRequest,
   throwForbidden,
-} from '@core/settings/base/errors/errors';
-import { AuthService } from '@domain/auth/auth.service';
-import { catcher } from '@core/helpers/operation';
-import { VerifyDto } from '@domain/auth/dto/verify.dto';
-import { ManualCreateDto } from '@domain/auth';
-import { MailService } from '@domain/mail/mail.service';
+} from 'src/core/settings/base/errors/errors';
+import { AuthService } from 'src/domain/auth/auth.service';
+import { catcher } from 'src/core/helpers/operation';
+import { VerifyDto } from 'src/domain/auth/dto/verify.dto';
+import { ManualCreateDto } from 'src/domain/auth';
+import { MailService } from 'src/domain/mail/mail.service';
 
 @Injectable()
 export class AuthMediator {

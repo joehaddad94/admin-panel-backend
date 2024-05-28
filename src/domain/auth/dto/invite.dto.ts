@@ -1,4 +1,4 @@
-import { AdminRole, adminRoleValues } from '@core/data/types/admin/roles';
+import { AdminRole, adminRoleValues } from 'src/core/data/types/admin/roles';
 import { ApiProperty } from '@nestjs/swagger';
 
 export class InviteDto {

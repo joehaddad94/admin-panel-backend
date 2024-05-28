@@ -9,7 +9,7 @@ import {
   InviteResponse,
   TokenResponse,
   AdminResponse,
-} from '@core/config/documentation/response_types/auth';
+} from 'src/core/config/documentation/response_types/auth';
 
 @ApiTags('auth')
 @Controller('auth')

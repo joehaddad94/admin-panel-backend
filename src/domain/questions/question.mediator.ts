@@ -1,8 +1,8 @@
 import { Injectable } from '@nestjs/common';
-import { QuestionService } from '@domain/questions/question.service';
-import { throwNotFound } from '@core/settings/base/errors/errors';
-import { catcher } from '@core/helpers/operation';
-import { CreateQuestionDto } from '@domain/questions';
+import { QuestionService } from 'src/domain/questions/question.service';
+import { throwNotFound } from 'src/core/settings/base/errors/errors';
+import { catcher } from 'src/core/helpers/operation';
+import { CreateQuestionDto } from 'src/domain/questions';
 
 @Injectable()
 export class QuestionMediator {

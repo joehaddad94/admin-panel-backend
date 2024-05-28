@@ -1,12 +1,12 @@
 import { Module } from '@nestjs/common';
-import { QuizController } from '@domain/quizes/quiz.controller';
-import { QuizMediator } from '@domain/quizes/quiz.mediator';
-import { QuizService } from '@domain/quizes/quiz.service';
-import { QuizRepository } from '@domain/quizes/quiz.repository';
-import { StudentModule } from '@domain/students/student.module';
+import { QuizController } from 'src/domain/quizes/quiz.controller';
+import { QuizMediator } from 'src/domain/quizes/quiz.mediator';
+import { QuizService } from 'src/domain/quizes/quiz.service';
+import { QuizRepository } from 'src/domain/quizes/quiz.repository';
+import { StudentModule } from 'src/domain/students/student.module';
 import { TypeOrmModule } from '@nestjs/typeorm';
-import { Quiz } from '@core/data/database';
-import { QuizQuestionsModule } from '@domain/quizQuestions/quiz.questions.module';
+import { Quiz } from 'src/core/data/database';
+import { QuizQuestionsModule } from 'src/domain/quizQuestions/quiz.questions.module';
 
 @Module({
   imports: [

@@ -1,7 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { UserService } from './user.service';
-import { catcher } from '@core/helpers/operation';
-import { throwNotFound } from '@core/settings/base/errors/errors';
+import { catcher } from 'src/core/helpers/operation';
+import { throwNotFound } from 'src/core/settings/base/errors/errors';
 
 @Injectable()
 export class UserMediator {

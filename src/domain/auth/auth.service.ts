@@ -1,7 +1,7 @@
 import { Injectable } from '@nestjs/common';
-import { BaseService } from '@core/settings/base/service/base.service';
-import { AuthRepository } from '@domain/auth/auth.repository';
-import { Admin } from '@core/data/database';
+import { BaseService } from 'src/core/settings/base/service/base.service';
+import { AuthRepository } from 'src/domain/auth/auth.repository';
+import { Admin } from 'src/core/data/database';
 import * as bcrypt from 'bcrypt';
 import * as crypto from 'crypto';
 import { JwtService } from '@nestjs/jwt';

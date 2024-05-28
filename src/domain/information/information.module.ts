@@ -1,4 +1,4 @@
-import { Information } from '@core/data/database/entities/information.entity';
+import { Information } from 'src/core/data/database/entities/information.entity';
 import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { InformationMediator } from './informattion.mediator';

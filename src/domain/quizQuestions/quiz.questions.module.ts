@@ -1,8 +1,8 @@
 import { Module } from '@nestjs/common';
-import { QuizQuestionsService } from '@domain/quizQuestions/quiz.questions.service';
-import { QuizQuestionsRepository } from '@domain/quizQuestions/quiz.questions.repository';
+import { QuizQuestionsService } from 'src/domain/quizQuestions/quiz.questions.service';
+import { QuizQuestionsRepository } from 'src/domain/quizQuestions/quiz.questions.repository';
 import { TypeOrmModule } from '@nestjs/typeorm';
-import { QuizQuestions } from '@core/data/database/relations/quiz-question.entity';
+import { QuizQuestions } from 'src/core/data/database/relations/quiz-question.entity';
 
 @Module({
   imports: [TypeOrmModule.forFeature([QuizQuestions])],

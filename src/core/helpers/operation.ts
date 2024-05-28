@@ -1,5 +1,5 @@
-import { GlobalEntities } from '@core/data/types/query/global.entities';
-import { throwError } from '@core/settings/base/errors/base.error';
+import { GlobalEntities } from 'src/core/data/types/query/global.entities';
+import { throwError } from 'src/core/settings/base/errors/base.error';
 
 export const catcher = async (promise: () => any, service?: GlobalEntities) => {
   try {

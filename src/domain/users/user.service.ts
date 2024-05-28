@@ -1,6 +1,6 @@
-import { BaseService } from '@core/settings/base/service/base.service';
+import { BaseService } from 'src/core/settings/base/service/base.service';
 import { Injectable } from '@nestjs/common';
-import { User } from '@core/data/database';
+import { User } from 'src/core/data/database';
 import { UserRepository } from './user.repository';
 
 @Injectable()

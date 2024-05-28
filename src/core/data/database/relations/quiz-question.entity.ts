@@ -8,7 +8,7 @@ import {
 } from 'typeorm';
 import { Quiz } from '../entities/quiz.entity';
 import { Question } from '../entities/question.entity';
-import { cascade } from '@core/data/constants/query.consts';
+import { cascade } from 'src/core/data/constants/query.consts';
 
 @Entity({ name: 'quiz_questions' })
 export class QuizQuestions extends BaseEntity {

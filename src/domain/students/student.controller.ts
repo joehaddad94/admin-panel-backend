@@ -7,13 +7,13 @@ import {
   Post,
   Put,
 } from '@nestjs/common';
-import { StudentMediator } from '@domain/students/student.mediator';
+import { StudentMediator } from 'src/domain/students/student.mediator';
 import { ApiParam, ApiResponse, ApiTags } from '@nestjs/swagger';
 import {
   DeleteResponse,
   UpdateResponse,
   StudentResponse,
-} from '@core/config/documentation';
+} from 'src/core/config/documentation';
 import { CreateStudentDto } from './dto/create.student.dto';
 import { UpdateStudentDto } from './dto/update.student.dto';
 

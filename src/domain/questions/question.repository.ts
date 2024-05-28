@@ -1,5 +1,5 @@
-import { Question } from '@core/data/database';
-import { BaseRepository } from '@core/settings/base/repository/base.repository';
+import { Question } from 'src/core/data/database';
+import { BaseRepository } from 'src/core/settings/base/repository/base.repository';
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';

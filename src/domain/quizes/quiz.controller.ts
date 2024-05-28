@@ -1,8 +1,8 @@
 import { Body, Controller, Get, Post } from '@nestjs/common';
-import { QuizMediator } from '@domain/quizes/quiz.mediator';
+import { QuizMediator } from 'src/domain/quizes/quiz.mediator';
 import { CreateQuizDto } from './dtos/create.quiz.dto';
 import { ApiResponse, ApiTags } from '@nestjs/swagger';
-import { QuizResponse } from '@core/config/documentation';
+import { QuizResponse } from 'src/core/config/documentation';
 
 @ApiTags('quizes')
 @Controller('quizes')

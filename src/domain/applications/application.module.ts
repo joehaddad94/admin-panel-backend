@@ -1,4 +1,4 @@
-import { Application } from '@core/data/database/entities/application.entity';
+import { Application } from 'src/core/data/database/entities/application.entity';
 import { ApplicationController } from '../applications/application.controller';
 import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';

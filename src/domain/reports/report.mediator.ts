@@ -1,14 +1,14 @@
 import { Injectable } from '@nestjs/common';
-import { catcher } from '@core/helpers/operation';
-import { ApplicationService } from '@domain/applications/application.service';
-import { InformationService } from '@domain/information/information.service';
-import { UserService } from '@domain/users/user.service';
-import { throwNotFound } from '@core/settings/base/errors/errors';
-import { GlobalEntities } from '@core/data/types';
+import { catcher } from 'src/core/helpers/operation';
+import { ApplicationService } from 'src/domain/applications/application.service';
+import { InformationService } from 'src/domain/information/information.service';
+import { UserService } from 'src/domain/users/user.service';
+import { throwNotFound } from 'src/core/settings/base/errors/errors';
+import { GlobalEntities } from 'src/core/data/types';
 import { FiltersDto } from './dtos/filters.dto';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Application } from '@core/data/database/entities/application.entity';
-import { ApplicationRepository } from '@domain/applications/application.repository';
+import { Application } from 'src/core/data/database/entities/application.entity';
+import { ApplicationRepository } from 'src/domain/applications/application.repository';
 import { Between, LessThanOrEqual, MoreThanOrEqual } from 'typeorm';
 
 @Injectable()

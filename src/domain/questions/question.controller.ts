@@ -2,8 +2,8 @@ import { Body, Controller, Delete, Get, Param, Post } from '@nestjs/common';
 import { QuestionMediator } from './question.mediator';
 import { CreateQuestionDto } from './dtos/create.question.dto';
 import { ApiResponse, ApiTags } from '@nestjs/swagger';
-import { QuestionResponse } from '@core/config/documentation/response_types/question';
-import { DeleteResponse } from '@core/config/documentation/response_types/general';
+import { QuestionResponse } from 'src/core/config/documentation/response_types/question';
+import { DeleteResponse } from 'src/core/config/documentation/response_types/general';
 
 @ApiTags('questions')
 @Controller('questions')

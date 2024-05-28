@@ -1,11 +1,11 @@
 import {
   QuestionDifficulty,
   questionDifficultyValues,
-} from '@core/data/types/questions/difficulty';
+} from 'src/core/data/types/questions/difficulty';
 import {
   QuestionType,
   questionTypeValues,
-} from '@core/data/types/questions/type';
+} from 'src/core/data/types/questions/type';
 import { ApiProperty } from '@nestjs/swagger';
 
 export class QuestionResponse {

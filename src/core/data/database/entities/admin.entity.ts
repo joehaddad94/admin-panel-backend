@@ -1,4 +1,4 @@
-import { AdminRole, adminRoleValues } from '@core/data/types/admin/roles';
+import { AdminRole, adminRoleValues } from 'src/core/data/types/admin/roles';
 import { BaseEntity, Column, Entity, PrimaryGeneratedColumn } from 'typeorm';
 
 @Entity()

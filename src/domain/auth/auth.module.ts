@@ -1,12 +1,12 @@
 import { Module } from '@nestjs/common';
-import { AuthController } from '@domain/auth/auth.controller';
-import { AuthMediator } from '@domain/auth/auth.mediator';
-import { AuthService } from '@domain/auth/auth.service';
-import { AuthRepository } from '@domain/auth/auth.repository';
+import { AuthController } from 'src/domain/auth/auth.controller';
+import { AuthMediator } from 'src/domain/auth/auth.mediator';
+import { AuthService } from 'src/domain/auth/auth.service';
+import { AuthRepository } from 'src/domain/auth/auth.repository';
 import { TypeOrmModule } from '@nestjs/typeorm';
-import { Admin } from '@core/data/database';
+import { Admin } from 'src/core/data/database';
 import { JwtService } from '@nestjs/jwt';
-import { MailModule } from '@domain/mail/mail.module';
+import { MailModule } from 'src/domain/mail/mail.module';
 
 @Module({
   imports: [MailModule, TypeOrmModule.forFeature([Admin])],
