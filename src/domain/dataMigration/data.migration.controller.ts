@@ -1,7 +1,6 @@
 import {
   Body,
   Controller,
-  Get,
   HttpException,
   HttpStatus,
   Post,
@@ -9,8 +8,10 @@ import {
 } from '@nestjs/common';
 import { DataMigrationMediator } from './data.migration.mediator';
 import { DataMigrationDto } from './dtos/data.migration.dto';
+import { ApiTags } from '@nestjs/swagger';
 import { Response } from 'express';
 
+@ApiTags('dataMigration')
 @Controller()
 export class DataMigrationController {
   constructor(private readonly mediator: DataMigrationMediator) {}
