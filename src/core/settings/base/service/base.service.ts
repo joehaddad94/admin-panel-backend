@@ -10,8 +10,8 @@ import {
 } from 'typeorm';
 import { BaseRepository } from '../repository/base.repository';
 import { QueryDeepPartialEntity } from 'typeorm/query-builder/QueryPartialEntity';
-import { buildWhereParams } from 'src/core/helpers/query';
-import { GlobalEntities } from 'src/core/data/types/query/global.entities';
+import { GlobalEntities } from '../../../data/types';
+import { buildWhereParams } from '../../../helpers/query';
 
 export class BaseService<T extends BaseRepository<E>, E extends BaseEntity> {
   constructor(private readonly repository: T) {}

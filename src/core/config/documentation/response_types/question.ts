@@ -1,12 +1,10 @@
-import {
-  QuestionDifficulty,
-  questionDifficultyValues,
-} from '@core/data/types/questions/difficulty';
-import {
-  QuestionType,
-  questionTypeValues,
-} from '@core/data/types/questions/type';
 import { ApiProperty } from '@nestjs/swagger';
+import {
+  questionDifficultyValues,
+  QuestionDifficulty,
+  questionTypeValues,
+  QuestionType,
+} from '../../../data/types';
 
 export class QuestionResponse {
   @ApiProperty({ default: 1 })

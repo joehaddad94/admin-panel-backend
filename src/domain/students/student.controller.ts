@@ -7,15 +7,15 @@ import {
   Post,
   Put,
 } from '@nestjs/common';
-import { StudentMediator } from '@domain/students/student.mediator';
 import { ApiParam, ApiResponse, ApiTags } from '@nestjs/swagger';
-import {
-  DeleteResponse,
-  UpdateResponse,
-  StudentResponse,
-} from '@core/config/documentation';
 import { CreateStudentDto } from './dto/create.student.dto';
 import { UpdateStudentDto } from './dto/update.student.dto';
+import { StudentMediator } from './student.mediator';
+import {
+  StudentResponse,
+  UpdateResponse,
+  DeleteResponse,
+} from '../../core/config/documentation';
 
 @ApiTags('students')
 @Controller('students')

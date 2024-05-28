@@ -1,15 +1,15 @@
 import { Body, Controller, Post, Put } from '@nestjs/common';
-import { AuthMediator } from './auth.mediator';
+import { AuthMediator } from './AuthMediator';
 import { InviteDto } from './dto/invite.dto';
 import { LoginDto } from './dto/login.dto';
 import { VerifyDto } from './dto/verify.dto';
 import { ManualCreateDto } from './dto/manual.create.dto';
 import { ApiResponse, ApiTags } from '@nestjs/swagger';
 import {
+  AdminResponse,
   InviteResponse,
   TokenResponse,
-  AdminResponse,
-} from '@core/config/documentation/response_types/auth';
+} from '../../core/config/documentation/response_types/auth';
 
 @ApiTags('auth')
 @Controller('auth')

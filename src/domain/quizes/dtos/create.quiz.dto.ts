@@ -1,6 +1,6 @@
-import { questionAnswerValue } from '@core/config/documentation/request_types/quiz';
-import { QuestionAnswer } from '@core/data/types/questions/questions.answer';
 import { ApiProperty } from '@nestjs/swagger';
+import { questionAnswerValue } from '../../../core/config/documentation';
+import { QuestionAnswer } from '../../../core/data/types';
 
 export class CreateQuizDto {
   @ApiProperty()

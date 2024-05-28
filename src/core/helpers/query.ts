@@ -1,4 +1,3 @@
-import { GlobalEntities } from 'src/core/data/types/query/global.entities';
 import {
   BaseEntity,
   FindManyOptions,
@@ -6,6 +5,7 @@ import {
   FindOptionsSelect,
   FindOptionsWhere,
 } from 'typeorm';
+import { GlobalEntities } from '../data/types';
 
 export const buildWhereParams = <T extends BaseEntity>(
   whereOptions: FindOptionsWhere<T>,

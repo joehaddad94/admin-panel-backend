@@ -1,9 +1,8 @@
-import { QuizQuestions } from '@core/data/database';
-import { BaseService } from '@core/settings/base/service/base.service';
 import { Injectable } from '@nestjs/common';
-import { QuizQuestionsRepository } from '@domain/quizQuestions/quiz.questions.repository';
-import { QuestionAnswer } from '@core/data/types/questions/questions.answer';
-import { Quiz } from '@core/data/database/entities/quiz.entity';
+import { QuizQuestionsRepository } from './quiz.questions.repository';
+import { QuizQuestions, Quiz } from '../../core/data/database';
+import { QuestionAnswer } from '../../core/data/types';
+import { BaseService } from '../../core/settings/base/service/base.service';
 
 @Injectable()
 export class QuizQuestionsService extends BaseService<

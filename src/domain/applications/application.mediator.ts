@@ -1,8 +1,8 @@
 import { Injectable } from '@nestjs/common';
 import { ApplicationService } from './application.service';
-import { catcher } from '@core/helpers/operation';
-import { throwNotFound } from '@core/settings/base/errors/errors';
-import { GlobalEntities } from '@core/data/types';
+import { GlobalEntities } from '../../core/data/types';
+import { catcher } from '../../core/helpers/operation';
+import { throwNotFound } from '../../core/settings/base/errors/errors';
 
 @Injectable()
 export class ApplicationMediator {

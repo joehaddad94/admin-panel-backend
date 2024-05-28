@@ -1,15 +1,15 @@
 import { Injectable } from '@nestjs/common';
-import { catcher } from '@core/helpers/operation';
-import { ApplicationService } from '@domain/applications/application.service';
-import { InformationService } from '@domain/information/information.service';
-import { UserService } from '@domain/users/user.service';
-import { throwNotFound } from '@core/settings/base/errors/errors';
-import { GlobalEntities } from '@core/data/types';
 import { FiltersDto } from './dtos/filters.dto';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Application } from '@core/data/database/entities/application.entity';
-import { ApplicationRepository } from '@domain/applications/application.repository';
 import { Between, LessThanOrEqual, MoreThanOrEqual } from 'typeorm';
+import { ApplicationRepository } from '../applications/application.repository';
+import { ApplicationService } from '../applications/application.service';
+import { InformationService } from '../information/information.service';
+import { UserService } from '../users/user.service';
+import { Application } from '../../core/data/database/entities/application.entity';
+import { GlobalEntities } from '../../core/data/types';
+import { catcher } from '../../core/helpers/operation';
+import { throwNotFound } from '../../core/settings/base/errors/errors';
 
 @Injectable()
 export class ReportMediator {

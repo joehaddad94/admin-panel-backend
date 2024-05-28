@@ -8,7 +8,9 @@ import {
 import { ReportMediator } from './report.mediator';
 import { FiltersDto } from './dtos/filters.dto';
 import { ReportType } from './dtos/report-type.enum';
+import { ApiTags } from '@nestjs/swagger';
 
+@ApiTags('reports')
 @Controller('reports')
 export class ReportController {
   constructor(private readonly mediator: ReportMediator) {}

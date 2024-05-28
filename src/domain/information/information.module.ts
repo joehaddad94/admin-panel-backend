@@ -1,10 +1,10 @@
-import { Information } from '@core/data/database/entities/information.entity';
 import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { InformationMediator } from './informattion.mediator';
 import { InformationRepository } from './information.repository';
 import { InformationService } from './information.service';
 import { InformationController } from './information.controller';
+import { Information } from '../../core/data/database/entities/information.entity';
 
 @Module({
   imports: [TypeOrmModule.forFeature([Information])],
