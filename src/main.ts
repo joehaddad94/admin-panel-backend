@@ -8,6 +8,7 @@ async function bootstrap() {
       cors: {
         origin: '*',
       },
+      logger: ['error', 'debug', 'log', 'verbose', 'warn'],
     });
 
     const port = process.env.SERVER_PORT || 3000;
