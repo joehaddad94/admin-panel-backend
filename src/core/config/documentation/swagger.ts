@@ -12,7 +12,7 @@ export const initOpenApi = (app) => {
   SwaggerModule.setup('api/docs', app, document, {
     useGlobalPrefix: true,
     swaggerUrl: 'api/docs',
-    ...(process.env.NODE_ENV === 'production'
+    ...(process.env.NODE_ENV === 'development'
       ? {
           customCssUrl: [
             'https://cdnjs.cloudflare.com/ajax/libs/swagger-ui/5.17.14/swagger-ui.min.css',
