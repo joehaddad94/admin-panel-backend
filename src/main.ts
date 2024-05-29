@@ -3,18 +3,25 @@ import { AppModule } from './app.module';
 import { initOpenApi } from './core/config/documentation/swagger';
 
 async function bootstrap() {
-  const app = await NestFactory.create(AppModule, {
-    cors: {
-      origin: '*',
-    },
-  });
+  try {
+    const app = await NestFactory.create(AppModule, {
+      cors: {
+        origin: '*',
+      },
+    });
 
-  const port = process.env.SERVER_PORT || 3000;
+    const port = process.env.SERVER_PORT || 3000;
 
-  console.log(`Server running on port ${port} || env: ${process.env.NODE_ENV}`);
+    console.log(
+      `Server running on port ${port} || env: ${process.env.NODE_ENV}`,
+    );
 
-  initOpenApi(app);
+    initOpenApi(app);
 
-  await app.listen(port);
+    await app.listen(port);
+    console.log('Connected to the database successfully.');
+  } catch (error) {
+    console.error(`Failed to start the server: ${error.message}`, error);
+  }
 }
 bootstrap();
