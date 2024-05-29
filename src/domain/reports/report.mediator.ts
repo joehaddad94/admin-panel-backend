@@ -23,9 +23,23 @@ export class ReportMediator {
     private readonly userService: UserService,
   ) {}
 
-  applicationReport = async (filtersDto: FiltersDto) => {
+  applicationReport = async (
+    filtersDto: FiltersDto,
+    page: number = 1,
+    pageSize: number = 100,
+  ) => {
     return catcher(async () => {
-      const { fromDate, toDate, programId } = filtersDto;
+      const {
+        fromDate,
+        toDate,
+        programId,
+        page: dtoPage,
+        pageSize: dtoPageSize,
+      } = filtersDto;
+
+      const currentPage = dtoPage ?? page;
+      const currentPageSize = dtoPageSize ?? pageSize;
+
       const options: GlobalEntities[] = [
         'applicationInfo',
         'applicationProgram',
@@ -48,9 +62,12 @@ export class ReportMediator {
         whereConditions.applicationProgram.programId = programId;
       }
 
-      const applications = await this.applicationService.findMany(
+      const [applications, total] = await this.applicationService.findAndCount(
         whereConditions,
         options,
+        undefined,
+        (currentPage - 1) * currentPageSize,
+        currentPageSize,
       );
 
       throwNotFound({
@@ -101,13 +118,31 @@ export class ReportMediator {
         extras: app.extras,
       }));
 
-      return mappedApplications;
+      return {
+        mappedApplications,
+        total,
+        page: currentPage,
+        pageSize: currentPageSize,
+      };
     });
   };
 
-  informationReport = async (filtersDto: FiltersDto) => {
+  informationReport = async (
+    filtersDto: FiltersDto,
+    page: number = 1,
+    pageSize: number = 100,
+  ) => {
     return catcher(async () => {
-      const { fromDate, toDate } = filtersDto;
+      const {
+        fromDate,
+        toDate,
+        page: dtoPage,
+        pageSize: dtoPageSize,
+      } = filtersDto;
+
+      const currentPage = dtoPage ?? page;
+      const currentPageSize = dtoPageSize ?? pageSize;
+
       const options: GlobalEntities[] = ['applicationInfo', 'informationUser'];
       const whereConditions: any = {};
 
@@ -119,9 +154,12 @@ export class ReportMediator {
         whereConditions.created_at = LessThanOrEqual(toDate);
       }
 
-      const information = await this.informationService.findMany(
+      const [information, total] = await this.informationService.findAndCount(
         whereConditions,
         options,
+        undefined,
+        (currentPage - 1) * currentPageSize,
+        currentPageSize,
       );
 
       throwNotFound({
@@ -129,48 +167,31 @@ export class ReportMediator {
         errorCheck: !information,
       });
 
-      return information;
+      return {
+        information,
+        total,
+        page: currentPage,
+        pageSize: currentPageSize,
+      };
     });
   };
 
-  // informationReport = async (
-  //   filtersDto: FiltersDto,
-  //   page: number = 1,
-  //   pageSize: number = 100,
-  // ) => {
-  //   return catcher(async () => {
-  //     const { fromDate, toDate } = filtersDto;
-  //     const options: GlobalEntities[] = ['applicationInfo', 'informationUser'];
-  //     const whereConditions: any = {};
-
-  //     if (fromDate && toDate) {
-  //       whereConditions.created_at = Between(fromDate, toDate);
-  //     } else if (fromDate) {
-  //       whereConditions.created_at = MoreThanOrEqual(fromDate);
-  //     } else if (toDate) {
-  //       whereConditions.created_at = LessThanOrEqual(toDate);
-  //     }
-
-  //     const [information, total] = await this.informationService.findAndCount(
-  //       whereConditions,
-  //       options,
-  //       undefined,
-  //       (page - 1) * pageSize,
-  //       pageSize,
-  //     );
-
-  //     throwNotFound({
-  //       entity: 'informationReport',
-  //       errorCheck: !information,
-  //     });
-
-  //     return information;
-  //   });
-  // };
-
-  usersReport = async (filtersDto: FiltersDto) => {
+  usersReport = async (
+    filtersDto: FiltersDto,
+    page: number = 1,
+    pageSize: number = 100,
+  ) => {
     return catcher(async () => {
-      const { fromDate, toDate } = filtersDto;
+      const {
+        fromDate,
+        toDate,
+        page: dtoPage,
+        pageSize: dtoPageSize,
+      } = filtersDto;
+
+      const currentPage = dtoPage ?? page;
+      const currentPageSize = dtoPageSize ?? pageSize;
+
       const whereConditions: any = {};
 
       if (fromDate && toDate) {
@@ -181,48 +202,20 @@ export class ReportMediator {
         whereConditions.created_at = LessThanOrEqual(toDate);
       }
 
-      const users = await this.userService.findMany(whereConditions);
+      const [users, total] = await this.userService.findAndCount(
+        whereConditions,
+        undefined,
+        undefined,
+        (currentPage - 1) * currentPageSize,
+        currentPageSize,
+      );
 
       throwNotFound({
         entity: 'usersReport',
         errorCheck: !users,
       });
 
-      return users;
+      return { users, total, page: currentPage, pageSize: currentPageSize };
     });
   };
-
-  // usersReport = async (
-  //   filtersDto: FiltersDto,
-  //   page: number = 1,
-  //   pageSize: number = 100,
-  // ) => {
-  //   return catcher(async () => {
-  //     const { fromDate, toDate } = filtersDto;
-  //     const whereConditions: any = {};
-
-  //     if (fromDate && toDate) {
-  //       whereConditions.created_at = Between(fromDate, toDate);
-  //     } else if (fromDate) {
-  //       whereConditions.created_at = MoreThanOrEqual(fromDate);
-  //     } else if (toDate) {
-  //       whereConditions.created_at = LessThanOrEqual(toDate);
-  //     }
-
-  //     const [users, total] = await this.userService.findAndCount(
-  //       whereConditions,
-  //       undefined,
-  //       undefined,
-  //       (page - 1) * pageSize,
-  //       pageSize,
-  //     );
-
-  //     throwNotFound({
-  //       entity: 'usersReport',
-  //       errorCheck: !users,
-  //     });
-
-  //     return { users, total, page, pageSize };
-  //   });
-  // };
 }
