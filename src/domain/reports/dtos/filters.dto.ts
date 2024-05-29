@@ -11,6 +11,12 @@ export class FiltersDto {
   @ApiProperty()
   programId?: number;
 
+  @ApiProperty()
+  page?: number;
+
+  @ApiProperty()
+  pageSize?: number;
+
   @ApiProperty({ enum: ReportType })
   reportType?: ReportType;
 }
