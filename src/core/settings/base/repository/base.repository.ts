@@ -25,6 +25,12 @@ export class BaseRepository<T extends BaseEntity> {
     return this.repository.find(options);
   };
 
+  findAndCount = async (
+    options: FindManyOptions<T>,
+  ): Promise<[T[], number]> => {
+    return this.repository.findAndCount(options);
+  };
+
   create = (data: DeepPartial<T>): T => {
     return this.repository.create(data);
   };

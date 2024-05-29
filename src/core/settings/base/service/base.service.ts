@@ -48,6 +48,25 @@ export class BaseService<T extends BaseRepository<E>, E extends BaseEntity> {
     return this.repository.findMany(options);
   };
 
+  findAndCount = async (
+    where: FindOptionsWhere<E>,
+    relations?: GlobalEntities[],
+    selects?: FindOptionsSelect<E>,
+    skip?: number,
+    take?: number,
+  ): Promise<[E[], number]> => {
+    const options: FindManyOptions<E> = buildWhereParams<E>(
+      where,
+      relations,
+      selects,
+    );
+
+    if (skip !== undefined) options.skip = skip;
+    if (take !== undefined) options.take = take;
+
+    return this.repository.findAndCount(options);
+  };
+
   create = (data: DeepPartial<E>): E => {
     return this.repository.create(data);
   };

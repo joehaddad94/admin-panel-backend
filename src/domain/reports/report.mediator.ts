@@ -133,7 +133,11 @@ export class ReportMediator {
     });
   };
 
-  usersReport = async (filtersDto: FiltersDto) => {
+  usersReport = async (
+    filtersDto: FiltersDto,
+    page: number = 1,
+    pageSize: number = 100,
+  ) => {
     return catcher(async () => {
       const { fromDate, toDate } = filtersDto;
       const whereConditions: any = {};
@@ -146,14 +150,21 @@ export class ReportMediator {
         whereConditions.created_at = LessThanOrEqual(toDate);
       }
 
-      const users = await this.userService.findMany(whereConditions);
+      // const users = await this.userService.findMany(whereConditions);
+      const [users, total] = await this.userService.findAndCount(
+        whereConditions,
+        undefined, // Add relations if needed
+        undefined, // Add selects if needed
+        (page - 1) * pageSize,
+        pageSize,
+      );
 
       throwNotFound({
         entity: 'usersReport',
         errorCheck: !users,
       });
 
-      return users;
+      return { users, total, page, pageSize };
     });
   };
 }

@@ -15,7 +15,6 @@ export const dataSourceOptions: DataSourceOptions = {
     process.env.DB_SSL_PROFILE === 'require'
       ? { rejectUnauthorized: false }
       : undefined,
-  // entities: ['../../data/database/**/*.entity{.ts,.js}'],
   entities: ['src/core/data/database/**/*.entity{.ts,.js}'],
   // migrations: ['./migrations/*{.ts,.js}'],
 };
