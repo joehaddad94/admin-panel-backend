@@ -11,9 +11,13 @@ export const dataSourceOptions: DataSourceOptions = {
   host: process.env.DB_HOST,
   database: process.env.DB_NAME,
   port: parseInt(process.env.DB_PORT),
-  ssl: process.env.DB_SSL_PROFILE === "require" ? { rejectUnauthorized: false } : undefined,
-  entities: ['dist/core/data/database/**/*.entity{.ts,.js}'],
-  migrations: ['dist/core/config/db/migrations/*{.ts,.js}'],
+  ssl:
+    process.env.DB_SSL_PROFILE === 'require'
+      ? { rejectUnauthorized: false }
+      : undefined,
+  // entities: ['../../data/database/**/*.entity{.ts,.js}'],
+  entities: ['src/core/data/database/**/*.entity{.ts,.js}'],
+  // migrations: ['./migrations/*{.ts,.js}'],
 };
 
 export default new DataSource(dataSourceOptions);
