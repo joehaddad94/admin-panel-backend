@@ -133,11 +133,42 @@ export class ReportMediator {
     });
   };
 
-  usersReport = async (
-    filtersDto: FiltersDto,
-    page: number = 1,
-    pageSize: number = 100,
-  ) => {
+  // informationReport = async (
+  //   filtersDto: FiltersDto,
+  //   page: number = 1,
+  //   pageSize: number = 100,
+  // ) => {
+  //   return catcher(async () => {
+  //     const { fromDate, toDate } = filtersDto;
+  //     const options: GlobalEntities[] = ['applicationInfo', 'informationUser'];
+  //     const whereConditions: any = {};
+
+  //     if (fromDate && toDate) {
+  //       whereConditions.created_at = Between(fromDate, toDate);
+  //     } else if (fromDate) {
+  //       whereConditions.created_at = MoreThanOrEqual(fromDate);
+  //     } else if (toDate) {
+  //       whereConditions.created_at = LessThanOrEqual(toDate);
+  //     }
+
+  //     const [information, total] = await this.informationService.findAndCount(
+  //       whereConditions,
+  //       options,
+  //       undefined,
+  //       (page - 1) * pageSize,
+  //       pageSize,
+  //     );
+
+  //     throwNotFound({
+  //       entity: 'informationReport',
+  //       errorCheck: !information,
+  //     });
+
+  //     return information;
+  //   });
+  // };
+
+  usersReport = async (filtersDto: FiltersDto) => {
     return catcher(async () => {
       const { fromDate, toDate } = filtersDto;
       const whereConditions: any = {};
@@ -150,21 +181,48 @@ export class ReportMediator {
         whereConditions.created_at = LessThanOrEqual(toDate);
       }
 
-      // const users = await this.userService.findMany(whereConditions);
-      const [users, total] = await this.userService.findAndCount(
-        whereConditions,
-        undefined, // Add relations if needed
-        undefined, // Add selects if needed
-        (page - 1) * pageSize,
-        pageSize,
-      );
+      const users = await this.userService.findMany(whereConditions);
 
       throwNotFound({
         entity: 'usersReport',
         errorCheck: !users,
       });
 
-      return { users, total, page, pageSize };
+      return users;
     });
   };
+
+  // usersReport = async (
+  //   filtersDto: FiltersDto,
+  //   page: number = 1,
+  //   pageSize: number = 100,
+  // ) => {
+  //   return catcher(async () => {
+  //     const { fromDate, toDate } = filtersDto;
+  //     const whereConditions: any = {};
+
+  //     if (fromDate && toDate) {
+  //       whereConditions.created_at = Between(fromDate, toDate);
+  //     } else if (fromDate) {
+  //       whereConditions.created_at = MoreThanOrEqual(fromDate);
+  //     } else if (toDate) {
+  //       whereConditions.created_at = LessThanOrEqual(toDate);
+  //     }
+
+  //     const [users, total] = await this.userService.findAndCount(
+  //       whereConditions,
+  //       undefined,
+  //       undefined,
+  //       (page - 1) * pageSize,
+  //       pageSize,
+  //     );
+
+  //     throwNotFound({
+  //       entity: 'usersReport',
+  //       errorCheck: !users,
+  //     });
+
+  //     return { users, total, page, pageSize };
+  //   });
+  // };
 }
