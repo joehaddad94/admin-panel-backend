@@ -10,6 +10,8 @@ import { Application } from '../../core/data/database/entities/application.entit
 import { GlobalEntities } from '../../core/data/types';
 import { catcher } from '../../core/helpers/operation';
 import { throwNotFound } from '../../core/settings/base/errors/errors';
+import { ApplicationUser } from 'src/core/data/database/relations/application-user.entity';
+import { info } from 'console';
 
 @Injectable()
 export class ReportMediator {
@@ -25,8 +27,8 @@ export class ReportMediator {
 
   applicationReport = async (
     filtersDto: FiltersDto,
-    page: number = 1,
-    pageSize: number = 100,
+    page = 1,
+    pageSize = 100,
   ) => {
     return catcher(async () => {
       const {
@@ -47,12 +49,16 @@ export class ReportMediator {
       ];
       const whereConditions: any = {};
 
-      if (fromDate && fromDate) {
-        whereConditions.created_at = Between(fromDate, toDate);
+      if (fromDate && toDate) {
+        const adjustedToDate = new Date(toDate);
+        adjustedToDate.setHours(23, 59, 59, 999); // Set to the end of the day
+        whereConditions.created_at = Between(fromDate, adjustedToDate);
       } else if (fromDate) {
         whereConditions.created_at = MoreThanOrEqual(fromDate);
       } else if (toDate) {
-        whereConditions.created_at = LessThanOrEqual(toDate);
+        const adjustedToDate = new Date(toDate);
+        adjustedToDate.setHours(23, 59, 59, 999);
+        whereConditions.created_at = LessThanOrEqual(adjustedToDate);
       }
 
       if (programId) {
@@ -118,6 +124,12 @@ export class ReportMediator {
         extras: app.extras,
       }));
 
+      mappedApplications.sort(
+        (a, b) =>
+          new Date(a.app_created_at).getTime() -
+          new Date(b.app_created_at).getTime(),
+      );
+
       return {
         mappedApplications,
         total,
@@ -127,39 +139,80 @@ export class ReportMediator {
     });
   };
 
-  informationReport = async (
-    filtersDto: FiltersDto,
-    page: number = 1,
-    pageSize: number = 100,
-  ) => {
+  // informationReport = async (
+  //   filtersDto: FiltersDto,
+  //   page: number = 1,
+  //   pageSize: number = 100,
+  // ) => {
+  //   return catcher(async () => {
+  //     const {
+  //       fromDate,
+  //       toDate,
+  //       page: dtoPage,
+  //       pageSize: dtoPageSize,
+  //     } = filtersDto;
+
+  //     const currentPage = dtoPage ?? page;
+  //     const currentPageSize = dtoPageSize ?? pageSize;
+
+  //     const options: GlobalEntities[] = ['applicationInfo', 'informationUser'];
+  //     const whereConditions: any = {};
+
+  //     if (fromDate && toDate) {
+  //       whereConditions.created_at = Between(fromDate, toDate);
+  //     } else if (fromDate) {
+  //       whereConditions.created_at = MoreThanOrEqual(fromDate);
+  //     } else if (toDate) {
+  //       whereConditions.created_at = LessThanOrEqual(toDate);
+  //     }
+
+  //     const [information, total] = await this.informationService.findAndCount(
+  //       whereConditions,
+  //       options,
+  //       undefined,
+  //       (currentPage - 1) * currentPageSize,
+  //       currentPageSize,
+  //     );
+
+  //     throwNotFound({
+  //       entity: 'informationReport',
+  //       errorCheck: !information,
+  //     });
+
+  //     return {
+  //       information,
+  //       total,
+  //       page: currentPage,
+  //       pageSize: currentPageSize,
+  //     };
+  //   });
+  // };
+
+  informationReport = async (filtersDto: FiltersDto) => {
     return catcher(async () => {
-      const {
-        fromDate,
-        toDate,
-        page: dtoPage,
-        pageSize: dtoPageSize,
-      } = filtersDto;
+      const { fromDate, toDate } = filtersDto;
 
-      const currentPage = dtoPage ?? page;
-      const currentPageSize = dtoPageSize ?? pageSize;
-
-      const options: GlobalEntities[] = ['applicationInfo', 'informationUser'];
-      const whereConditions: any = {};
+      const infoOptions: GlobalEntities[] = [
+        'informationUser',
+        'applicationInfo',
+      ];
+      const infoWhereConditions: any = {};
 
       if (fromDate && toDate) {
-        whereConditions.created_at = Between(fromDate, toDate);
+        const adjustedToDate = new Date(toDate);
+        adjustedToDate.setHours(23, 59, 59, 999); // Set to the end of the day
+        infoWhereConditions.created_at = Between(fromDate, adjustedToDate);
       } else if (fromDate) {
-        whereConditions.created_at = MoreThanOrEqual(fromDate);
+        infoWhereConditions.created_at = MoreThanOrEqual(fromDate);
       } else if (toDate) {
-        whereConditions.created_at = LessThanOrEqual(toDate);
+        const adjustedToDate = new Date(toDate);
+        adjustedToDate.setHours(23, 59, 59, 999);
+        infoWhereConditions.created_at = LessThanOrEqual(adjustedToDate);
       }
 
-      const [information, total] = await this.informationService.findAndCount(
-        whereConditions,
-        options,
-        undefined,
-        (currentPage - 1) * currentPageSize,
-        currentPageSize,
+      const information = await this.informationService.findMany(
+        infoWhereConditions,
+        infoOptions,
       );
 
       throwNotFound({
@@ -167,20 +220,135 @@ export class ReportMediator {
         errorCheck: !information,
       });
 
+      const applicationOptions: GlobalEntities[] = [
+        'applicationUser',
+        'applicationProgram',
+      ];
+
+      const applications = await this.applicationService.findMany(
+        {},
+        applicationOptions,
+      );
+
+      throwNotFound({
+        entity: 'informationReport',
+        errorCheck: !applications,
+      });
+
+      const applicationMap = new Map(applications.map((app) => [app.id, app]));
+
+      const combinedData = information.flatMap((info) => {
+        if (info.applicationInfo && info.applicationInfo.length > 0) {
+          return info.applicationInfo.map((appInfo) => {
+            const appId = typeof appInfo === 'number' ? appInfo : appInfo.id;
+            const application = applicationMap.get(appId);
+
+            return {
+              sef_id: info.sef_id,
+              email: info.email,
+              first_name: info.first_name,
+              middle_name: info.middle_name,
+              last_name: info.last_name,
+              mother_maiden_first: info.mother_maiden_first,
+              mother_maiden_last: info.mother_maiden_last,
+              gender: info.gender,
+              dob: info.dob,
+              mobile: info.mobile,
+              country_origin: info.country_origin,
+              country_residence: info.country_residence,
+              residency_status: info.residency_status,
+              district: info.district,
+              governate: info.governate,
+              marital_status: info.marital_status,
+              type_of_disability: info.type_of_disability,
+              disability: info.disability,
+              employment_situation: info.employment_situation,
+              which_social: info.which_social,
+              terms_conditions: info.terms_conditions,
+              degree_type: info.degree_type,
+              status: info.status,
+              institution: info.institution,
+              field_of_study: info.field_of_study,
+              major_title: info.major_title,
+              createdAt: info.created_at,
+              program_id:
+                application?.applicationProgram?.[0]?.program.id || '',
+              program_name:
+                application?.applicationProgram?.[0]?.program.program_name ||
+                '',
+              abbreviation:
+                application?.applicationProgram?.[0]?.program.abbreviation ||
+                '',
+              passed_screening: application?.passed_screening || '',
+              passed_screening_date: application?.passed_screening_date || '',
+              passed_exam: application?.passed_exam || '',
+              passed_exam_date: application?.passed_exam_date || '',
+              passed_interview_date: application?.passed_interview_date || '',
+              passed_interview: application?.passed_interview || '',
+              enrolled: application?.enrolled || '',
+              remarks: application?.remarks || '',
+              extras: application?.extras || '',
+            };
+          });
+        } else {
+          return [
+            {
+              sef_id: info.sef_id,
+              email: info.email,
+              first_name: info.first_name,
+              middle_name: info.middle_name,
+              last_name: info.last_name,
+              mother_maiden_first: info.mother_maiden_first,
+              mother_maiden_last: info.mother_maiden_last,
+              gender: info.gender,
+              dob: info.dob,
+              mobile: info.mobile,
+              country_origin: info.country_origin,
+              country_residence: info.country_residence,
+              residency_status: info.residency_status,
+              district: info.district,
+              governate: info.governate,
+              marital_status: info.marital_status,
+              type_of_disability: info.type_of_disability,
+              disability: info.disability,
+              employment_situation: info.employment_situation,
+              which_social: info.which_social,
+              terms_conditions: info.terms_conditions,
+              degree_type: info.degree_type,
+              status: info.status,
+              institution: info.institution,
+              field_of_study: info.field_of_study,
+              major_title: info.major_title,
+              createdAt: info.created_at,
+              program_id: '',
+              program_name: '',
+              abbreviation: '',
+              passed_screening: '',
+              passed_screening_date: '',
+              passed_exam: '',
+              passed_exam_date: '',
+              passed_interview_date: '',
+              passed_interview: '',
+              enrolled: '',
+              remarks: '',
+              extras: '',
+            },
+          ];
+        }
+      });
+
+      combinedData.sort(
+        (a, b) =>
+          new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime(),
+      );
+
       return {
-        information,
-        total,
-        page: currentPage,
-        pageSize: currentPageSize,
+        combinedData,
       };
     });
   };
 
-  usersReport = async (
-    filtersDto: FiltersDto,
-    page: number = 1,
-    pageSize: number = 100,
-  ) => {
+  usersReport = async (filtersDto: FiltersDto, page = 1, pageSize = 100) => {
     return catcher(async () => {
       const {
         fromDate,
@@ -195,11 +363,15 @@ export class ReportMediator {
       const whereConditions: any = {};
 
       if (fromDate && toDate) {
-        whereConditions.created_at = Between(fromDate, toDate);
+        const adjustedToDate = new Date(toDate);
+        adjustedToDate.setHours(23, 59, 59, 999); // Set to the end of the day
+        whereConditions.created_at = Between(fromDate, adjustedToDate);
       } else if (fromDate) {
         whereConditions.created_at = MoreThanOrEqual(fromDate);
       } else if (toDate) {
-        whereConditions.created_at = LessThanOrEqual(toDate);
+        const adjustedToDate = new Date(toDate);
+        adjustedToDate.setHours(23, 59, 59, 999);
+        whereConditions.created_at = LessThanOrEqual(adjustedToDate);
       }
 
       const [users, total] = await this.userService.findAndCount(
@@ -215,7 +387,26 @@ export class ReportMediator {
         errorCheck: !users,
       });
 
-      return { users, total, page: currentPage, pageSize: currentPageSize };
+      const sortedUsers = users.map((user) => ({
+        sef_id: user.sef_id,
+        username: user.username,
+        email: user.email,
+        first_name: user.first_name,
+        last_name: user.last_name,
+        createdAt: user.created_at,
+      }));
+
+      sortedUsers.sort(
+        (a, b) =>
+          new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime(),
+      );
+
+      return {
+        sortedUsers,
+        total,
+        page: currentPage,
+        pageSize: currentPageSize,
+      };
     });
   };
 }
