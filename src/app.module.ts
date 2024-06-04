@@ -17,6 +17,7 @@ import { DataMigrationModule } from './domain/dataMigration/data.migration.modul
 import { ServeStaticModule } from '@nestjs/serve-static';
 import { join } from 'path';
 import { QuestionModule } from './domain/questions/question.module';
+import { ProgramModule } from './domain/programs/program.module';
 
 @Module({
   imports: [
@@ -42,6 +43,7 @@ import { QuestionModule } from './domain/questions/question.module';
     InformationModule,
     ReportModule,
     DataMigrationModule,
+    ProgramModule,
   ],
   controllers: [AppController],
   providers: [AppService],
