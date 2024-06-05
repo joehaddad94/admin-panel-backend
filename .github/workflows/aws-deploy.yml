@@ -1,0 +1,36 @@
+name: Deploy Application
+
+# Defines when the action will run.
+on:
+  push:
+    branches:
+      - development # Specify the branch to listen for push events
+
+# Jobs to execute
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest # Specifies the runner environment
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3 # Checks-out your repository under $GITHUB_WORKSPACE
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: '20' # Sets up Node.js version
+
+      - name: Install dependencies
+        run: npm install # Install Node.js dependencies
+
+      - name: Build the project
+        run: npm run build # Your build command
+
+      - name: Deploy to server
+        run: ssh -i ${{ secrets.SSH_PRIVATE_KEY }} ubuntu@admin-panel-server-dev.sef-hiring-portal.click " cd sef-admin-panel-server && git pull && npm install && npm run deploy"
+        env:
+          SSH_KEY: ${{ secrets.SSH_PRIVATE_KEY }} # Using stored secrets for SSH key
+
+# Adds environment variables and other configurations
+env:
+  CI: true
