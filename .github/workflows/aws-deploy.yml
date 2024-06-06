@@ -34,6 +34,8 @@ jobs:
           mkdir -p ~/.ssh
           echo "${{ secrets.SSH_PRIVATE_KEY }}" > ~/.ssh/id_rsa
           chmod 600 ~/.ssh/id_rsa
+          ssh-keyscan github.com >> ~/.ssh/known_hosts
+          ssh-keyscan admin-panel-server-dev.sef-hiring-portal.click >> ~/.ssh/known_hosts
           ssh -i ~/.ssh/id_rsa -o StrictHostKeyChecking=no ubuntu@admin-panel-server-dev.sef-hiring-portal.click "
             cd sef-admin-panel-server && \
             git remote set-url origin git@github.com:sefact0ry/sef-admin-panel-server.git && \
