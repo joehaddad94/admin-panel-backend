@@ -150,10 +150,7 @@ import { AuthService } from './auth.service';
 import { JwtService } from '@nestjs/jwt';
 import { LoginDto } from './dto/login.dto';
 import { catcher } from '../../core/helpers/operation';
-import {
-  throwBadRequest,
-  throwNotFound,
-} from '../../core/settings/base/errors/errors';
+import { throwBadRequest } from '../../core/settings/base/errors/errors';
 import { ManualCreateDto } from './dto/manual.create.dto';
 
 @Injectable()

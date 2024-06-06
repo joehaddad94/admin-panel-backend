@@ -21,7 +21,7 @@ import { AuthService } from './auth.service';
 import { JwtStrategy } from './jwt.strategy';
 import { AuthController } from './auth.controller';
 import { TypeOrmModule } from '@nestjs/typeorm';
-import { AuthMediator } from './authMediator';
+import { AuthMediator } from './AuthMediator';
 import { Admin } from '../../core/data/database';
 import { AuthRepository } from './auth.repository';
 

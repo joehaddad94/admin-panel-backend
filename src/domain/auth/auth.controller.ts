@@ -50,7 +50,7 @@
 // }
 
 import { ApiResponse, ApiTags } from '@nestjs/swagger';
-import { AuthMediator } from './authMediator';
+import { AuthMediator } from './AuthMediator';
 import { AdminResponse, TokenResponse } from '../../core/config/documentation';
 import { Body, Controller, Post } from '@nestjs/common';
 import { LoginDto } from './dto/login.dto';
