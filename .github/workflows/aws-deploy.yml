@@ -27,7 +27,11 @@ jobs:
         run: npm run build # Your build command
 
       - name: Deploy to server
-        run: ssh -i ${{ secrets.SSH_PRIVATE_KEY }} ubuntu@admin-panel-server-dev.sef-hiring-portal.click " cd sef-admin-panel-server && git pull && npm install && npm run deploy"
+        run: |
+          mkdir -p ~/.ssh
+          echo "${{ secrets.SSH_PRIVATE_KEY }}" > ~/.ssh/id_rsa
+          chmod 600 ~/.ssh/id_rsa
+          ssh -i ~/.ssh/id_rsa -o StrictHostKeyChecking=no ubuntu@admin-panel-server-dev.sef-hiring-portal.click "cd sef-admin-panel-server && git pull && npm install && npm run deploy"
         env:
           SSH_KEY: ${{ secrets.SSH_PRIVATE_KEY }} # Using stored secrets for SSH key
 
