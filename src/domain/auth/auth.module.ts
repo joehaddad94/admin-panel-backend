@@ -17,19 +17,18 @@
 // export class AuthModule {}
 
 import { Module } from '@nestjs/common';
-import { JwtModule } from '@nestjs/jwt';
-import { jwtConstants } from '../../core/data/constants/jwt.consts';
 import { AuthService } from './auth.service';
 import { JwtStrategy } from './jwt.strategy';
+import { AuthController } from './auth.controller';
+import { TypeOrmModule } from '@nestjs/typeorm';
+import { AuthMediator } from './authMediator';
+import { Admin } from '../../core/data/database';
+import { AuthRepository } from './auth.repository';
 
 @Module({
-  imports: [
-    JwtModule.register({
-      secret: jwtConstants.secret,
-      signOptions: { expiresIn: '1d' },
-    }),
-  ],
-  providers: [AuthService, JwtStrategy],
+  imports: [TypeOrmModule.forFeature([Admin])],
+  controllers: [AuthController],
+  providers: [AuthMediator, AuthService, AuthRepository, JwtStrategy],
   exports: [AuthService],
 })
 export class AuthModule {}

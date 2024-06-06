@@ -5,7 +5,7 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import { ConfigModule } from '@nestjs/config';
 import { dataSourceOptions } from './core/config/db/db.data.source';
 import { enivroment } from './core/config/server/enviroment';
-// import { AuthModule } from './domain/auth';
+import { AuthModule } from './domain/auth';
 import { JwtModule } from '@nestjs/jwt';
 import { StudentModule } from './domain/students';
 import { QuizModule } from './domain/quizes';
@@ -34,7 +34,7 @@ import { ProgramModule } from './domain/programs/program.module';
     ServeStaticModule.forRoot({
       rootPath: join(__dirname, 'public'),
     }),
-    // AuthModule,
+    AuthModule,
     StudentModule,
     QuizModule,
     QuestionModule,

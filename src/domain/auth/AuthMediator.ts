@@ -188,7 +188,7 @@ export class AuthMediator {
 
       return {
         name: admin.name,
-        email: admin.password,
+        email: admin.email,
         token,
       };
     });
@@ -199,10 +199,12 @@ export class AuthMediator {
 
     const existingAdmin = await this.service.findOne({ email });
 
-    throwBadRequest({
-      message: 'Admin already exists with the provided email.',
-      errorCheck: !existingAdmin,
-    });
+    if (existingAdmin) {
+      throwBadRequest({
+        message: 'Admin already exists with the provided email.',
+        errorCheck: true,
+      });
+    }
 
     const hashedPassword = await this.service.hashPassword(password);
 
@@ -218,6 +220,7 @@ export class AuthMediator {
 
     await admin.save();
 
-    return admin;
+    const { password: omitted, ...adminData } = admin;
+    return adminData;
   };
 }
