@@ -18,23 +18,28 @@ jobs:
       - name: Set up Node.js
         uses: actions/setup-node@v3
         with:
-          node-version: '20'
+          node-version: '20' # Sets up Node.js version
 
       - name: Change Git remote URL to SSH
         run: git remote set-url origin git@github.com:sefact0ry/sef-admin-panel-server.git
 
       - name: Install dependencies
-        run: npm install
+        run: npm install # Install Node.js dependencies
 
       - name: Build the project
-        run: npm run build
+        run: npm run build # Your build command
 
       - name: Deploy to server
         run: |
           mkdir -p ~/.ssh
           echo "${{ secrets.SSH_PRIVATE_KEY }}" > ~/.ssh/id_rsa
           chmod 600 ~/.ssh/id_rsa
-          ssh -i ~/.ssh/id_rsa -o StrictHostKeyChecking=no ubuntu@admin-panel-server-dev.sef-hiring-portal.click "cd sef-admin-panel-server && git pull && npm install && npm run deploy"
+          ssh -i ~/.ssh/id_rsa -o StrictHostKeyChecking=no ubuntu@admin-panel-server-dev.sef-hiring-portal.click "
+            cd sef-admin-panel-server && \
+            git remote set-url origin git@github.com:sefact0ry/sef-admin-panel-server.git && \
+            git pull && \
+            npm install && \
+            npm run deploy"
         env:
           SSH_KEY: ${{ secrets.SSH_PRIVATE_KEY }} # Using stored secrets for SSH key
 
