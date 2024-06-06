@@ -13,10 +13,9 @@ export class PanelAdmins1717594595679 implements MigrationInterface {
           generationStrategy: 'increment',
         },
         {
-          name: 'username',
+          name: 'name',
           type: 'varchar',
           length: '255',
-          isUnique: true,
         },
         {
           name: 'email',
@@ -41,9 +40,8 @@ export class PanelAdmins1717594595679 implements MigrationInterface {
           onUpdate: 'CURRENT_TIMESTAMP',
         },
         {
-          name: 'status',
-          type: 'varchar',
-          length: '50',
+          name: 'isActive',
+          type: 'boolean',
         },
         {
           name: 'reset_token',

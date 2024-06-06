@@ -5,8 +5,8 @@ export class Admin extends BaseEntity {
   @PrimaryGeneratedColumn()
   id: number;
 
-  @Column({ unique: true })
-  username: string;
+  @Column()
+  name: string;
 
   @Column({ unique: true })
   email: string;
@@ -21,7 +21,7 @@ export class Admin extends BaseEntity {
   updated_at: Date;
 
   @Column()
-  status: string;
+  isActive: boolean;
 
   @Column({ nullable: true })
   reset_token: string;

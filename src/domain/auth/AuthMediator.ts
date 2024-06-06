@@ -144,3 +144,80 @@
 //     });
 //   };
 // }
+
+import { Injectable } from '@nestjs/common';
+import { AuthService } from './auth.service';
+import { JwtService } from '@nestjs/jwt';
+import { LoginDto } from './dto/login.dto';
+import { catcher } from '../../core/helpers/operation';
+import {
+  throwBadRequest,
+  throwNotFound,
+} from '../../core/settings/base/errors/errors';
+import { ManualCreateDto } from './dto/manual.create.dto';
+
+@Injectable()
+export class AuthMediator {
+  constructor(
+    private readonly service: AuthService,
+    private readonly jwtService: JwtService,
+  ) {}
+
+  login = async (data: LoginDto) => {
+    return catcher(async () => {
+      const { email, password } = data;
+
+      const admin = await this.service.findOne({ email });
+
+      throwBadRequest({
+        message: 'Admin not found',
+        errorCheck: !admin,
+      });
+
+      const passwordIsValid = await this.service.comparePassword(
+        password,
+        admin.password,
+      );
+
+      throwBadRequest({
+        message: 'Invalid Credentials',
+        errorCheck: !passwordIsValid,
+      });
+
+      const token = await this.service.generateToken(admin);
+
+      return {
+        name: admin.name,
+        email: admin.password,
+        token,
+      };
+    });
+  };
+
+  manualCreate = async (data: ManualCreateDto) => {
+    const { name, email, password } = data;
+
+    const existingAdmin = await this.service.findOne({ email });
+
+    throwBadRequest({
+      message: 'Admin already exists with the provided email.',
+      errorCheck: !existingAdmin,
+    });
+
+    const hashedPassword = await this.service.hashPassword(password);
+
+    const admin = this.service.create({
+      name,
+      email,
+      password: hashedPassword,
+      created_at: new Date(),
+      updated_at: new Date(),
+      isActive: true,
+      login_attempts: 5,
+    });
+
+    await admin.save();
+
+    return admin;
+  };
+}

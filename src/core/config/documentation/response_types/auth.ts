@@ -1,5 +1,5 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { AdminRole, adminRoleValues } from '../../../data/types';
+// import { AdminRole, adminRoleValues } from '../../../data/types';
 
 export class AdminResponse {
   @ApiProperty()
@@ -11,8 +11,8 @@ export class AdminResponse {
   @ApiProperty()
   email: string;
 
-  @ApiProperty({ enum: adminRoleValues })
-  role: AdminRole;
+  // @ApiProperty({ enum: adminRoleValues })
+  // role: AdminRole;
 
   @ApiProperty()
   inActive: boolean;
@@ -21,6 +21,9 @@ export class AdminResponse {
 export class TokenResponse {
   @ApiProperty()
   token: string;
+
+  @ApiProperty({ type: AdminResponse })
+  name: string;
 
   @ApiProperty({ type: AdminResponse })
   user: AdminResponse;
