@@ -52,7 +52,13 @@
 import { ApiResponse, ApiTags } from '@nestjs/swagger';
 import { AuthMediator } from './AuthMediator';
 import { AdminResponse, TokenResponse } from '../../core/config/documentation';
-import { Body, Controller, Post } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Post,
+  UsePipes,
+  ValidationPipe,
+} from '@nestjs/common';
 import { LoginDto } from './dto/login.dto';
 import { ManualCreateDto } from './dto/manual.create.dto';
 
@@ -65,6 +71,7 @@ export class AuthController {
     type: TokenResponse,
   })
   @Post('login')
+  @UsePipes(new ValidationPipe({ whitelist: true }))
   login(@Body() data: LoginDto) {
     return this.mediator.login(data);
   }
@@ -73,6 +80,7 @@ export class AuthController {
     type: AdminResponse,
   })
   @Post('create-admin')
+  @UsePipes(new ValidationPipe({ whitelist: true }))
   async createAdmin(@Body() data: ManualCreateDto) {
     const admin = await this.mediator.manualCreate(data);
     await this.mediator.invite(data);

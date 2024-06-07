@@ -10,7 +10,7 @@ import { MailService } from './mail.service';
       useFactory: async () => ({
         transport: {
           host: process.env.SMTP_HOST,
-          secure: false,
+          secure: true,
           auth: {
             user: process.env.SMTP_USER,
             pass: process.env.SMTP_PASS,

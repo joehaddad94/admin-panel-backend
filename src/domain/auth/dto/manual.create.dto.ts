@@ -11,6 +11,5 @@ export class ManualCreateDto {
   email: string;
 
   @ApiProperty()
-  @IsNotEmpty({ message: 'Password should not be empty' })
   password: string;
 }

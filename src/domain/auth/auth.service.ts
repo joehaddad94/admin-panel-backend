@@ -131,4 +131,12 @@ export class AuthService extends BaseService<AuthRepository, Admin> {
 
     return { link, key: verificationKey };
   };
+
+  generateRandomPassword = (length = 12): string => {
+    const charset =
+      'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!@#$%^&*()_+~`|}{[]:;?><,./-=';
+    return Array.from(crypto.randomFillSync(new Uint8Array(length)))
+      .map((n) => charset[n % charset.length])
+      .join('');
+  };
 }

@@ -201,7 +201,7 @@ export class AuthMediator {
   };
 
   manualCreate = async (data: ManualCreateDto) => {
-    const { name, email, password } = data;
+    const { name, email } = data;
 
     const emailValid = this.service.verifyEmail(email);
     throwBadRequest({
@@ -210,6 +210,10 @@ export class AuthMediator {
     });
 
     const existingAdmin = await this.service.findOne({ email });
+    console.log(
+      '🚀 ~ AuthMediator ~ manualCreate= ~ existingAdmin:',
+      existingAdmin,
+    );
 
     if (existingAdmin) {
       throwBadRequest({
@@ -218,6 +222,7 @@ export class AuthMediator {
       });
     }
 
+    const password = this.service.generateRandomPassword();
     const hashedPassword = await this.service.hashPassword(password);
 
     const admin = this.service.create({
@@ -238,29 +243,30 @@ export class AuthMediator {
 
   invite = async (data: InviteDto) => {
     return catcher(async () => {
-      const { email, name } = data;
+      const { email } = data;
 
-      const found = await this.service.findOne({
+      const existingAdmin = await this.service.findOne({
         email,
       });
+      console.log(
+        '🚀 ~ AuthMediator ~ returncatcher ~ existingAdmin:',
+        existingAdmin,
+      );
 
-      throwBadRequest({
-        message: 'Email already in use',
-        errorCheck: !!found,
-      });
+      if (!existingAdmin) {
+        throwBadRequest({
+          message: 'Email does not exist',
+          errorCheck: true,
+        });
+      }
 
       const { link, key } = await this.service.generateLink(email);
 
-      const user = this.service.create({
-        name,
-        email,
-        isActive: false,
-        reset_token: key,
-      });
+      existingAdmin.reset_token = key;
+      existingAdmin.reset_token_expiry = new Date(Date.now() + 3600000); // 1 hour expiry
+      await existingAdmin.save();
 
-      await user.save();
-
-      await this.mailService.sendRegistrationMail(user);
+      await this.mailService.sendRegistrationMail(existingAdmin);
 
       return { link };
     });
