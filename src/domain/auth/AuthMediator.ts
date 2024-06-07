@@ -152,17 +152,26 @@ import { LoginDto } from './dto/login.dto';
 import { catcher } from '../../core/helpers/operation';
 import { throwBadRequest } from '../../core/settings/base/errors/errors';
 import { ManualCreateDto } from './dto/manual.create.dto';
+import { InviteDto } from './dto/invite.dto';
+import { MailService } from '../mail/mail.service';
 
 @Injectable()
 export class AuthMediator {
   constructor(
     private readonly service: AuthService,
+    private readonly mailService: MailService,
     private readonly jwtService: JwtService,
   ) {}
 
   login = async (data: LoginDto) => {
     return catcher(async () => {
       const { email, password } = data;
+
+      const emailValid = this.service.verifyEmail(email);
+      throwBadRequest({
+        message: 'Invalid email format',
+        errorCheck: !emailValid,
+      });
 
       const admin = await this.service.findOne({ email });
 
@@ -194,6 +203,12 @@ export class AuthMediator {
   manualCreate = async (data: ManualCreateDto) => {
     const { name, email, password } = data;
 
+    const emailValid = this.service.verifyEmail(email);
+    throwBadRequest({
+      message: 'Invalid email format',
+      errorCheck: !emailValid,
+    });
+
     const existingAdmin = await this.service.findOne({ email });
 
     if (existingAdmin) {
@@ -219,5 +234,35 @@ export class AuthMediator {
 
     const { password: omitted, ...adminData } = admin;
     return adminData;
+  };
+
+  invite = async (data: InviteDto) => {
+    return catcher(async () => {
+      const { email, name } = data;
+
+      const found = await this.service.findOne({
+        email,
+      });
+
+      throwBadRequest({
+        message: 'Email already in use',
+        errorCheck: !!found,
+      });
+
+      const { link, key } = await this.service.generateLink(email);
+
+      const user = this.service.create({
+        name,
+        email,
+        isActive: false,
+        reset_token: key,
+      });
+
+      await user.save();
+
+      await this.mailService.sendRegistrationMail(user);
+
+      return { link };
+    });
   };
 }

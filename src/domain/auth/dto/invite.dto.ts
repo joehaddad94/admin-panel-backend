@@ -1,13 +1,12 @@
-// import { ApiProperty } from '@nestjs/swagger';
-// import { adminRoleValues, AdminRole } from '../../../core/data/types';
+import { ApiProperty } from '@nestjs/swagger';
+import { IsEmail, IsNotEmpty } from 'class-validator';
 
-// export class InviteDto {
-//   @ApiProperty()
-//   name: string;
+export class InviteDto {
+  @ApiProperty()
+  @IsNotEmpty({ message: 'Password should not be empty' })
+  name: string;
 
-//   @ApiProperty()
-//   email: string;
-
-//   @ApiProperty({ enum: adminRoleValues, enumName: 'UserRole' })
-//   role: AdminRole;
-// }
+  @ApiProperty()
+  @IsEmail({}, { message: 'Invalid email format' })
+  email: string;
+}

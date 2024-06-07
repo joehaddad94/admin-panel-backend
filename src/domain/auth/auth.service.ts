@@ -98,28 +98,37 @@ export class AuthService extends BaseService<AuthRepository, Admin> {
     return formatCheck;
   };
 
-  //   generateLink = async (email: string) => {
-  //     const verificationKey = crypto
-  //       .randomBytes(32)
-  //       .toString('base64')
-  //       .replace(/\+/g, '-')
-  //       .replace(/\//g, '_')
-  //       .replace(/=/g, '');
+  generateResetToken = async (email: string) => {
+    const resetToken = crypto
+      .randomBytes(32)
+      .toString('base64')
+      .replace(/\+/g, '-')
+      .replace(/\//g, '_')
+      .replace(/=/g, '');
 
-  //     const link = `${process.env.VERIFY_CLIENT_URL}?key=${verificationKey}&email=${email}`;
+    const link = `${process.env.VERIFY_CLIENT_URL}?key=${resetToken}&email=${email}`;
 
-  //     return { link, key: verificationKey };
-  //   };
+    return { link, key: resetToken };
+  };
 
   generateToken = async (user: Admin) => {
     const payload = { sub: user.id };
 
-    // const token = this.jwtService.sign(payload, {
-    //   secret: process.env.JWT_SECRET,
-    // });
-
     const token = this.jwtService.sign(payload);
 
     return token;
+  };
+
+  generateLink = async (email: string) => {
+    const verificationKey = crypto
+      .randomBytes(32)
+      .toString('base64')
+      .replace(/\+/g, '-')
+      .replace(/\//g, '_')
+      .replace(/=/g, '');
+
+    const link = `${process.env.VERIFY_CLIENT_URL}?key=${verificationKey}&email=${email}`;
+
+    return { link, key: verificationKey };
   };
 }

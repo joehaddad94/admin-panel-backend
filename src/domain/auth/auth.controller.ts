@@ -73,7 +73,9 @@ export class AuthController {
     type: AdminResponse,
   })
   @Post('create-admin')
-  createAdmin(@Body() data: ManualCreateDto) {
-    return this.mediator.manualCreate(data);
+  async createAdmin(@Body() data: ManualCreateDto) {
+    const admin = await this.mediator.manualCreate(data);
+    await this.mediator.invite(data);
+    return admin;
   }
 }

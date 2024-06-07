@@ -18,6 +18,7 @@ import { ServeStaticModule } from '@nestjs/serve-static';
 import { join } from 'path';
 import { QuestionModule } from './domain/questions/question.module';
 import { ProgramModule } from './domain/programs/program.module';
+import { MailModule } from './domain/mail/mail.module';
 
 @Module({
   imports: [
@@ -44,6 +45,7 @@ import { ProgramModule } from './domain/programs/program.module';
     ReportModule,
     DataMigrationModule,
     ProgramModule,
+    MailModule,
   ],
   controllers: [AppController],
   providers: [AppService],
