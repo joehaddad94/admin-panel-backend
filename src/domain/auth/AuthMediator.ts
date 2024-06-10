@@ -154,6 +154,7 @@ import { throwBadRequest } from '../../core/settings/base/errors/errors';
 import { ManualCreateDto } from './dto/manual.create.dto';
 import { InviteDto } from './dto/invite.dto';
 import { MailService } from '../mail/mail.service';
+import { ChangePasswordDto } from './dto/change-password.dto';
 
 @Injectable()
 export class AuthMediator {
@@ -210,10 +211,6 @@ export class AuthMediator {
     });
 
     const existingAdmin = await this.service.findOne({ email });
-    console.log(
-      '🚀 ~ AuthMediator ~ manualCreate= ~ existingAdmin:',
-      existingAdmin,
-    );
 
     if (existingAdmin) {
       throwBadRequest({
@@ -257,15 +254,90 @@ export class AuthMediator {
         });
       }
 
-      const { link, key } = await this.service.generateLink(email);
+      const { link, reset_token } = await this.service.generateLink(email);
 
-      existingAdmin.reset_token = key;
+      existingAdmin.reset_token = reset_token;
       existingAdmin.reset_token_expiry = new Date(Date.now() + 3600000); // 1 hour expiry
       await existingAdmin.save();
 
       await this.mailService.sendMail(existingAdmin, templateName);
 
       return { link };
+    });
+  };
+
+  changePassword = async (data: ChangePasswordDto) => {
+    const { reset_token, newPassword } = data;
+    return catcher(async () => {
+      const admin = await this.service.findOneByResetToken(reset_token);
+
+      if (!admin) {
+        throwBadRequest({
+          message: 'Invalid or Expired Token',
+          errorCheck: true,
+        });
+      }
+
+      const currentDate = new Date();
+      if (admin.reset_token_expiry < currentDate) {
+        throwBadRequest({
+          message: 'Token Expired',
+          errorCheck: true,
+        });
+      }
+
+      await this.service.updatePassword(admin, newPassword);
+      return { message: 'Password changed successfully.' };
+    });
+  };
+
+  forgotPassword = async (data: ChangePasswordDto) => {
+    const { email } = data;
+    return catcher(async () => {
+      const admin = await this.service.findOne({ email });
+
+      if (!admin) {
+        throwBadRequest({
+          message: 'Email not found',
+          errorCheck: true,
+        });
+      }
+
+      const { key } = await this.service.generateResetToken(email);
+
+      admin.reset_token = key;
+      admin.reset_token_expiry = new Date(Date.now() + 3600000); // 1 hour expiry
+      await admin.save();
+
+      const templateName = 'reset-password.hbs';
+      await this.mailService.sendMail(admin, templateName);
+
+      return { message: 'Reset password email sent' };
+    });
+  };
+
+  resetPassword = async (data: ChangePasswordDto) => {
+    const { reset_token, newPassword } = data;
+    return catcher(async () => {
+      const admin = await this.service.findOneByResetToken(reset_token);
+
+      if (!admin) {
+        throwBadRequest({
+          message: 'Invalid or expired token',
+          errorCheck: true,
+        });
+      }
+
+      const currentDate = new Date();
+      if (admin.reset_token_expiry < currentDate) {
+        throwBadRequest({
+          message: 'Token expired',
+          errorCheck: true,
+        });
+      }
+
+      await this.service.updatePassword(admin, newPassword);
+      return { message: 'Password reset successfully' };
     });
   };
 }

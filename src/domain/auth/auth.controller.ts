@@ -58,11 +58,14 @@ import {
   HttpException,
   HttpStatus,
   Post,
+  Put,
   UsePipes,
   ValidationPipe,
 } from '@nestjs/common';
 import { LoginDto } from './dto/login.dto';
 import { ManualCreateDto } from './dto/manual.create.dto';
+import { catcher } from '../../core/helpers/operation';
+import { ChangePasswordDto } from './dto/change-password.dto';
 
 @ApiTags('auth')
 @Controller('auth')
@@ -84,18 +87,28 @@ export class AuthController {
   @Post('create-admin')
   @UsePipes(new ValidationPipe({ whitelist: true }))
   async createAdmin(@Body() data: ManualCreateDto) {
-    try {
+    return catcher(async () => {
       const admin = await this.mediator.manualCreate(data);
       await this.mediator.invite(data);
       return admin;
-    } catch (error) {
-      throw new HttpException(
-        {
-          status: HttpStatus.INTERNAL_SERVER_ERROR,
-          error: error.message,
-        },
-        HttpStatus.INTERNAL_SERVER_ERROR,
-      );
-    }
+    });
+  }
+
+  @Put('change-password')
+  @UsePipes(new ValidationPipe({ whitelist: true }))
+  changePassword(@Body() data: ChangePasswordDto) {
+    return this.mediator.changePassword(data);
+  }
+
+  @Post('forgot-password')
+  @UsePipes(new ValidationPipe({ whitelist: true }))
+  forgotPassword(@Body() data: ChangePasswordDto) {
+    return this.mediator.forgotPassword(data);
+  }
+
+  @Put('reset-password')
+  @UsePipes(new ValidationPipe({ whitelist: true }))
+  resetPassword(@Body() data: ChangePasswordDto) {
+    return this.mediator.resetPassword(data);
   }
 }

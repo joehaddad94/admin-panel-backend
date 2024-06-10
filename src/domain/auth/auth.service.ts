@@ -120,16 +120,16 @@ export class AuthService extends BaseService<AuthRepository, Admin> {
   };
 
   generateLink = async (email: string) => {
-    const verificationKey = crypto
+    const reset_token = crypto
       .randomBytes(32)
       .toString('base64')
       .replace(/\+/g, '-')
       .replace(/\//g, '_')
       .replace(/=/g, '');
 
-    const link = `${process.env.VERIFY_CLIENT_URL}?key=${verificationKey}&email=${email}`;
+    const link = `${process.env.VERIFY_CLIENT_URL}?key=${reset_token}&email=${email}`;
 
-    return { link, key: verificationKey };
+    return { link, reset_token };
   };
 
   generateRandomPassword = (length = 12): string => {
@@ -139,4 +139,15 @@ export class AuthService extends BaseService<AuthRepository, Admin> {
       .map((n) => charset[n % charset.length])
       .join('');
   };
+
+  async findOneByResetToken(reset_token: string): Promise<Admin | null> {
+    return this.authRepository.findOne({ where: { reset_token } });
+  }
+
+  async updatePassword(admin: Admin, newPassword: string): Promise<void> {
+    admin.password = await this.hashPassword(newPassword);
+    admin.reset_token = null;
+    admin.reset_token_expiry = null;
+    await this.authRepository.save(admin);
+  }
 }
