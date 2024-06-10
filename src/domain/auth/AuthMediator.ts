@@ -186,11 +186,24 @@ export class AuthMediator {
         admin.password,
       );
 
-      throwBadRequest({
-        message: 'Invalid Credentials',
-        errorCheck: !passwordIsValid,
-      });
+      if (!passwordIsValid) {
+        if (admin.login_attempts > 1) {
+          admin.login_attempts -= 1;
+          await admin.save();
+        } else {
+          admin.isActive = false;
+          await admin.save();
+          throwBadRequest({
+            message: 'Account locked due to multiple failed login attempts',
+            errorCheck: true,
+          });
+        }
 
+        throwBadRequest({
+          message: 'Invalid Credentials',
+          errorCheck: true,
+        });
+      }
       const token = await this.service.generateToken(admin);
 
       return {
