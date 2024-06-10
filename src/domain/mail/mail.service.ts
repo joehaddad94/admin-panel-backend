@@ -7,7 +7,7 @@ export class MailService {
   private readonly logger = new Logger(MailService.name);
   constructor(private readonly mailerService: MailerService) {}
 
-  sendRegistrationMail = async (admin: Admin) => {
+  sendMail = async (admin: Admin, template: string) => {
     const { email, name, reset_token } = admin;
 
     const link = `${process.env.VERIFY_CLIENT_URL}?key=${reset_token}&email=${email}`;
@@ -16,14 +16,14 @@ export class MailService {
         from: '"SEF Admin Panel" <noreply@example.com>',
         to: email,
         subject: 'SEF Admin Panel Invitation!',
-        template: './invitation.hbs',
+        template,
         context: {
           name,
           link,
         },
       });
 
-      this.logger.log(`Email sent to ${email}: ${result.messageId}`);
+      return this.logger.log(`Email sent to ${email}: ${result.messageId}`);
     } catch (error) {
       this.logger.error(`Failed to send email to ${email}`, error.stack);
       throw new Error(`Failed to send email to ${email}: ${error.message}`);

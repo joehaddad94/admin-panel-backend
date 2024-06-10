@@ -55,6 +55,8 @@ import { AdminResponse, TokenResponse } from '../../core/config/documentation';
 import {
   Body,
   Controller,
+  HttpException,
+  HttpStatus,
   Post,
   UsePipes,
   ValidationPipe,
@@ -82,8 +84,18 @@ export class AuthController {
   @Post('create-admin')
   @UsePipes(new ValidationPipe({ whitelist: true }))
   async createAdmin(@Body() data: ManualCreateDto) {
-    const admin = await this.mediator.manualCreate(data);
-    await this.mediator.invite(data);
-    return admin;
+    try {
+      const admin = await this.mediator.manualCreate(data);
+      await this.mediator.invite(data);
+      return admin;
+    } catch (error) {
+      throw new HttpException(
+        {
+          status: HttpStatus.INTERNAL_SERVER_ERROR,
+          error: error.message,
+        },
+        HttpStatus.INTERNAL_SERVER_ERROR,
+      );
+    }
   }
 }

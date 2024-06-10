@@ -244,14 +244,11 @@ export class AuthMediator {
   invite = async (data: InviteDto) => {
     return catcher(async () => {
       const { email } = data;
+      const templateName = 'invitation.hbs';
 
       const existingAdmin = await this.service.findOne({
         email,
       });
-      console.log(
-        '🚀 ~ AuthMediator ~ returncatcher ~ existingAdmin:',
-        existingAdmin,
-      );
 
       if (!existingAdmin) {
         throwBadRequest({
@@ -266,7 +263,7 @@ export class AuthMediator {
       existingAdmin.reset_token_expiry = new Date(Date.now() + 3600000); // 1 hour expiry
       await existingAdmin.save();
 
-      await this.mailService.sendRegistrationMail(existingAdmin);
+      await this.mailService.sendMail(existingAdmin, templateName);
 
       return { link };
     });
