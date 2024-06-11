@@ -30,7 +30,12 @@ jobs:
         run: npm run build # Your build command
 
       - name: Install dependencies and redeploy
-        run: npm run redeploy:dev
+        run: |
+          mkdir -p ~/.ssh
+          echo "${{ secrets.SSH_PRIVATE_KEY }}" > ~/.ssh/id_rsa
+          chmod 600 ~/.ssh/id_rsa
+          ssh-keyscan github.com >> ~/.ssh/known_hosts
+          git pull origin development && npm install && sudo systemctl restart admin-dev.service
         env:
           SSH_KEY: ${{ secrets.SSH_PRIVATE_KEY }} # Using stored secrets for SSH key
 
