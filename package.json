@@ -22,7 +22,7 @@
     "migration:generate": "npm run typeorm -- migration:generate src/core/config/db/migrations/migration",
     "migration:run": "npm run typeorm -- migration:run",
     "migration:revert": "npm run typeorm -- migration:revert",
-    "redeploy:dev": "git pull origin development && npm install && if systemctl list-unit-files --type=service | grep -q 'admin-dev.service'; then sudo systemctl stop admin-dev.service && sudo systemctl start admin-dev.service && systemctl is-active --quiet admin-dev.service; fi"
+    "redeploy:dev": "git pull origin development && npm install && if systemctl list-unit-files --type=service | grep -q 'admin-dev.service'; then sudo systemctl stop admin-dev.service && sudo systemctl start admin-dev.service; fi"
   },
   "dependencies": {
     "@nestjs-modules/mailer": "^1.10.3",
