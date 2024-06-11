@@ -35,7 +35,7 @@ jobs:
           echo "${{ secrets.SSH_PRIVATE_KEY }}" > ~/.ssh/id_rsa
           chmod 600 ~/.ssh/id_rsa
           ssh-keyscan github.com >> ~/.ssh/known_hosts
-          git pull origin development && npm install && sudo systemctl restart admin-dev.service
+          npm run redeploy:dev
         env:
           SSH_KEY: ${{ secrets.SSH_PRIVATE_KEY }} # Using stored secrets for SSH key
 
