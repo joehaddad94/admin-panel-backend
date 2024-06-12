@@ -13,6 +13,7 @@ import { LoginDto } from './dto/login.dto';
 import { ManualCreateDto } from './dto/manual.create.dto';
 import { catcher } from '../../core/helpers/operation';
 import { ChangePasswordDto } from './dto/change-password.dto';
+import { VerifyTokenDto } from './dto/change-password.dto copy';
 
 @ApiTags('auth')
 @Controller('auth')
@@ -51,5 +52,12 @@ export class AuthController {
   @UsePipes(new ValidationPipe({ whitelist: true }))
   forgotPassword(@Body() data: ChangePasswordDto) {
     return this.mediator.forgotPassword(data);
+  }
+
+  @Post('me')
+  me(@Body() data: VerifyTokenDto) {
+    return catcher(() => {
+      return this.mediator.verifyToken(data);
+    });
   }
 }

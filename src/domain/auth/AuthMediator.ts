@@ -8,6 +8,7 @@ import { ManualCreateDto } from './dto/manual.create.dto';
 import { InviteDto } from './dto/invite.dto';
 import { MailService } from '../mail/mail.service';
 import { ChangePasswordDto } from './dto/change-password.dto';
+import { VerifyTokenDto } from './dto/change-password.dto copy';
 
 @Injectable()
 export class AuthMediator {
@@ -180,5 +181,18 @@ export class AuthMediator {
 
       return { message: 'Reset password email sent' };
     });
+  };
+
+  verifyToken = async (data: VerifyTokenDto) => {
+    const { token } = data;
+
+    throwBadRequest({
+      message: 'Invalid token',
+      errorCheck: !token,
+    });
+
+    const payload = await this.service.verifyToken(token);
+
+    return payload;
   };
 }

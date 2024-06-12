@@ -150,4 +150,14 @@ export class AuthService extends BaseService<AuthRepository, Admin> {
     admin.reset_token_expiry = null;
     await this.authRepository.save(admin);
   }
+
+  async verifyToken(token: string) {
+    const payload = await this.jwtService.decode(token);
+
+    const updated = await this.authRepository.findOne({
+      where: { id: payload.sub },
+    });
+
+    return updated;
+  }
 }
