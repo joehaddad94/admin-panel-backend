@@ -52,10 +52,4 @@ export class AuthController {
   forgotPassword(@Body() data: ChangePasswordDto) {
     return this.mediator.forgotPassword(data);
   }
-
-  @Put('reset-password')
-  @UsePipes(new ValidationPipe({ whitelist: true }))
-  resetPassword(@Body() data: ChangePasswordDto) {
-    return this.mediator.resetPassword(data);
-  }
 }

@@ -1,5 +1,5 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { IsEmail, IsNotEmpty, MinLength } from 'class-validator';
+import { IsEmail, IsNotEmpty } from 'class-validator';
 
 export class ManualCreateDto {
   @ApiProperty()
@@ -9,8 +9,4 @@ export class ManualCreateDto {
   @ApiProperty()
   @IsEmail({}, { message: 'Invalid email format' })
   email: string;
-
-  @ApiProperty()
-  @MinLength(6)
-  password: string;
 }

@@ -181,29 +181,4 @@ export class AuthMediator {
       return { message: 'Reset password email sent' };
     });
   };
-
-  resetPassword = async (data: ChangePasswordDto) => {
-    const { reset_token, newPassword } = data;
-    return catcher(async () => {
-      const admin = await this.service.findOneByResetToken(reset_token);
-
-      if (!admin) {
-        throwBadRequest({
-          message: 'Invalid or expired token',
-          errorCheck: true,
-        });
-      }
-
-      const currentDate = new Date();
-      if (admin.reset_token_expiry < currentDate) {
-        throwBadRequest({
-          message: 'Token expired',
-          errorCheck: true,
-        });
-      }
-
-      await this.service.updatePassword(admin, newPassword);
-      return { message: 'Password reset successfully' };
-    });
-  };
 }
