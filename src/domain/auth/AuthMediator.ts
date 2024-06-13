@@ -41,23 +41,17 @@ export class AuthMediator {
       );
 
       if (!passwordIsValid) {
-        if (admin.login_attempts > 1) {
-          admin.login_attempts -= 1;
-          await admin.save();
-        } else {
-          admin.isActive = false;
-          await admin.save();
-          throwBadRequest({
-            message: 'Account locked due to multiple failed login attempts',
-            errorCheck: true,
-          });
-        }
-
+        const accountLocked = await this.service.decrementLoginAttempts(admin);
         throwBadRequest({
-          message: 'Invalid Credentials',
+          message: accountLocked
+            ? 'Account locked due to multiple failed login attempts'
+            : 'Invalid Credentials',
           errorCheck: true,
         });
       }
+
+      await this.service.resetLoginAttempts(admin);
+
       const token = await this.service.generateToken(admin);
 
       return {
@@ -128,7 +122,6 @@ export class AuthMediator {
       await existingAdmin.save();
 
       await this.mailService.sendMail(existingAdmin, templateName);
-
       return { link };
     });
   };
