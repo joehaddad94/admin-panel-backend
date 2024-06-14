@@ -8,10 +8,7 @@ import * as bcrypt from 'bcrypt';
 
 @Injectable()
 export class AdminService extends BaseService<AdminRepository, Admin> {
-  constructor(
-    private readonly adminRepository: AdminRepository,
-    private readonly jwtService: JwtService,
-  ) {
+  constructor(private readonly adminRepository: AdminRepository) {
     super(adminRepository);
   }
 

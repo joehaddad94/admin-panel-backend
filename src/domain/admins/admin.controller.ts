@@ -5,12 +5,13 @@ import {
   UsePipes,
   ValidationPipe,
 } from '@nestjs/common';
-import { ApiResponse } from '@nestjs/swagger';
+import { ApiResponse, ApiTags } from '@nestjs/swagger';
 import { AdminResponse } from 'src/core/config/documentation';
-import { ManualCreateDto } from '../auth';
+import { ManualCreateDto } from '../admins';
 import { catcher } from 'src/core/helpers/operation';
 import { AdminMediator } from './admin.mediator';
 
+@ApiTags('admins')
 @Controller()
 export class AdminController {
   constructor(private readonly mediator: AdminMediator) {}

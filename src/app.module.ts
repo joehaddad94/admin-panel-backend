@@ -19,6 +19,7 @@ import { join } from 'path';
 import { QuestionModule } from './domain/questions/question.module';
 import { ProgramModule } from './domain/programs/program.module';
 import { MailModule } from './domain/mail/mail.module';
+import { AdminModule } from './domain/admins';
 
 @Module({
   imports: [
@@ -36,6 +37,7 @@ import { MailModule } from './domain/mail/mail.module';
       rootPath: join(__dirname, 'public'),
     }),
     AuthModule,
+    AdminModule,
     StudentModule,
     QuizModule,
     QuestionModule,
