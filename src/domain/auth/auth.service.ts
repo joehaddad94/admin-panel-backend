@@ -5,7 +5,6 @@ import { JwtService } from '@nestjs/jwt';
 import { AuthRepository } from './auth.repository';
 import { Admin } from '../../core/data/database';
 import { BaseService } from '../../core/settings/base/service/base.service';
-import { throwBadRequest } from '../../core/settings/base/errors/errors';
 
 @Injectable()
 export class AuthService extends BaseService<AuthRepository, Admin> {
@@ -69,14 +68,6 @@ export class AuthService extends BaseService<AuthRepository, Admin> {
     const link = `${process.env.VERIFY_CLIENT_URL}?key=${reset_token}&email=${email}`;
 
     return { link, reset_token };
-  };
-
-  generateRandomPassword = (length = 12): string => {
-    const charset =
-      'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!@#$%^&*()_+~`|}{[]:;?><,./-=';
-    return Array.from(crypto.randomFillSync(new Uint8Array(length)))
-      .map((n) => charset[n % charset.length])
-      .join('');
   };
 
   async findOneByResetToken(reset_token: string): Promise<Admin | null> {

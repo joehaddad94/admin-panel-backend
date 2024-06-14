@@ -1,6 +1,6 @@
 import { ApiResponse, ApiTags } from '@nestjs/swagger';
 import { AuthMediator } from './AuthMediator';
-import { AdminResponse, TokenResponse } from '../../core/config/documentation';
+import { TokenResponse } from '../../core/config/documentation';
 import {
   Body,
   Controller,
@@ -10,10 +10,9 @@ import {
   ValidationPipe,
 } from '@nestjs/common';
 import { LoginDto } from './dto/login.dto';
-import { ManualCreateDto } from './dto/manual.create.dto';
 import { catcher } from '../../core/helpers/operation';
 import { ChangePasswordDto } from './dto/change-password.dto';
-import { VerifyTokenDto } from './dto/change-password.dto copy';
+import { VerifyTokenDto } from './dto/verifyToken.dto';
 
 @ApiTags('auth')
 @Controller('auth')
@@ -27,19 +26,6 @@ export class AuthController {
   @UsePipes(new ValidationPipe({ whitelist: true }))
   login(@Body() data: LoginDto) {
     return this.mediator.login(data);
-  }
-
-  @ApiResponse({
-    type: AdminResponse,
-  })
-  @Post('create-admin')
-  @UsePipes(new ValidationPipe({ whitelist: true }))
-  async createAdmin(@Body() data: ManualCreateDto) {
-    return catcher(async () => {
-      const admin = await this.mediator.manualCreate(data);
-      await this.mediator.invite(data);
-      return admin;
-    });
   }
 
   @Put('change-password')
