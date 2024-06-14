@@ -71,4 +71,14 @@ export class AdminMediator {
       return { link };
     });
   };
+
+  getAdmins = async () => {
+    return catcher(async () => {
+      const admins = await this.service.findMany({});
+      const adminsData = admins.map(
+        ({ password, reset_token, reset_token_expiry, ...admin }) => admin,
+      );
+      return adminsData;
+    });
+  };
 }

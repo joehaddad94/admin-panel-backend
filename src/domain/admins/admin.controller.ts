@@ -1,6 +1,7 @@
 import {
   Body,
   Controller,
+  Get,
   Post,
   UsePipes,
   ValidationPipe,
@@ -27,5 +28,14 @@ export class AdminController {
       await this.mediator.invite(data);
       return admin;
     });
+  }
+
+  @ApiResponse({
+    type: AdminResponse,
+  })
+  @Get('get-all-admins')
+  @UsePipes(new ValidationPipe({ whitelist: true }))
+  async getAdmins() {
+    return this.mediator.getAdmins();
   }
 }
