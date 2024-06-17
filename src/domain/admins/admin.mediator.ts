@@ -5,6 +5,7 @@ import { MailService } from '../mail/mail.service';
 import { InviteDto, ManualCreateDto } from '../admins';
 import { throwBadRequest } from 'src/core/settings/base/errors/errors';
 import { catcher } from 'src/core/helpers/operation';
+import { format } from 'date-fns';
 
 @Injectable()
 export class AdminMediator {
@@ -76,7 +77,18 @@ export class AdminMediator {
     return catcher(async () => {
       const admins = await this.service.findMany({});
       const adminsData = admins.map(
-        ({ password, reset_token, reset_token_expiry, ...admin }) => admin,
+        ({
+          password,
+          reset_token,
+          reset_token_expiry,
+          created_at,
+          isActive,
+          ...admin
+        }) => ({
+          ...admin,
+          created_at: format(new Date(created_at), 'yyyy-MM-dd'),
+          isActive: isActive ? 'Yes' : 'No',
+        }),
       );
       return adminsData;
     });
