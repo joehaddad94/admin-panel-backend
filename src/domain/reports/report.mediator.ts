@@ -10,8 +10,6 @@ import { Application } from '../../core/data/database/entities/application.entit
 import { GlobalEntities } from '../../core/data/types';
 import { catcher } from '../../core/helpers/operation';
 import { throwNotFound } from '../../core/settings/base/errors/errors';
-import { ApplicationUser } from 'src/core/data/database/relations/application-user.entity';
-import { info } from 'console';
 
 @Injectable()
 export class ReportMediator {
