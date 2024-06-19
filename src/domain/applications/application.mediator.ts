@@ -67,10 +67,10 @@ export class ApplicationMediator {
       });
 
       const mappedApplications = applications.map((app) => ({
-        sef_id: app.applicationUser[0].user.sef_id,
+        'Sef ID': app.applicationUser[0].user.sef_id,
         username: app.applicationUser[0].user.username,
         email: app.applicationUser[0].user.email,
-        first_name: app.applicationInfo[0].info.first_name,
+        'First Name': app.applicationInfo[0].info.first_name,
         middle_name: app.applicationInfo[0].info.middle_name,
         last_name: app.applicationInfo[0].info.last_name,
         mother_maiden_first: app.applicationInfo[0].info.mother_maiden_first,
@@ -109,18 +109,18 @@ export class ApplicationMediator {
         extras: app.extras,
       }));
 
-      mappedApplications.sort(
+      return mappedApplications.sort(
         (a, b) =>
           new Date(a.app_created_at).getTime() -
           new Date(b.app_created_at).getTime(),
       );
 
-      return {
-        mappedApplications,
-        total,
-        page: currentPage,
-        pageSize: currentPageSize,
-      };
+      // return {
+      //   applications: mappedApplications,
+      //   total,
+      //   page: currentPage,
+      //   pageSize: currentPageSize,
+      // };
     });
   };
 }
