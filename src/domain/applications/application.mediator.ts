@@ -108,19 +108,6 @@ export class ApplicationMediator {
         remarks: app.remarks,
         extras: app.extras,
       }));
-
-      mappedApplications.sort(
-        (a, b) =>
-          new Date(a.app_created_at).getTime() -
-          new Date(b.app_created_at).getTime(),
-      );
-
-      return {
-        mappedApplications,
-        total,
-        page: currentPage,
-        pageSize: currentPageSize,
-      };
     });
   };
 }
