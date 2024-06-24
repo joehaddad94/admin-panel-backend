@@ -1,3 +1,4 @@
+/* eslint-disable camelcase */
 import { OneToMany } from 'typeorm';
 import { BaseEntity, Column, Entity, PrimaryGeneratedColumn } from 'typeorm';
 import { ApplicationUser } from '../relations/application-user.entity';
