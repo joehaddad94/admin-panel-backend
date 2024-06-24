@@ -69,10 +69,10 @@ export class ApplicationMediator {
       const mappedApplications = applications.map((app) => ({
         'Sef ID': app.applicationUser[0].user.sef_id,
         username: app.applicationUser[0].user.username,
-        email: app.applicationUser[0].user.email,
+        Email: app.applicationUser[0].user.email,
         'First Name': app.applicationInfo[0].info.first_name,
         middle_name: app.applicationInfo[0].info.middle_name,
-        last_name: app.applicationInfo[0].info.last_name,
+        'Last Name': app.applicationInfo[0].info.last_name,
         mother_maiden_first: app.applicationInfo[0].info.mother_maiden_first,
         mother_maiden_last: app.applicationInfo[0].info.mother_maiden_last,
         gender: app.applicationInfo[0].info.gender,
@@ -96,9 +96,9 @@ export class ApplicationMediator {
         major_title: app.applicationInfo[0].info.major_title,
         info_createdAt: app.applicationInfo[0].info.created_at,
         program_name: app.applicationProgram[0].program.program_name,
-        abbreviation: app.applicationProgram[0].program.abbreviation,
+        Program: app.applicationProgram[0].program.abbreviation,
         passed_screening: app.passed_screening,
-        app_created_at: app.created_at,
+        'Application Date': app.created_at,
         passed_screening_date: app.passed_screening_date,
         passed_exam: app.passed_exam,
         passed_exam_date: app.passed_exam_date,
@@ -109,18 +109,24 @@ export class ApplicationMediator {
         extras: app.extras,
       }));
 
-      return mappedApplications.sort(
+      // return mappedApplications.sort(
+      //   (a, b) =>
+      //     new Date(a.app_created_at).getTime() -
+      //     new Date(b.app_created_at).getTime(),
+      // );
+
+      mappedApplications.sort(
         (a, b) =>
-          new Date(a.app_created_at).getTime() -
-          new Date(b.app_created_at).getTime(),
+          new Date(a['Application Date']).getTime() -
+          new Date(b['Application Date']).getTime(),
       );
 
-      // return {
-      //   applications: mappedApplications,
-      //   total,
-      //   page: currentPage,
-      //   pageSize: currentPageSize,
-      // };
+      return {
+        applications: mappedApplications,
+        total,
+        page: currentPage,
+        pageSize: currentPageSize,
+      };
     });
   };
 }
