@@ -67,58 +67,52 @@ export class ApplicationMediator {
       });
 
       const mappedApplications = applications.map((app) => ({
-        'Sef ID': app.applicationUser[0].user.sef_id,
+        sefId: app.applicationUser[0].user.sef_id,
         username: app.applicationUser[0].user.username,
-        Email: app.applicationUser[0].user.email,
-        'First Name': app.applicationInfo[0].info.first_name,
-        middle_name: app.applicationInfo[0].info.middle_name,
-        'Last Name': app.applicationInfo[0].info.last_name,
-        mother_maiden_first: app.applicationInfo[0].info.mother_maiden_first,
-        mother_maiden_last: app.applicationInfo[0].info.mother_maiden_last,
+        email: app.applicationUser[0].user.email,
+        firstName: app.applicationInfo[0].info.first_name,
+        middleName: app.applicationInfo[0].info.middle_name,
+        lastName: app.applicationInfo[0].info.last_name,
+        motherMaidenFirst: app.applicationInfo[0].info.mother_maiden_first,
+        motherMaidenLast: app.applicationInfo[0].info.mother_maiden_last,
         gender: app.applicationInfo[0].info.gender,
         dob: app.applicationInfo[0].info.dob,
         mobile: app.applicationInfo[0].info.mobile,
-        country_origin: app.applicationInfo[0].info.country_origin,
-        country_residence: app.applicationInfo[0].info.country_residence,
-        residency_status: app.applicationInfo[0].info.residency_status,
+        countryOrigin: app.applicationInfo[0].info.country_origin,
+        countryResidence: app.applicationInfo[0].info.country_residence,
+        residencyStatus: app.applicationInfo[0].info.residency_status,
         district: app.applicationInfo[0].info.district,
         governate: app.applicationInfo[0].info.governate,
-        marital_status: app.applicationInfo[0].info.marital_status,
-        type_of_disability: app.applicationInfo[0].info.type_of_disability,
+        maritalStatus: app.applicationInfo[0].info.marital_status,
+        typeOfDisability: app.applicationInfo[0].info.type_of_disability,
         disability: app.applicationInfo[0].info.disability,
-        employment_situation: app.applicationInfo[0].info.employment_situation,
-        which_social: app.applicationInfo[0].info.which_social,
-        terms_conditions: app.applicationInfo[0].info.terms_conditions,
-        degree_type: app.applicationInfo[0].info.degree_type,
+        employmentSituation: app.applicationInfo[0].info.employment_situation,
+        whichSocial: app.applicationInfo[0].info.which_social,
+        termsConditions: app.applicationInfo[0].info.terms_conditions,
+        degreeType: app.applicationInfo[0].info.degree_type,
         status: app.applicationInfo[0].info.status,
         institution: app.applicationInfo[0].info.institution,
-        field_of_study: app.applicationInfo[0].info.field_of_study,
-        major_title: app.applicationInfo[0].info.major_title,
-        info_createdAt: app.applicationInfo[0].info.created_at,
-        program_name: app.applicationProgram[0].program.program_name,
-        Program: app.applicationProgram[0].program.abbreviation,
-        passed_screening: app.passed_screening,
-        'Application Date': app.created_at,
-        passed_screening_date: app.passed_screening_date,
-        passed_exam: app.passed_exam,
-        passed_exam_date: app.passed_exam_date,
-        passed_interview_date: app.passed_interview_date,
-        passed_interview: app.passed_interview,
+        fieldOfStudy: app.applicationInfo[0].info.field_of_study,
+        majorTitle: app.applicationInfo[0].info.major_title,
+        infoCreatedAt: app.applicationInfo[0].info.created_at,
+        programName: app.applicationProgram[0].program.program_name,
+        program: app.applicationProgram[0].program.abbreviation,
+        passedScreening: app.passed_screening,
+        applicationDate: app.created_at,
+        passedScreeningDate: app.passed_screening_date,
+        passedExam: app.passed_exam,
+        passedExamDate: app.passed_exam_date,
+        passedInterviewDate: app.passed_interview_date,
+        passedInterview: app.passed_interview,
         enrolled: app.enrolled,
         remarks: app.remarks,
         extras: app.extras,
       }));
 
-      // return mappedApplications.sort(
-      //   (a, b) =>
-      //     new Date(a.app_created_at).getTime() -
-      //     new Date(b.app_created_at).getTime(),
-      // );
-
       mappedApplications.sort(
         (a, b) =>
-          new Date(a['Application Date']).getTime() -
-          new Date(b['Application Date']).getTime(),
+          new Date(a.applicationDate).getTime() -
+          new Date(b.applicationDate).getTime(),
       );
 
       return {
