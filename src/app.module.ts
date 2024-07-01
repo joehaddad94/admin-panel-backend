@@ -20,6 +20,7 @@ import { QuestionModule } from './domain/questions/question.module';
 import { ProgramModule } from './domain/programs/program.module';
 import { MailModule } from './domain/mail/mail.module';
 import { AdminModule } from './domain/admins';
+import { CycleModule } from './domain/cycles/cycle.module';
 
 @Module({
   imports: [
@@ -48,6 +49,7 @@ import { AdminModule } from './domain/admins';
     DataMigrationModule,
     ProgramModule,
     MailModule,
+    CycleModule,
   ],
   controllers: [AppController],
   providers: [AppService],
