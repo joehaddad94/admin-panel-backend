@@ -25,7 +25,7 @@ export class CycleMediator {
         errorCheck: !found,
       });
 
-      return { data: found, count, page, pageSize };
+      return { cycles: found, count, page, pageSize };
     });
   };
 }
