@@ -15,47 +15,59 @@ export class Application extends BaseEntity {
   @PrimaryGeneratedColumn()
   id: number;
 
-  @Column({ type: 'boolean' })
+  @Column({ type: 'boolean', nullable: true })
   passed_screening: boolean;
 
-  @Column({ type: 'timestamp' })
+  @Column({ type: 'timestamp without time zone', nullable: true })
   created_at: Date;
 
-  @Column({ type: 'timestamp' })
+  @Column({ type: 'timestamp without time zone', nullable: true })
   updated_at: Date;
 
-  @Column({ type: 'timestamp' })
+  @Column({ type: 'timestamp without time zone', nullable: true })
   published_at: Date;
 
-  @Column({ type: 'int' })
+  @Column({ type: 'int', nullable: true })
   created_by_id: number;
 
-  @Column({ type: 'int' })
+  @Column({ type: 'int', nullable: true })
   updated_by_id: number;
 
-  @Column({ type: 'timestamp' })
+  @Column({ type: 'date', nullable: true })
   passed_screening_date: Date;
 
-  @Column({ type: 'boolean' })
+  @Column({ type: 'boolean', nullable: true })
   passed_exam: boolean;
 
-  @Column({ type: 'timestamp' })
+  @Column({ type: 'date', nullable: true })
   passed_exam_date: Date;
 
-  @Column({ type: 'boolean' })
+  @Column({ type: 'boolean', nullable: true })
   passed_interview: boolean;
 
-  @Column({ type: 'timestamp' })
+  @Column({ type: 'date', nullable: true })
   passed_interview_date: Date;
 
-  @Column({ type: 'boolean' })
-  enrolled: boolean;
-
-  @Column({ type: 'text' })
+  @Column({ type: 'text', nullable: true })
   remarks: string;
 
-  @Column({ type: 'jsonb' })
+  @Column({ type: 'jsonb', nullable: true })
   extras: any;
+
+  @Column({ type: 'boolean', nullable: true })
+  is_elligible: boolean;
+
+  @Column({ type: 'bigint', nullable: true })
+  exam_score: number;
+
+  @Column({ type: 'bigint', nullable: true })
+  tech_interview_score: number;
+
+  @Column({ type: 'bigint', nullable: true })
+  soft_interview_score: number;
+
+  @Column({ type: 'varchar', length: 255, nullable: true })
+  status: string;
 
   @OneToMany(
     () => ApplicationInfo,

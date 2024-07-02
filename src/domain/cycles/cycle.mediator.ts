@@ -6,6 +6,8 @@ import { throwNotFound } from 'src/core/settings/base/errors/errors';
 import { CreateCycleDto } from './dtos/create.cycle.dto';
 import { CycleProgram } from '../../core/data/database/relations/cycle-program.entity';
 import { Cycles } from '../../core/data/database/entities/cycle.entity';
+import { convertToCamelCase } from '../../core/helpers/camelCase';
+import { Admin } from 'typeorm';
 
 @Injectable()
 export class CycleMediator {
@@ -33,10 +35,10 @@ export class CycleMediator {
     });
   };
 
-  createCycle = async (req: any, data: CreateCycleDto) => {
+  createCycle = async (admin: Admin, data: CreateCycleDto) => {
     return catcher(async () => {
       const { programId, cycleName, fromDate, toDate } = data;
-      // console.log('user', req.user);
+      console.log('admin', admin);
       // const created_by_id = req.user.id;
 
       const cycle = this.service.create({
@@ -64,7 +66,8 @@ export class CycleMediator {
       createdCycle.cycleProgram = cycleProgram;
       await createdCycle.save();
 
-      return createdCycle;
+      const camelCaseCreatedCycle = convertToCamelCase(createdCycle);
+      return camelCaseCreatedCycle;
     });
   };
 }

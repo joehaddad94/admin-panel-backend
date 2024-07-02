@@ -104,7 +104,7 @@ export class ApplicationMediator {
         passedExamDate: app.passed_exam_date,
         passedInterviewDate: app.passed_interview_date,
         passedInterview: app.passed_interview,
-        enrolled: app.enrolled,
+        appStatus: app.status,
         remarks: app.remarks,
         extras: app.extras,
       }));

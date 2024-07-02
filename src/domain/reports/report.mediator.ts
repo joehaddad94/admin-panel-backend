@@ -1,3 +1,4 @@
+/* eslint-disable camelcase */
 import { Injectable } from '@nestjs/common';
 import { FiltersDto } from './dtos/filters.dto';
 import { InjectRepository } from '@nestjs/typeorm';
@@ -117,7 +118,7 @@ export class ReportMediator {
         passed_exam_date: app.passed_exam_date,
         passed_interview_date: app.passed_interview_date,
         passed_interview: app.passed_interview,
-        enrolled: app.enrolled,
+        appStatus: app.status,
         remarks: app.remarks,
         extras: app.extras,
       }));
@@ -235,7 +236,7 @@ export class ReportMediator {
 
       const applicationMap = new Map(applications.map((app) => [app.id, app]));
 
-      const combinedData = information.flatMap((info) => {
+      const combinedData = information.flatMap((info: any) => {
         if (info.applicationInfo && info.applicationInfo.length > 0) {
           return info.applicationInfo.map((appInfo) => {
             const appId = typeof appInfo === 'number' ? appInfo : appInfo.id;
@@ -283,7 +284,7 @@ export class ReportMediator {
               passed_exam_date: application?.passed_exam_date || '',
               passed_interview_date: application?.passed_interview_date || '',
               passed_interview: application?.passed_interview || '',
-              enrolled: application?.enrolled || '',
+              appStatus: application?.status || '',
               remarks: application?.remarks || '',
               extras: application?.extras || '',
             };

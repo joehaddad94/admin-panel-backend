@@ -13,10 +13,10 @@ export class Program extends BaseEntity {
   @PrimaryGeneratedColumn()
   id: number;
 
-  @Column({ type: 'varchar' })
+  @Column({ type: 'varchar', nullable: true })
   program_name: string;
 
-  @Column({ type: 'varchar' })
+  @Column({ type: 'varchar', nullable: true })
   abbreviation: string;
 
   @Column({ type: 'text', nullable: true })

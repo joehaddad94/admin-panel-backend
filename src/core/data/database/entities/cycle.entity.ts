@@ -3,7 +3,6 @@ import {
   BaseEntity,
   Column,
   Entity,
-  JoinColumn,
   OneToOne,
   PrimaryGeneratedColumn,
 } from 'typeorm';
@@ -41,7 +40,7 @@ export class Cycles extends BaseEntity {
   @Column({ type: 'int', nullable: true })
   updated_by_id: number;
 
-  @Column({ type: 'varchar', length: 255 })
+  @Column({ type: 'varchar', length: 255, nullable: true })
   cycle_name: string;
 
   @OneToOne(() => CycleProgram, (cycleProgram) => cycleProgram.cycle)
