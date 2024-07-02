@@ -1,3 +1,4 @@
+/* eslint-disable camelcase */
 import { BaseEntity, Column, Entity, PrimaryGeneratedColumn } from 'typeorm';
 
 @Entity('panel_admins')

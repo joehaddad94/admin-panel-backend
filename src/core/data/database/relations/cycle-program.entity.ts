@@ -1,7 +1,9 @@
+/* eslint-disable camelcase */
 import {
   BaseEntity,
   Column,
   Entity,
+  JoinColumn,
   OneToOne,
   PrimaryGeneratedColumn,
 } from 'typeorm';
@@ -18,6 +20,9 @@ export class CycleProgram extends BaseEntity {
   @Column()
   program_id: number;
 
-  @OneToOne(() => Cycles, (cycle) => cycle.cycleProgram)
+  @OneToOne(() => Cycles, (cycle) => cycle.cycleProgram, {
+    onDelete: 'CASCADE',
+  })
+  @JoinColumn({ name: 'cycle_id' })
   cycle: Cycles;
 }

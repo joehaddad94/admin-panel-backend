@@ -1,3 +1,4 @@
+/* eslint-disable camelcase */
 import { Injectable } from '@nestjs/common';
 import { AdminService } from './admin.service';
 import { JwtService } from '@nestjs/jwt';
