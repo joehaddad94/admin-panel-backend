@@ -14,15 +14,13 @@ export class CycleProgram extends BaseEntity {
   @PrimaryGeneratedColumn()
   id: number;
 
-  @Column()
+  @Column({ type: 'int', nullable: true })
   cycle_id: number;
 
-  @Column()
+  @Column({ type: 'int', nullable: true })
   program_id: number;
 
-  @OneToOne(() => Cycles, (cycle) => cycle.cycleProgram, {
-    onDelete: 'CASCADE',
-  })
+  @OneToOne(() => Cycles, (cycle) => cycle.cycleProgram)
   @JoinColumn({ name: 'cycle_id' })
   cycle: Cycles;
 }
