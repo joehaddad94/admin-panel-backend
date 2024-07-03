@@ -8,9 +8,10 @@ import { CycleService } from './cycle.service';
 import { JwtStrategy } from '../auth/jwt.strategy';
 import AuthMiddleware from '../../core/settings/middlewares/auth.middleware';
 import { AuthModule } from '../auth';
+import { ProgramModule } from '../programs/program.module';
 
 @Module({
-  imports: [TypeOrmModule.forFeature([Cycles]), AuthModule],
+  imports: [TypeOrmModule.forFeature([Cycles]), AuthModule, ProgramModule],
   controllers: [CycleController],
   providers: [CycleMediator, CycleRepository, CycleService, JwtStrategy],
   exports: [CycleRepository, CycleService],
