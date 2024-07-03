@@ -5,8 +5,10 @@ import {
   Column,
   BaseEntity,
   OneToMany,
+  OneToOne,
 } from 'typeorm';
 import { ApplicationProgram } from '../relations/application-program.entity';
+import { CycleProgram } from '../relations/cycle-program.entity';
 
 @Entity('programs')
 export class Program extends BaseEntity {
@@ -45,4 +47,7 @@ export class Program extends BaseEntity {
     (applicationProgram) => applicationProgram.program,
   )
   applicationProgram: ApplicationProgram[];
+
+  @OneToOne(() => CycleProgram, (cycleProgram) => cycleProgram.program)
+  cycleProgram: CycleProgram;
 }

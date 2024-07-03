@@ -8,6 +8,7 @@ import {
   PrimaryGeneratedColumn,
 } from 'typeorm';
 import { Cycles } from '../entities/cycle.entity';
+import { Program } from '../entities/program.entity';
 
 @Entity('cycles_program_links')
 export class CycleProgram extends BaseEntity {
@@ -20,7 +21,11 @@ export class CycleProgram extends BaseEntity {
   @Column({ type: 'int', nullable: true })
   program_id: number;
 
-  @OneToOne(() => Cycles, (cycle) => cycle.cycleProgram)
-  @JoinColumn({ name: 'cycle_id' })
-  cycle: Cycles;
+  // @OneToOne(() => Cycles, (cycle) => cycle.cycleProgram, { eager: true })
+  // @JoinColumn({ name: 'cycle_id' })
+  // cycle: Cycles;
+
+  @OneToOne(() => Program, (program) => program.cycleProgram, { eager: true })
+  @JoinColumn({ name: 'program_id' })
+  program: Program;
 }

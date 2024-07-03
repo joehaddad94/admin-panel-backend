@@ -8,6 +8,7 @@ import { CycleProgram } from '../../core/data/database/relations/cycle-program.e
 import { Cycles } from '../../core/data/database/entities/cycle.entity';
 import { convertToCamelCase } from '../../core/helpers/camelCase';
 import { Admin } from 'typeorm';
+import { GlobalEntities } from '../../core/data/types';
 
 @Injectable()
 export class CycleMediator {
@@ -18,9 +19,11 @@ export class CycleMediator {
       const skip = (page - 1) * pageSize;
       const take = pageSize;
 
+      const cyclesOptions: GlobalEntities[] = ['cycleProgram'];
+
       const [found, count] = await this.service.findAndCount(
         {},
-        undefined,
+        cyclesOptions,
         undefined,
         skip,
         take,
@@ -39,10 +42,10 @@ export class CycleMediator {
     return catcher(async () => {
       const { programId, cycleName, fromDate, toDate } = data;
       console.log('admin', admin);
-      // const created_by_id = req.user.id;
+      // const created_by_id = admin.id;
 
       const cycle = this.service.create({
-        cycle_name: cycleName,
+        name: cycleName,
         from_date: fromDate,
         to_date: toDate,
         created_at: new Date(),

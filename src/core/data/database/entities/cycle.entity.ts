@@ -41,8 +41,8 @@ export class Cycles extends BaseEntity {
   updated_by_id: number;
 
   @Column({ type: 'varchar', length: 255, nullable: true })
-  cycle_name: string;
+  name: string;
 
-  @OneToOne(() => CycleProgram, (cycleProgram) => cycleProgram.cycle)
+  @OneToOne(() => CycleProgram, (cycleProgram) => cycleProgram.program)
   cycleProgram: CycleProgram;
 }
