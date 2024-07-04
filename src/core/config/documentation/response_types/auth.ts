@@ -1,3 +1,4 @@
+/* eslint-disable camelcase */
 import { ApiProperty } from '@nestjs/swagger';
 
 export class AdminResponse {
@@ -11,7 +12,7 @@ export class AdminResponse {
   email: string;
 
   @ApiProperty()
-  isActive: boolean;
+  is_active: boolean;
 }
 
 export class TokenResponse {

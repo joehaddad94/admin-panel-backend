@@ -1,3 +1,4 @@
+/* eslint-disable camelcase */
 import { Injectable } from '@nestjs/common';
 import * as bcrypt from 'bcrypt';
 import * as crypto from 'crypto';
@@ -95,7 +96,7 @@ export class AuthService extends BaseService<AuthRepository, Admin> {
     if (admin.login_attempts > 1) {
       admin.login_attempts -= 1;
     } else {
-      admin.isActive = false;
+      admin.is_active = false;
       await admin.save();
       return true;
     }

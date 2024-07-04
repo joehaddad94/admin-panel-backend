@@ -37,7 +37,7 @@ export class AdminMediator {
       password: hashedPassword,
       created_at: new Date(),
       updated_at: new Date(),
-      isActive: true,
+      is_active: true,
       login_attempts: 5,
     });
 
@@ -83,12 +83,12 @@ export class AdminMediator {
           reset_token,
           reset_token_expiry,
           created_at,
-          isActive,
+          is_active,
           ...admin
         }) => ({
           ...admin,
           created_at: format(new Date(created_at), 'yyyy-MM-dd'),
-          isActive: isActive ? 'Yes' : 'No',
+          is_active: is_active ? 'Yes' : 'No',
         }),
       );
       return adminsData;
