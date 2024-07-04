@@ -55,7 +55,7 @@ export class Application extends BaseEntity {
   extras: any;
 
   @Column({ type: 'boolean', nullable: true })
-  is_elligible: boolean;
+  is_eligible: boolean;
 
   @Column({ type: 'bigint', nullable: true })
   exam_score: number;
