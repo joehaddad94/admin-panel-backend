@@ -9,20 +9,53 @@ import { Cycles } from '../../core/data/database/entities/cycle.entity';
 import { convertToCamelCase } from '../../core/helpers/camelCase';
 import { Admin } from 'typeorm';
 import { GlobalEntities } from '../../core/data/types';
+import { ProgramService } from '../programs/program.service';
 
 @Injectable()
 export class CycleMediator {
-  constructor(private readonly service: CycleService) {}
+  constructor(
+    private readonly cycleService: CycleService,
+    private readonly programService: ProgramService,
+  ) {}
 
-  findCycles = async (page = 1, pageSize = 100) => {
+  // findCycles = async (page = 1, pageSize = 100) => {
+  //   return catcher(async () => {
+  //     const skip = (page - 1) * pageSize;
+  //     const take = pageSize;
+
+  //     const cyclesOptions: GlobalEntities[] = ['cycleProgram'];
+
+  //     const [found, count] = await this.cycleService.findAndCount(
+  //       {},
+  //       cyclesOptions,
+  //       undefined,
+  //       skip,
+  //       take,
+  //     );
+
+  //     throwNotFound({
+  //       entity: 'cycles',
+  //       errorCheck: !found,
+  //     });
+
+  //     const cycles = convertToCamelCase(found);
+
+  //     return { cycles, count, page, pageSize };
+  //   });
+  // };
+  findCycles = async (programId?: string, page = 1, pageSize = 100) => {
     return catcher(async () => {
       const skip = (page - 1) * pageSize;
       const take = pageSize;
-
       const cyclesOptions: GlobalEntities[] = ['cycleProgram'];
 
-      const [found, count] = await this.service.findAndCount(
-        {},
+      let where = {};
+      if (programId) {
+        where = { cycleProgram: { program_id: programId } };
+      }
+
+      const [found, count] = await this.cycleService.findAndCount(
+        where,
         cyclesOptions,
         undefined,
         skip,
@@ -31,7 +64,7 @@ export class CycleMediator {
 
       throwNotFound({
         entity: 'cycles',
-        errorCheck: !found,
+        errorCheck: !found.length,
       });
 
       const cycles = convertToCamelCase(found);
@@ -46,7 +79,7 @@ export class CycleMediator {
       console.log('admin', admin);
       // const created_by_id = admin.id;
 
-      const cycle = this.service.create({
+      const cycle = this.cycleService.create({
         name: cycleName,
         from_date: fromDate,
         to_date: toDate,
@@ -56,7 +89,7 @@ export class CycleMediator {
         // updated_by_id: created_by_id,
       });
 
-      const createdCycle = (await this.service.save(cycle)) as Cycles;
+      const createdCycle = (await this.cycleService.save(cycle)) as Cycles;
 
       if (!createdCycle || !createdCycle.id) {
         throw new Error('Failed to create cycle or retrieve cycle ID');
@@ -69,7 +102,6 @@ export class CycleMediator {
       await cycleProgram.save();
 
       createdCycle.cycleProgram = cycleProgram;
-      await createdCycle.save();
 
       const camelCaseCreatedCycle = convertToCamelCase(createdCycle);
       return camelCaseCreatedCycle;
