@@ -21,6 +21,7 @@ import { ProgramModule } from './domain/programs/program.module';
 import { MailModule } from './domain/mail/mail.module';
 import { AdminModule } from './domain/admins';
 import { CycleModule } from './domain/cycles/cycle.module';
+import { DecisionDateModule } from './domain/decisionDates/decision-date.module';
 
 @Module({
   imports: [
@@ -50,6 +51,7 @@ import { CycleModule } from './domain/cycles/cycle.module';
     ProgramModule,
     MailModule,
     CycleModule,
+    DecisionDateModule,
   ],
   controllers: [AppController],
   providers: [AppService],

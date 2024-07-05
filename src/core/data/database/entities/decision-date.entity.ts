@@ -4,13 +4,12 @@ import {
   Column,
   Entity,
   OneToOne,
-  PrimaryColumnCannotBeNullableError,
   PrimaryGeneratedColumn,
 } from 'typeorm';
 import { DecisionDateCycle } from '../relations/decisionDate-cycle.entity';
 
 @Entity('decision-dates')
-export class DecisionDate extends BaseEntity {
+export class DecisionDates extends BaseEntity {
   @PrimaryGeneratedColumn()
   id: number;
 
