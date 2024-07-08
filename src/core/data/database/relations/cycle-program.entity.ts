@@ -24,4 +24,8 @@ export class CycleProgram extends BaseEntity {
   @OneToOne(() => Program, (program) => program.cycleProgram, { eager: true })
   @JoinColumn({ name: 'program_id' })
   program: Program;
+
+  @OneToOne(() => Cycles, (cycle) => cycle.cycleProgram, { eager: false })
+  @JoinColumn({ name: 'cycle_id' })
+  cycle: Cycles;
 }

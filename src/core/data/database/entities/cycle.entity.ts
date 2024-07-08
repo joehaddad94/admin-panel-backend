@@ -44,7 +44,7 @@ export class Cycles extends BaseEntity {
   @Column({ type: 'varchar', length: 255, nullable: true, unique: true })
   name: string;
 
-  @OneToOne(() => CycleProgram, (cycleProgram) => cycleProgram.program)
+  @OneToOne(() => CycleProgram, (cycleProgram) => cycleProgram.cycle)
   cycleProgram: CycleProgram;
 
   @OneToOne(() => DecisionDateCycle, (decisionDate) => decisionDate.cycle)
