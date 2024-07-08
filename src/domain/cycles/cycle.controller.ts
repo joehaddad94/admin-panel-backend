@@ -4,6 +4,7 @@ import { CycleMediator } from './cycle.mediator';
 import { CreateCycleDto } from './dtos/create.cycle.dto';
 import { GetAdmin } from '../../core/settings/decorators/admin.decorator';
 import { Admin } from 'typeorm';
+import { GetCyclesDto } from './dtos/get.cycle.dto';
 
 @ApiTags('cycles')
 @Controller('cycles')
@@ -11,8 +12,8 @@ export class CycleController {
   constructor(private readonly mediator: CycleMediator) {}
 
   @Get()
-  getCycle() {
-    return this.mediator.findCycles();
+  getCycle(@Body() data: GetCyclesDto) {
+    return this.mediator.findCycles(data);
   }
 
   @Post('create-cycle')

@@ -10,6 +10,7 @@ import { convertToCamelCase } from '../../core/helpers/camelCase';
 import { Admin } from 'typeorm';
 import { GlobalEntities } from '../../core/data/types';
 import { ProgramService } from '../programs/program.service';
+import { GetCyclesDto } from './dtos/get.cycle.dto';
 
 @Injectable()
 export class CycleMediator {
@@ -43,10 +44,14 @@ export class CycleMediator {
   //     return { cycles, count, page, pageSize };
   //   });
   // };
-  findCycles = async (programId?: string, page = 1, pageSize = 100) => {
+  findCycles = async (data: GetCyclesDto) => {
     return catcher(async () => {
-      const skip = (page - 1) * pageSize;
-      const take = pageSize;
+      console.log('entered');
+      const { page, pageSize, programId } = data;
+      const skip = Number((page - 1) * pageSize);
+      console.log('🚀 ~ CycleMediator ~ returncatcher ~ skip:', skip);
+      const take = Number(pageSize);
+      console.log('🚀 ~ CycleMediator ~ returncatcher ~ take:', take);
       const cyclesOptions: GlobalEntities[] = ['cycleProgram'];
 
       let where = {};
