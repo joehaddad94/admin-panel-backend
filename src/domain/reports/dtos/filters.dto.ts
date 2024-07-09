@@ -29,4 +29,9 @@ export class FiltersDto {
 
   @ApiProperty({ enum: ReportType })
   reportType?: ReportType;
+
+  @ApiProperty()
+  @IsNumber()
+  @IsOptional()
+  cycleId?: number;
 }

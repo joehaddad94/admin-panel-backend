@@ -11,4 +11,5 @@ export type GlobalEntities =
   | 'applicationProgram'
   | 'applicationUser'
   | 'informationUser'
-  | 'cycleProgram';
+  | 'cycleProgram'
+  | 'applicationCycle';

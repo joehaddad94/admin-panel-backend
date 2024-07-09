@@ -9,6 +9,7 @@ import {
 import { ApplicationInfo } from '../relations/application-info.entity';
 import { ApplicationProgram } from '../relations/application-program.entity';
 import { ApplicationUser } from '../relations/application-user.entity';
+import { ApplicationCycle } from '../relations/application-cycle.entity';
 
 @Entity('application_news')
 export class Application extends BaseEntity {
@@ -87,4 +88,11 @@ export class Application extends BaseEntity {
     { eager: true },
   )
   applicationUser: ApplicationUser[];
+
+  @OneToMany(
+    () => ApplicationCycle,
+    (applicationCycle) => applicationCycle.application,
+    { nullable: true },
+  )
+  applicationCycle: ApplicationCycle[];
 }

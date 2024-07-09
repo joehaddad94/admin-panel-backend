@@ -1,3 +1,4 @@
+/* eslint-disable camelcase */
 import { Injectable } from '@nestjs/common';
 import { ApplicationService } from './application.service';
 import { GlobalEntities } from '../../core/data/types';
@@ -34,7 +35,16 @@ export class ApplicationMediator {
     pageSize = 100,
   ) => {
     return catcher(async () => {
-      const { programId, page: dtoPage, pageSize: dtoPageSize } = filtersDto;
+      const {
+        programId,
+        page: dtoPage,
+        pageSize: dtoPageSize,
+        cycleId,
+      } = filtersDto;
+      console.log(
+        '🚀 ~ ApplicationMediator ~ returncatcher ~ cycleId:',
+        cycleId,
+      );
 
       const currentPage = dtoPage ?? page;
       const currentPageSize = dtoPageSize ?? pageSize;
@@ -43,7 +53,12 @@ export class ApplicationMediator {
         'applicationInfo',
         'applicationProgram',
         'applicationUser',
+        'applicationCycle',
       ];
+      console.log(
+        '🚀 ~ ApplicationMediator ~ returncatcher ~ options:',
+        options,
+      );
       const whereConditions: any = {};
 
       if (programId) {
@@ -51,7 +66,16 @@ export class ApplicationMediator {
           whereConditions.applicationProgram = {};
         }
         whereConditions.applicationProgram.programId = programId;
+      } else if (cycleId) {
+        if (whereConditions.applicationCycle === undefined) {
+          whereConditions.applicationCycle = {};
+        }
+        whereConditions.applicationCycle.cycleId = cycleId;
       }
+      console.log(
+        '🚀 ~ ApplicationMediator ~ returncatcher ~ whereConditions:',
+        whereConditions,
+      );
 
       const [applications, total] = await this.service.findAndCount(
         whereConditions,
