@@ -1,19 +1,18 @@
-import { Body, Controller, Get, Post, Req } from '@nestjs/common';
+import { Body, Controller, Get, Param, Post, Query, Req } from '@nestjs/common';
 import { ApiTags } from '@nestjs/swagger';
 import { CycleMediator } from './cycle.mediator';
 import { CreateCycleDto } from './dtos/create.cycle.dto';
 import { GetAdmin } from '../../core/settings/decorators/admin.decorator';
 import { Admin } from 'typeorm';
-import { GetCyclesDto } from './dtos/get.cycle.dto';
 
 @ApiTags('cycles')
 @Controller('cycles')
 export class CycleController {
   constructor(private readonly mediator: CycleMediator) {}
 
-  @Get()
-  getCycle(@Body() data: GetCyclesDto) {
-    return this.mediator.findCycles(data);
+  @Get(':id')
+  getCycle(@Param('id') programId: number) {
+    return this.mediator.findCycles(programId);
   }
 
   @Post('create-cycle')
