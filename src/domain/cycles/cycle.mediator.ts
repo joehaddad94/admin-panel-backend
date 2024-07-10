@@ -22,7 +22,10 @@ export class CycleMediator {
     return catcher(async () => {
       const skip = (page - 1) * pageSize;
       const take = pageSize;
-      const cyclesOptions: GlobalEntities[] = ['cycleProgram'];
+      const cyclesOptions: GlobalEntities[] = [
+        'cycleProgram',
+        'decisionDateCycle',
+      ];
 
       let where = {};
       if (programId) {

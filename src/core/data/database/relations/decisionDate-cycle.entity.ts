@@ -8,6 +8,7 @@ import {
   PrimaryGeneratedColumn,
 } from 'typeorm';
 import { Cycles } from '../entities/cycle.entity';
+import { DecisionDates } from '../entities/decision-date.entity';
 
 @Entity('descision_dates_cycle_id_links')
 export class DecisionDateCycle extends BaseEntity {
@@ -23,4 +24,12 @@ export class DecisionDateCycle extends BaseEntity {
   @OneToOne(() => Cycles, (cycle) => cycle.decisionDateCycle, { eager: true })
   @JoinColumn({ name: 'cycle_id' })
   cycle: Cycles;
+
+  @OneToOne(
+    () => DecisionDates,
+    (decisionDate) => decisionDate.decisionDateCycle,
+    { eager: true },
+  )
+  @JoinColumn({ name: 'decision_date_id' })
+  decisionDate: DecisionDates;
 }
