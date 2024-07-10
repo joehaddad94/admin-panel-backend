@@ -8,6 +8,7 @@ import {
 } from 'typeorm';
 import { CycleProgram } from '../relations/cycle-program.entity';
 import { DecisionDateCycle } from '../relations/decisionDate-cycle.entity';
+import { ApplicationCycle } from '../relations/application-cycle.entity';
 
 @Entity('cycles')
 export class Cycles extends BaseEntity {
@@ -46,6 +47,9 @@ export class Cycles extends BaseEntity {
 
   @OneToOne(() => CycleProgram, (cycleProgram) => cycleProgram.cycle)
   cycleProgram: CycleProgram;
+
+  @OneToOne(() => ApplicationCycle, (applicationCycle) => applicationCycle)
+  applicationCycle: ApplicationCycle;
 
   @OneToOne(() => DecisionDateCycle, (decisionDate) => decisionDate.cycle)
   decisionDateCycle: DecisionDateCycle;

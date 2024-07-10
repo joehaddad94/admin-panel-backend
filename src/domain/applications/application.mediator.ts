@@ -10,26 +10,7 @@ import { FiltersDto } from '../reports/dtos/filters.dto';
 export class ApplicationMediator {
   constructor(private readonly service: ApplicationService) {}
 
-  findApplications = async () => {
-    return catcher(async () => {
-      const options: GlobalEntities[] = [
-        'applicationInfo',
-        'applicationProgram',
-        'applicationUser',
-      ];
-
-      const found = await this.service.findMany({}, options);
-
-      throwNotFound({
-        entity: 'Application',
-        errorCheck: !found,
-      });
-
-      return found;
-    });
-  };
-
-  findApplicationsByProgramId = async (
+  findApplications = async (
     filtersDto: FiltersDto,
     page = 1,
     pageSize = 100,
@@ -41,10 +22,6 @@ export class ApplicationMediator {
         pageSize: dtoPageSize,
         cycleId,
       } = filtersDto;
-      console.log(
-        '🚀 ~ ApplicationMediator ~ returncatcher ~ cycleId:',
-        cycleId,
-      );
 
       const currentPage = dtoPage ?? page;
       const currentPageSize = dtoPageSize ?? pageSize;
@@ -55,10 +32,7 @@ export class ApplicationMediator {
         'applicationUser',
         'applicationCycle',
       ];
-      console.log(
-        '🚀 ~ ApplicationMediator ~ returncatcher ~ options:',
-        options,
-      );
+
       const whereConditions: any = {};
 
       if (programId) {
@@ -72,10 +46,6 @@ export class ApplicationMediator {
         }
         whereConditions.applicationCycle.cycleId = cycleId;
       }
-      console.log(
-        '🚀 ~ ApplicationMediator ~ returncatcher ~ whereConditions:',
-        whereConditions,
-      );
 
       const [applications, total] = await this.service.findAndCount(
         whereConditions,
@@ -122,13 +92,23 @@ export class ApplicationMediator {
         programName: app.applicationProgram[0].program.program_name,
         program: app.applicationProgram[0].program.abbreviation,
         passedScreening: app.passed_screening,
-        applicationDate: app.created_at,
+        applicationDate: new Date(app.created_at).toLocaleDateString('en-GB', {
+          day: '2-digit',
+          month: '2-digit',
+          year: 'numeric',
+        }),
+        elligible:
+          app.is_eligible === true
+            ? 'Yes'
+            : app.is_eligible === false
+            ? 'No'
+            : '-',
         passedScreeningDate: app.passed_screening_date,
         passedExam: app.passed_exam,
         passedExamDate: app.passed_exam_date,
         passedInterviewDate: app.passed_interview_date,
         passedInterview: app.passed_interview,
-        appStatus: app.status,
+        applicationStatus: app.status,
         remarks: app.remarks,
         extras: app.extras,
       }));

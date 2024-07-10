@@ -10,8 +10,13 @@ import { Admin } from 'typeorm';
 export class CycleController {
   constructor(private readonly mediator: CycleMediator) {}
 
+  @Get()
+  getAllCycles() {
+    return this.mediator.findCycles();
+  }
+
   @Get(':id')
-  getCycle(@Param('id') programId: number) {
+  getCycles(@Param('id') programId: number) {
     return this.mediator.findCycles(programId);
   }
 

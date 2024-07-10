@@ -18,7 +18,7 @@ export class CycleMediator {
     private readonly programService: ProgramService,
   ) {}
 
-  findCycles = async (programId: number, page = 1, pageSize = 100) => {
+  findCycles = async (programId?: number, page = 1, pageSize = 100) => {
     return catcher(async () => {
       const skip = (page - 1) * pageSize;
       const take = pageSize;

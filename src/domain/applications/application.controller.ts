@@ -8,13 +8,8 @@ import { FiltersDto } from '../reports/dtos/filters.dto';
 export class ApplicationController {
   constructor(private readonly mediator: ApplicationMediator) {}
 
-  @Get()
-  getApplications() {
-    return this.mediator.findApplications();
-  }
-
-  @Post('find-by-program')
+  @Post()
   getApplicationsByProgamId(@Body() filtersDto: FiltersDto) {
-    return this.mediator.findApplicationsByProgramId(filtersDto);
+    return this.mediator.findApplications(filtersDto);
   }
 }
