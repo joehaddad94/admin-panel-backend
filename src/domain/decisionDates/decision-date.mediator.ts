@@ -14,6 +14,7 @@ export class DecisionDateMediator {
   createEditDates = async (data: CreateEditDecisionDateDto) => {
     return catcher(async () => {
       const { examDate, cycleId, decisionDateId } = data;
+      console.log('🚀 ~ DecisionDateMediator ~ returncatcher ~ data:', data);
 
       let decisionDate: DecisionDates;
 
