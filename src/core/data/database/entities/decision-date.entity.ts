@@ -8,7 +8,7 @@ import {
 } from 'typeorm';
 import { DecisionDateCycle } from '../relations/decisionDate-cycle.entity';
 
-@Entity('decision-dates')
+@Entity('decision_dates')
 export class DecisionDates extends BaseEntity {
   @PrimaryGeneratedColumn()
   id: number;

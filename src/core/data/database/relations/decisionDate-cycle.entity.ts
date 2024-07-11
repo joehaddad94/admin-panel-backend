@@ -10,7 +10,7 @@ import {
 import { Cycles } from '../entities/cycle.entity';
 import { DecisionDates } from '../entities/decision-date.entity';
 
-@Entity('descision_dates_cycle_id_links')
+@Entity('decision_dates_cycle_id_links')
 export class DecisionDateCycle extends BaseEntity {
   @PrimaryGeneratedColumn()
   id: number;
@@ -21,7 +21,7 @@ export class DecisionDateCycle extends BaseEntity {
   @Column({ type: 'int', nullable: true })
   cycle_id: number;
 
-  @OneToOne(() => Cycles, (cycle) => cycle.decisionDateCycle, { eager: true })
+  @OneToOne(() => Cycles, (cycle) => cycle.decisionDateCycle)
   @JoinColumn({ name: 'cycle_id' })
   cycle: Cycles;
 
