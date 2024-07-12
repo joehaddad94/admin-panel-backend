@@ -31,6 +31,10 @@ export class DecisionDateMediator {
           '🚀 ~ DecisionDateMediator ~ returncatcher ~ decisionDate:',
           decisionDate,
         );
+
+        decisionDate = (await this.decisionDateService.save(
+          decisionDate,
+        )) as DecisionDates;
       } else {
         decisionDate = this.decisionDateService.create({
           exam_date: examDate,
@@ -54,14 +58,6 @@ export class DecisionDateMediator {
 
         decisionDate.decisionDateCycle = decisionDateCycle;
       }
-
-      // const savedDecisionDate = await this.decisionDateService.save(
-      //   decisionDate,
-      // );
-      // console.log(
-      //   '🚀 ~ DecisionDateMediator ~ returncatcher ~ savedDecisionDate:',
-      //   savedDecisionDate,
-      // );
 
       const camelCaseCreatedDates = convertToCamelCase(decisionDate);
       return camelCaseCreatedDates;
