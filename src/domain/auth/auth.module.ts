@@ -7,9 +7,10 @@ import { AuthMediator } from './AuthMediator';
 import { Admin } from '../../core/data/database';
 import { AuthRepository } from './auth.repository';
 import { MailService } from '../mail/mail.service';
+import { UserModule } from '../users/user.module';
 
 @Module({
-  imports: [TypeOrmModule.forFeature([Admin])],
+  imports: [TypeOrmModule.forFeature([Admin]), UserModule],
   controllers: [AuthController],
   providers: [
     AuthMediator,

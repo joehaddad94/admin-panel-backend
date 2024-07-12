@@ -104,7 +104,7 @@ export class AuthMediator {
       await admin.save();
 
       const templateName = 'reset-password.hbs';
-      await this.mailService.sendMail(admin, templateName);
+      await this.mailService.sendInvitationEmail(admin, templateName);
 
       return { message: 'Reset password email sent' };
     });

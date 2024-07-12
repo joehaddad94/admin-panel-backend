@@ -9,9 +9,10 @@ import { JwtStrategy } from '../auth/jwt.strategy';
 import { AdminService } from './admin.service';
 import AuthMiddleware from 'src/core/settings/middlewares/auth.middleware';
 import { AuthModule } from '../auth';
+import { UserModule } from '../users/user.module';
 
 @Module({
-  imports: [TypeOrmModule.forFeature([Admin]), AuthModule],
+  imports: [TypeOrmModule.forFeature([Admin]), AuthModule, UserModule],
   controllers: [AdminController],
   providers: [
     AdminMediator,

@@ -69,7 +69,7 @@ export class AdminMediator {
       existingAdmin.reset_token_expiry = new Date(Date.now() + 3600000); // 1 hour expiry
       await existingAdmin.save();
 
-      await this.mailService.sendMail(existingAdmin, templateName);
+      await this.mailService.sendInvitationEmail(existingAdmin, templateName);
       return { link };
     });
   };
