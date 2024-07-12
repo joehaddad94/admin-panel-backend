@@ -1,5 +1,3 @@
-// email.helper.ts
-
 import { MailerService } from '@nestjs-modules/mailer';
 import { Logger } from '@nestjs/common';
 
@@ -10,6 +8,7 @@ export const sendBulkEmails = async (
   emails: { email: string; name: string }[],
   template: string,
   subject: string,
+  examDate?: Date,
 ) => {
   const emailPromises = emails.map(async ({ email, name }) => {
     // const link = `${process.env.VERIFY_CLIENT_URL}?key=${resetToken}&email=${email}`;

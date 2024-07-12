@@ -36,13 +36,10 @@ export class MailService {
     }
   };
   sendScreeningProcessEmail = async (
-    admin: Admin,
-    emails: string[],
+    uniqueEmails: string[],
     template: string,
     subject: string,
   ) => {
-    const uniqueEmails = [...new Set(emails)];
-
     const validatedEmails = await this.usersService.findMany({
       email: In(uniqueEmails),
     });
@@ -72,6 +69,6 @@ export class MailService {
       );
     }
 
-    return { results, notFoundEmails };
+    return { results, foundEmails, notFoundEmails };
   };
 }

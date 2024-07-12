@@ -1,14 +1,22 @@
 /* eslint-disable camelcase */
-import { Injectable } from '@nestjs/common';
+import { HttpStatus, Injectable } from '@nestjs/common';
 import { ApplicationService } from './application.service';
 import { GlobalEntities } from '../../core/data/types';
 import { catcher } from '../../core/helpers/operation';
 import { throwNotFound } from '../../core/settings/base/errors/errors';
 import { FiltersDto } from '../reports/dtos/filters.dto';
+import { PostScreeningDto } from './dtos/post.screening.dto';
+import { CycleService } from '../cycles/cycle.service';
+import { throwError } from 'src/core/settings/base/errors/base.error';
+import { MailService } from '../mail/mail.service';
 
 @Injectable()
 export class ApplicationMediator {
-  constructor(private readonly service: ApplicationService) {}
+  constructor(
+    private readonly applicationsService: ApplicationService,
+    private readonly cyclesService: CycleService,
+    private readonly mailService: MailService,
+  ) {}
 
   findApplications = async (
     filtersDto: FiltersDto,
@@ -47,7 +55,7 @@ export class ApplicationMediator {
         whereConditions.applicationCycle.cycleId = cycleId;
       }
 
-      const [applications, total] = await this.service.findAndCount(
+      const [applications, total] = await this.applicationsService.findAndCount(
         whereConditions,
         options,
         undefined,
@@ -126,5 +134,43 @@ export class ApplicationMediator {
         pageSize: currentPageSize,
       };
     });
+  };
+
+  sendPostScreeningEmails = async (data: PostScreeningDto) => {
+    const { cycleId, emails } = data;
+
+    const cyclesWhereConditions = cycleId ? { id: cycleId } : {};
+
+    const currentCycle = await this.cyclesService.findOne(
+      cyclesWhereConditions,
+      ['decisionDateCycle'],
+    );
+
+    if (currentCycle.decisionDateCycle.decisionDate.exam_date === null) {
+      throwError('Exam Date should be provided.', HttpStatus.BAD_REQUEST);
+    }
+
+    const uniqueEmails = [...new Set(emails)];
+
+    const subject = 'SE Factory Screening Process';
+    const templateName = 'invitation.hbs';
+    const response = this.mailService.sendScreeningProcessEmail(
+      uniqueEmails,
+      templateName,
+      subject,
+    );
+
+    const applicationsWhereConditions = cycleId
+      ? {
+          applicationCycle: { cycleId },
+        }
+      : {};
+
+    const applicationsByCycle = await this.applicationsService.findMany(
+      applicationsWhereConditions,
+      ['applicationUser'],
+    );
+
+    return applicationsByCycle;
   };
 }
