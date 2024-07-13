@@ -150,15 +150,7 @@ export class ApplicationMediator {
       throwError('Exam Date should be provided.', HttpStatus.BAD_REQUEST);
     }
 
-    const uniqueEmails = [...new Set(emails)];
-
-    const subject = 'SE Factory Screening Process';
-    const templateName = 'invitation.hbs';
-    const response = this.mailService.sendScreeningProcessEmail(
-      uniqueEmails,
-      templateName,
-      subject,
-    );
+    const uniqueEmails: string[] = [...new Set(emails)];
 
     const applicationsWhereConditions = cycleId
       ? {
@@ -168,9 +160,49 @@ export class ApplicationMediator {
 
     const applicationsByCycle = await this.applicationsService.findMany(
       applicationsWhereConditions,
-      ['applicationUser'],
+      ['applicationInfo'],
     );
 
-    return applicationsByCycle;
+    const applicationsToEmail = [];
+
+    for (const application of applicationsByCycle) {
+      const email: string = application.applicationUser[0].user.email;
+      if (
+        uniqueEmails.includes(email) &&
+        application.is_eligible &&
+        !application.passed_screening
+      ) {
+        application.passed_screening = true;
+        await this.applicationsService.update(
+          { id: application.id },
+          {
+            passed_screening: true,
+            passed_screening_date: new Date(),
+          },
+        );
+        applicationsToEmail.push(application);
+      }
+    }
+
+    const emailsToSend = applicationsToEmail.map(
+      (app) => app.applicationUser[0].user.email,
+    );
+
+    let mailerResponse: any;
+    if (emailsToSend.length > 0) {
+      const subject = 'SE Factory Screening Process';
+      const templateName = 'invitation.hbs';
+      mailerResponse = this.mailService.sendScreeningProcessEmail(
+        emailsToSend,
+        templateName,
+        subject,
+      );
+    }
+
+    return {
+      message: 'Emails sent successfully.',
+      foundEmails: mailerResponse?.foundEmails || [],
+      notFoundEmails: mailerResponse?.notFoundEmails || [],
+    };
   };
 }

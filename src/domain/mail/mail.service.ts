@@ -36,10 +36,12 @@ export class MailService {
     }
   };
   sendScreeningProcessEmail = async (
-    uniqueEmails: string[],
+    emails: string[],
     template: string,
     subject: string,
   ) => {
+    const uniqueEmails = [...new Set(emails)];
+
     const validatedEmails = await this.usersService.findMany({
       email: In(uniqueEmails),
     });
