@@ -10,6 +10,7 @@ import { ApplicationMediator } from './application.mediator';
 import { ApiTags } from '@nestjs/swagger';
 import { FiltersDto } from '../reports/dtos/filters.dto';
 import { PostScreeningDto } from './dtos/post.screening.dto';
+import { ExamScoresDto } from './dtos/exam.scores.dto';
 
 @ApiTags('applications')
 @Controller('applications')
@@ -26,5 +27,11 @@ export class ApplicationController {
   @UsePipes(new ValidationPipe({ whitelist: true }))
   sendPostScreeningEmails(@Body() data: PostScreeningDto) {
     return this.mediator.sendPostScreeningEmails(data);
+  }
+
+  @Post('import-exam-scores')
+  @UsePipes(new ValidationPipe({ whitelist: true }))
+  importExamScores(@Body() data: ExamScoresDto) {
+    return this.mediator.importExamScores(data);
   }
 }

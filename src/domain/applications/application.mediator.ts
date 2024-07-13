@@ -9,6 +9,9 @@ import { PostScreeningDto } from './dtos/post.screening.dto';
 import { CycleService } from '../cycles/cycle.service';
 import { throwError } from 'src/core/settings/base/errors/base.error';
 import { MailService } from '../mail/mail.service';
+import { ExamScoresDto } from './dtos/exam.scores.dto';
+import * as path from 'path';
+import * as XLSX from 'xlsx';
 
 @Injectable()
 export class ApplicationMediator {
@@ -204,5 +207,65 @@ export class ApplicationMediator {
       foundEmails: mailerResponse?.foundEmails || [],
       notFoundEmails: mailerResponse?.notFoundEmails || [],
     };
+  };
+
+  importExamScores = async (data: ExamScoresDto) => {
+    const { sourceFilePath, cycleId } = data;
+
+    try {
+      const fileExtension = path.extname(sourceFilePath).toLowerCase();
+      if (fileExtension !== '.xls' && fileExtension !== '.xlsx') {
+        throwError(
+          'Invalid file type. Only Excel files are allowed',
+          HttpStatus.BAD_REQUEST,
+        );
+      }
+
+      const workbook = XLSX.readFile(sourceFilePath);
+      const sheetName = workbook.SheetNames[0];
+      const worksheet = workbook.Sheets[sheetName];
+
+      const examScores = XLSX.utils.sheet_to_json<{
+        email: string;
+        score: number;
+      }>(worksheet);
+
+      const applicationsWhereConditions = cycleId
+        ? {
+            applicationCycle: { cycleId },
+          }
+        : {};
+
+      const applicationsByCycle = await this.applicationsService.findMany(
+        applicationsWhereConditions,
+        ['applicationInfo'],
+      );
+
+      const applicationsMap = new Map(
+        applicationsByCycle.map((app) => [
+          app.applicationInfo[0].info.email,
+          app.id,
+        ]),
+      );
+
+      for (const { email, score } of examScores) {
+        const applicationId = applicationsMap.get(email);
+        if (applicationId) {
+          await this.applicationsService.update(
+            { id: applicationId },
+            {
+              exam_score: score,
+            },
+          );
+        }
+      }
+
+      return { message: 'Exam scores imported successfully.' };
+    } catch (error) {
+      throwError(
+        'Error importing exam scores: ' + error.message,
+        HttpStatus.INTERNAL_SERVER_ERROR,
+      );
+    }
   };
 }
