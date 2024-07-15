@@ -12,6 +12,7 @@ import { MailService } from '../mail/mail.service';
 import { ExamScoresDto } from './dtos/exam.scores.dto';
 import * as path from 'path';
 import * as XLSX from 'xlsx';
+import { EditApplicationsDto } from './dtos/edit.applications.dto';
 
 @Injectable()
 export class ApplicationMediator {
@@ -72,6 +73,7 @@ export class ApplicationMediator {
       });
 
       const mappedApplications = applications.map((app) => ({
+        id: app.id,
         sefId: app.applicationUser[0].user.sef_id,
         username: app.applicationUser[0].user.username,
         email: app.applicationUser[0].user.email,
@@ -115,6 +117,7 @@ export class ApplicationMediator {
             ? 'No'
             : '-',
         passedScreeningDate: app.passed_screening_date,
+        examScore: app.exam_score,
         passedExam: app.passed_exam,
         passedExamDate: app.passed_exam_date,
         passedInterviewDate: app.passed_interview_date,
@@ -139,74 +142,115 @@ export class ApplicationMediator {
     });
   };
 
-  sendPostScreeningEmails = async (data: PostScreeningDto) => {
-    const { cycleId, emails } = data;
+  editApplications = async (data: EditApplicationsDto) => {
+    return catcher(async () => {
+      const { id, examScore, techInterviewScore, softInterviewScore, status } =
+        data;
 
-    const cyclesWhereConditions = cycleId ? { id: cycleId } : {};
+      const application = await this.applicationsService.findOne({ id });
 
-    const currentCycle = await this.cyclesService.findOne(
-      cyclesWhereConditions,
-      ['decisionDateCycle'],
-    );
+      throwNotFound({
+        entity: 'application',
+        errorCheck: !application,
+      });
 
-    if (currentCycle.decisionDateCycle.decisionDate.exam_date === null) {
-      throwError('Exam Date should be provided.', HttpStatus.BAD_REQUEST);
-    }
+      const updatedData: any = {};
 
-    const uniqueEmails: string[] = [...new Set(emails)];
-
-    const applicationsWhereConditions = cycleId
-      ? {
-          applicationCycle: { cycleId },
-        }
-      : {};
-
-    const applicationsByCycle = await this.applicationsService.findMany(
-      applicationsWhereConditions,
-      ['applicationInfo'],
-    );
-
-    const applicationsToEmail = [];
-
-    for (const application of applicationsByCycle) {
-      const email: string = application.applicationUser[0].user.email;
-      if (
-        uniqueEmails.includes(email) &&
-        application.is_eligible &&
-        !application.passed_screening
-      ) {
-        application.passed_screening = true;
-        await this.applicationsService.update(
-          { id: application.id },
-          {
-            passed_screening: true,
-            passed_screening_date: new Date(),
-          },
-        );
-        applicationsToEmail.push(application);
+      if (examScore !== undefined) {
+        updatedData.exam_score = examScore;
       }
-    }
 
-    const emailsToSend = applicationsToEmail.map(
-      (app) => app.applicationUser[0].user.email,
-    );
+      if (techInterviewScore !== undefined) {
+        updatedData.tech_interview_score = techInterviewScore;
+      }
 
-    let mailerResponse: any;
-    if (emailsToSend.length > 0) {
-      const subject = 'SE Factory Screening Process';
-      const templateName = 'invitation.hbs';
-      mailerResponse = this.mailService.sendScreeningProcessEmail(
-        emailsToSend,
-        templateName,
-        subject,
+      if (softInterviewScore !== undefined) {
+        updatedData.soft_interview_score = softInterviewScore;
+      }
+
+      if (status !== undefined) {
+        updatedData.status = status;
+      }
+
+      await this.applicationsService.update({ id }, updatedData);
+
+      return {
+        message: 'Application updated successfully.',
+        updatedData,
+      };
+    });
+  };
+
+  sendPostScreeningEmails = async (data: PostScreeningDto) => {
+    return catcher(async () => {
+      const { cycleId, emails } = data;
+
+      const cyclesWhereConditions = cycleId ? { id: cycleId } : {};
+
+      const currentCycle = await this.cyclesService.findOne(
+        cyclesWhereConditions,
+        ['decisionDateCycle'],
       );
-    }
 
-    return {
-      message: 'Emails sent successfully.',
-      foundEmails: mailerResponse?.foundEmails || [],
-      notFoundEmails: mailerResponse?.notFoundEmails || [],
-    };
+      if (currentCycle.decisionDateCycle.decisionDate.exam_date === null) {
+        throwError('Exam Date should be provided.', HttpStatus.BAD_REQUEST);
+      }
+
+      const uniqueEmails: string[] = [...new Set(emails)];
+
+      const applicationsWhereConditions = cycleId
+        ? {
+            applicationCycle: { cycleId },
+          }
+        : {};
+
+      const applicationsByCycle = await this.applicationsService.findMany(
+        applicationsWhereConditions,
+        ['applicationInfo'],
+      );
+
+      const applicationsToEmail = [];
+
+      for (const application of applicationsByCycle) {
+        const email: string = application.applicationUser[0].user.email;
+        if (
+          uniqueEmails.includes(email) &&
+          application.is_eligible &&
+          !application.passed_screening
+        ) {
+          application.passed_screening = true;
+          await this.applicationsService.update(
+            { id: application.id },
+            {
+              passed_screening: true,
+              passed_screening_date: new Date(),
+            },
+          );
+          applicationsToEmail.push(application);
+        }
+      }
+
+      const emailsToSend = applicationsToEmail.map(
+        (app) => app.applicationUser[0].user.email,
+      );
+
+      let mailerResponse: any;
+      if (emailsToSend.length > 0) {
+        const subject = 'SE Factory Screening Process';
+        const templateName = 'invitation.hbs';
+        mailerResponse = this.mailService.sendScreeningProcessEmail(
+          emailsToSend,
+          templateName,
+          subject,
+        );
+      }
+
+      return {
+        message: 'Emails sent successfully.',
+        foundEmails: mailerResponse?.foundEmails || [],
+        notFoundEmails: mailerResponse?.notFoundEmails || [],
+      };
+    });
   };
 
   importExamScores = async (data: ExamScoresDto) => {

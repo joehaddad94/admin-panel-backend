@@ -11,6 +11,7 @@ import { ApiTags } from '@nestjs/swagger';
 import { FiltersDto } from '../reports/dtos/filters.dto';
 import { PostScreeningDto } from './dtos/post.screening.dto';
 import { ExamScoresDto } from './dtos/exam.scores.dto';
+import { EditApplicationsDto } from './dtos/edit.applications.dto';
 
 @ApiTags('applications')
 @Controller('applications')
@@ -21,6 +22,12 @@ export class ApplicationController {
   @UsePipes(new ValidationPipe({ whitelist: true }))
   getApplicationsByProgamId(@Body() filtersDto: FiltersDto) {
     return this.mediator.findApplications(filtersDto);
+  }
+
+  @Post('edit-application')
+  @UsePipes(new ValidationPipe({ whitelist: true }))
+  editApplications(@Body() data: EditApplicationsDto) {
+    return this.mediator.editApplications(data);
   }
 
   @Post('post-screening-mail')
