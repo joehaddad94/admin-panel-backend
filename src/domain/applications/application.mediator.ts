@@ -13,6 +13,7 @@ import { ExamScoresDto } from './dtos/exam.scores.dto';
 import * as path from 'path';
 import * as XLSX from 'xlsx';
 import { EditApplicationsDto } from './dtos/edit.applications.dto';
+import { convertToCamelCase } from 'src/core/helpers/camelCase';
 
 @Injectable()
 export class ApplicationMediator {
@@ -174,9 +175,11 @@ export class ApplicationMediator {
 
       await this.applicationsService.update({ id }, updatedData);
 
+      const updatedPayload = convertToCamelCase(updatedData);
+
       return {
         message: 'Application updated successfully.',
-        updatedData,
+        updatedPayload,
       };
     });
   };
