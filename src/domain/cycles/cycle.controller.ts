@@ -1,4 +1,12 @@
-import { Body, Controller, Get, Param, Post } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Get,
+  Param,
+  Post,
+  UsePipes,
+  ValidationPipe,
+} from '@nestjs/common';
 import { ApiTags } from '@nestjs/swagger';
 import { CycleMediator } from './cycle.mediator';
 import { CreateCycleDto } from './dtos/create.cycle.dto';
@@ -21,6 +29,7 @@ export class CycleController {
   }
 
   @Post('create-cycle')
+  @UsePipes(new ValidationPipe({ whitelist: true }))
   async createCycle(@GetAdmin() admin: Admin, @Body() data: CreateCycleDto) {
     return this.mediator.createCycle(admin, data);
   }

@@ -10,6 +10,7 @@ import { convertToCamelCase } from '../../core/helpers/camelCase';
 import { Admin } from 'typeorm';
 import { GlobalEntities } from '../../core/data/types';
 import { ProgramService } from '../programs/program.service';
+import { format } from 'date-fns';
 
 @Injectable()
 export class CycleMediator {
@@ -61,8 +62,8 @@ export class CycleMediator {
         name: cycleName,
         from_date: fromDate,
         to_date: toDate,
-        created_at: new Date(),
-        updated_at: new Date(),
+        created_at: format(new Date(), 'dd-MM-yyyy'),
+        updated_at: format(new Date(), 'dd-MM-yyyy'),
         // created_by_id,
         // updated_by_id: created_by_id,
       });

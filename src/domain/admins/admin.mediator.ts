@@ -7,6 +7,7 @@ import { InviteDto, ManualCreateDto } from '../admins';
 import { throwBadRequest } from 'src/core/settings/base/errors/errors';
 import { catcher } from 'src/core/helpers/operation';
 import { format } from 'date-fns';
+import { convertToCamelCase } from 'src/core/helpers/camelCase';
 
 @Injectable()
 export class AdminMediator {
@@ -87,11 +88,11 @@ export class AdminMediator {
           ...admin
         }) => ({
           ...admin,
-          created_at: format(new Date(created_at), 'yyyy-MM-dd'),
+          created_at: format(new Date(created_at), 'dd-MM-yy'),
           is_active: is_active ? 'Yes' : 'No',
         }),
       );
-      return adminsData;
+      return convertToCamelCase(adminsData);
     });
   };
 }
