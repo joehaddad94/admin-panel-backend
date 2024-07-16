@@ -265,14 +265,41 @@ export class ApplicationMediator {
         );
       }
 
-      const workbook = XLSX.readFile(sourceFilePath);
+      let workbook;
+      try {
+        workbook = XLSX.readFile(sourceFilePath);
+      } catch (err) {
+        throwError(
+          'Error reading the Excel file. Please make sure the file exists and is accessible.',
+          HttpStatus.BAD_REQUEST,
+        );
+      }
+
+      if (!workbook || workbook.SheetNames.length === 0) {
+        throwError(
+          'The Excel file is empty or does not contain any sheets.',
+          HttpStatus.BAD_REQUEST,
+        );
+      }
+
       const sheetName = workbook.SheetNames[0];
       const worksheet = workbook.Sheets[sheetName];
+      if (!worksheet) {
+        throwError(
+          'The specified sheet in the Excel file could not be found.',
+          HttpStatus.BAD_REQUEST,
+        );
+      }
 
       const examScores = XLSX.utils.sheet_to_json<{
         email: string;
         score: number;
       }>(worksheet);
+
+      console.log(
+        '🚀 ~ ApplicationMediator ~ importExamScores= ~ examScores:',
+        examScores,
+      );
 
       const applicationsWhereConditions = cycleId
         ? {
@@ -290,6 +317,10 @@ export class ApplicationMediator {
           app.applicationInfo[0].info.email,
           app.id,
         ]),
+      );
+      console.log(
+        '🚀 ~ ApplicationMediator ~ importExamScores= ~ applicationsMap:',
+        applicationsMap,
       );
 
       for (const { email, score } of examScores) {

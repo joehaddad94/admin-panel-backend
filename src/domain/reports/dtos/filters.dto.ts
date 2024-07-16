@@ -20,6 +20,8 @@ export class FiltersDto {
   page?: number;
 
   @ApiProperty()
+  @IsNumber()
+  @IsOptional()
   pageSize?: number;
 
   @ApiProperty()
