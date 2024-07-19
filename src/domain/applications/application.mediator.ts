@@ -12,8 +12,11 @@ import { MailService } from '../mail/mail.service';
 import { ExamScoresDto } from './dtos/exam.scores.dto';
 import * as path from 'path';
 import * as XLSX from 'xlsx';
+import * as fs from 'fs';
 import { EditApplicationsDto } from './dtos/edit.applications.dto';
 import { convertToCamelCase } from 'src/core/helpers/camelCase';
+import { FindOptionsWhere } from 'typeorm';
+import { Application } from 'src/core/data/database/entities/application.entity';
 
 @Injectable()
 export class ApplicationMediator {
@@ -256,8 +259,11 @@ export class ApplicationMediator {
     });
   };
 
+  // importExamScores = async (data: ExamScoresDto, fileBuffer: Buffer) => {
   importExamScores = async (data: ExamScoresDto) => {
     const { sourceFilePath, cycleId } = data;
+    const cycleIdNumber = Number(cycleId);
+    console.log('🚀 ~ ApplicationMediator ~ importExamScores= ~ data:', data);
 
     try {
       const fileExtension = path.extname(sourceFilePath).toLowerCase();
@@ -268,9 +274,19 @@ export class ApplicationMediator {
         );
       }
 
+      if (!fs.existsSync(sourceFilePath)) {
+        throwError('Source file does not exist', HttpStatus.BAD_REQUEST);
+      }
+
+      const fileBuffer = fs.readFileSync(sourceFilePath);
+      console.log(
+        '🚀 ~ ApplicationMediator ~ importExamScores= ~ fileBuffer:',
+        fileBuffer,
+      );
+
       let workbook;
       try {
-        workbook = XLSX.readFile(sourceFilePath);
+        workbook = XLSX.read(fileBuffer, { type: 'buffer' });
       } catch (err) {
         throwError(
           'Error reading the Excel file. Please make sure the file exists and is accessible.',
@@ -304,11 +320,10 @@ export class ApplicationMediator {
         examScores,
       );
 
-      const applicationsWhereConditions = cycleId
-        ? {
-            applicationCycle: { cycleId },
-          }
-        : {};
+      const applicationsWhereConditions: FindOptionsWhere<Application> =
+        cycleIdNumber
+          ? { applicationCycle: { id: cycleIdNumber } } // Adjusted to match the expected type
+          : {};
 
       const applicationsByCycle = await this.applicationsService.findMany(
         applicationsWhereConditions,
