@@ -9,6 +9,7 @@ import {
 import { CycleProgram } from '../relations/cycle-program.entity';
 import { DecisionDateCycle } from '../relations/decisionDate-cycle.entity';
 import { ApplicationCycle } from '../relations/application-cycle.entity';
+import { CycleThreshold } from '../relations/cycle-threshold.entity';
 
 @Entity('cycles')
 export class Cycles extends BaseEntity {
@@ -53,4 +54,7 @@ export class Cycles extends BaseEntity {
 
   @OneToOne(() => DecisionDateCycle, (decisionDate) => decisionDate.cycle)
   decisionDateCycle: DecisionDateCycle;
+
+  @OneToOne(() => CycleThreshold, (cycleThreshold) => cycleThreshold.cycle)
+  cycleThreshold: CycleThreshold;
 }
