@@ -23,6 +23,6 @@ import { ThresholdService } from './threshold.service';
 })
 export class ThresholdModule implements NestModule {
   configure(consumer: MiddlewareConsumer) {
-    consumer.apply(AuthMiddleware).forRoutes(AuthController);
+    consumer.apply(AuthMiddleware).forRoutes(ThresholdController);
   }
 }

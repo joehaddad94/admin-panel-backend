@@ -9,6 +9,9 @@ export class CreateEditDecisionDateDto {
   examDate: Date;
 
   @ApiProperty()
+  interviewMeetLink?: string;
+
+  @ApiProperty()
   @IsNotEmpty({ message: 'cycleId must be provided' })
   cycleId: number;
 

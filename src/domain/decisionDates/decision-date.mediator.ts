@@ -13,8 +13,7 @@ export class DecisionDateMediator {
 
   createEditDates = async (data: CreateEditDecisionDateDto) => {
     return catcher(async () => {
-      const { examDate, cycleId, decisionDateId } = data;
-      console.log('🚀 ~ DecisionDateMediator ~ returncatcher ~ data:', data);
+      const { examDate, cycleId, decisionDateId, interviewMeetLink } = data;
 
       let decisionDate: DecisionDates;
 
@@ -25,12 +24,10 @@ export class DecisionDateMediator {
         if (!decisionDate) {
           throw new Error(`Decision date with ID ${decisionDateId} not found`);
         }
+
         decisionDate.exam_date = examDate;
+        decisionDate.interview_meet_link = interviewMeetLink;
         decisionDate.updated_at = new Date();
-        console.log(
-          '🚀 ~ DecisionDateMediator ~ returncatcher ~ decisionDate:',
-          decisionDate,
-        );
 
         decisionDate = (await this.decisionDateService.save(
           decisionDate,
@@ -38,6 +35,7 @@ export class DecisionDateMediator {
       } else {
         decisionDate = this.decisionDateService.create({
           exam_date: examDate,
+          interview_meet_link: interviewMeetLink,
           created_at: new Date(),
           updated_at: new Date(),
         });
@@ -49,10 +47,6 @@ export class DecisionDateMediator {
         const decisionDateCycle = new DecisionDateCycle();
         decisionDateCycle.cycle_id = cycleId;
         decisionDateCycle.decision_date_id = decisionDate.id;
-        console.log(
-          '🚀 ~ DecisionDateMediator ~ returncatcher ~ decisionDateCycle:',
-          decisionDateCycle,
-        );
 
         await decisionDateCycle.save();
 
