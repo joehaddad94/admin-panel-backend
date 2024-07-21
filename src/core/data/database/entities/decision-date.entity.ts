@@ -37,6 +37,9 @@ export class DecisionDates extends BaseEntity {
   @Column({ type: 'int', nullable: true })
   updated_by_id: number;
 
+  @Column({ type: 'varchar', length: 255, nullable: true })
+  interview_meet_link: string;
+
   @OneToOne(
     () => DecisionDateCycle,
     (decisionDateCycle) => decisionDateCycle.cycle,
