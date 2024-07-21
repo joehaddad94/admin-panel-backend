@@ -7,7 +7,7 @@ import {
   PrimaryGeneratedColumn,
 } from 'typeorm';
 import { Cycles } from '../entities/cycle.entity';
-import { Threshold } from '../entities/thresholds';
+import { Threshold } from '../entities/threshold.entity';
 
 @Entity('thresholds_cycle_id_links')
 export class CycleThreshold extends BaseEntity {

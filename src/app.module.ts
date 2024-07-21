@@ -22,6 +22,7 @@ import { MailModule } from './domain/mail/mail.module';
 import { AdminModule } from './domain/admins';
 import { CycleModule } from './domain/cycles/cycle.module';
 import { DecisionDateModule } from './domain/decisionDates/decision-date.module';
+import { ThresholdModule } from './domain/thresholds/threshold.module';
 
 @Module({
   imports: [
@@ -52,6 +53,7 @@ import { DecisionDateModule } from './domain/decisionDates/decision-date.module'
     MailModule,
     CycleModule,
     DecisionDateModule,
+    ThresholdModule,
   ],
   controllers: [AppController],
   providers: [AppService],
