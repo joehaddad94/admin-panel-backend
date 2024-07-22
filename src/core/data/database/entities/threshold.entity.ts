@@ -13,6 +13,9 @@ export class Threshold extends BaseEntity {
   id: number;
 
   @Column({ type: 'int', nullable: true })
+  exam_passing_grade: number;
+
+  @Column({ type: 'int', nullable: true })
   weight_tech: number;
 
   @Column({ type: 'int', nullable: true })
