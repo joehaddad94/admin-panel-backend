@@ -9,6 +9,6 @@ export class ThresholdController {
 
   @Get()
   test() {
-    return this.mediator.test();
+    // return this.mediator.test();
   }
 }

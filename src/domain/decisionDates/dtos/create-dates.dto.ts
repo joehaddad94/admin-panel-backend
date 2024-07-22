@@ -5,8 +5,7 @@ import { IsDateString, IsNotEmpty } from 'class-validator';
 export class CreateEditDecisionDateDto {
   @ApiProperty()
   @IsDateString({}, { message: 'examDate must be a valid date string' })
-  @IsNotEmpty({ message: 'examDate must be provided' })
-  examDate: Date;
+  examDate?: Date;
 
   @ApiProperty()
   interviewMeetLink?: string;
