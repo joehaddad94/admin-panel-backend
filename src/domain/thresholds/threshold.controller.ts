@@ -15,7 +15,7 @@ import { CreateEditThresholdsDto } from './dtos/create-edit.dto';
 export class ThresholdController {
   constructor(private readonly mediator: ThresholdMediator) {}
 
-  @Post('create-edit-thresholds')
+  @Post('create-edit')
   @UsePipes(new ValidationPipe({ whitelist: true }))
   createEditThreshold(@Body() data: CreateEditThresholdsDto) {
     return this.mediator.createEditThresholds(data);

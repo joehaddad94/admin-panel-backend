@@ -14,7 +14,7 @@ import { CreateEditDecisionDateDto } from './dtos/create-dates.dto';
 export class DecisionDateController {
   constructor(private readonly mediator: DecisionDateMediator) {}
 
-  @Post('create-edit-decisionDates')
+  @Post('create-edit')
   @UsePipes(new ValidationPipe({ whitelist: true }))
   createEditDecisionDate(@Body() data: CreateEditDecisionDateDto) {
     return this.mediator.createEditDates(data);

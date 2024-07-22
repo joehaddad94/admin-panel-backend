@@ -1,13 +1,20 @@
 /* eslint-disable camelcase */
 import { ApiProperty } from '@nestjs/swagger';
-import { IsDateString, IsNotEmpty } from 'class-validator';
+import {
+  IsDateString,
+  IsNotEmpty,
+  IsNumber,
+  IsOptional,
+} from 'class-validator';
 
 export class CreateEditDecisionDateDto {
   @ApiProperty()
   @IsDateString({}, { message: 'examDate must be a valid date string' })
+  @IsOptional()
   examDate?: Date;
 
   @ApiProperty()
+  @IsOptional()
   interviewMeetLink?: string;
 
   @ApiProperty()
@@ -15,5 +22,7 @@ export class CreateEditDecisionDateDto {
   cycleId: number;
 
   @ApiProperty()
+  @IsOptional()
+  @IsNumber()
   decisionDateId?: number;
 }

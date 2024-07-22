@@ -21,6 +21,10 @@ export class ThresholdMediator {
         weightSoft,
         weightTech,
       } = data;
+      console.log(
+        '🚀 ~ ThresholdMediator ~ returncatcher ~ data:',
+        thresholdId,
+      );
 
       let threshold: Threshold;
 
@@ -28,6 +32,10 @@ export class ThresholdMediator {
         threshold = await this.thresholdService.findOne({
           id: thresholdId,
         });
+        console.log(
+          '🚀 ~ ThresholdMediator ~ returncatcher ~ threshold:',
+          threshold,
+        );
 
         if (!threshold) {
           throw new Error(`Threshold with ID ${thresholdId} not found`);
@@ -48,7 +56,16 @@ export class ThresholdMediator {
           }
         }
 
-        threshold = (await this.thresholdService.save(updates)) as Threshold;
+        console.log(
+          '🚀 ~ ThresholdMediator ~ returncatcher ~ updates:',
+          updates,
+        );
+
+        threshold = (await this.thresholdService.save(threshold)) as Threshold;
+        console.log(
+          '🚀 ~ ThresholdMediator ~ returncatcher ~ updatedthreshold:',
+          threshold,
+        );
       } else {
         threshold = this.thresholdService.create({
           exam_passing_grade: examPassingGrade || 0,
