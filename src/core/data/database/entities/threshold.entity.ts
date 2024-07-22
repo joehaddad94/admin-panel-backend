@@ -5,7 +5,7 @@ import {
   OneToOne,
   PrimaryGeneratedColumn,
 } from 'typeorm';
-import { CycleThreshold } from '../relations/cycle-threshold.entity';
+import { ThresholdCycle } from '../relations/cycle-threshold.entity';
 
 @Entity('thresholds')
 export class Threshold extends BaseEntity {
@@ -45,6 +45,6 @@ export class Threshold extends BaseEntity {
   @Column({ type: 'int', nullable: true })
   updated_by_id: number;
 
-  @OneToOne(() => CycleThreshold, (cycleThreshold) => cycleThreshold.cycle)
-  cycleThreshold: CycleThreshold;
+  @OneToOne(() => ThresholdCycle, (thresholdCycle) => thresholdCycle.cycle)
+  thresholdCycle: ThresholdCycle;
 }

@@ -26,6 +26,7 @@ export class CycleMediator {
       const cyclesOptions: GlobalEntities[] = [
         'cycleProgram',
         'decisionDateCycle',
+        'thresholdCycle',
       ];
 
       let where = {};

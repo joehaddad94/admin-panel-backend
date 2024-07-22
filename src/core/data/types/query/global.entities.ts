@@ -13,4 +13,5 @@ export type GlobalEntities =
   | 'informationUser'
   | 'cycleProgram'
   | 'applicationCycle'
-  | 'decisionDateCycle';
+  | 'decisionDateCycle'
+  | 'thresholdCycle';
