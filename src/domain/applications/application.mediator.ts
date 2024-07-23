@@ -316,7 +316,6 @@ export class ApplicationMediator {
     });
   };
 
-  // importExamScores = async (data: ExamScoresDto, fileBuffer: Buffer) => {
   importExamScores = async (data: ExamScoresDto) => {
     const { sourceFilePath, cycleId } = data;
     const cycleIdNumber = Number(cycleId);
@@ -446,7 +445,7 @@ export class ApplicationMediator {
 
     const applicationsByCycle = await this.applicationsService.findMany(
       applicationsWhereConditions,
-      ['applicationInfo'],
+      ['applicationUser'],
     );
 
     return applicationsByCycle;
