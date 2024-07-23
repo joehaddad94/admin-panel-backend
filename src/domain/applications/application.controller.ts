@@ -11,7 +11,7 @@ import {
 import { ApplicationMediator } from './application.mediator';
 import { ApiTags } from '@nestjs/swagger';
 import { FiltersDto } from '../reports/dtos/filters.dto';
-import { PostScreeningDto } from './dtos/post.screening.dto';
+import { SendingEmailsDto } from './dtos/sending.emails.dto';
 import { ExamScoresDto } from './dtos/exam.scores.dto';
 import { EditApplicationsDto } from './dtos/edit.applications.dto';
 import { FileInterceptor } from '@nestjs/platform-express';
@@ -36,7 +36,7 @@ export class ApplicationController {
 
   @Post('post-screening-mails')
   @UsePipes(new ValidationPipe({ whitelist: true }))
-  sendPostScreeningEmails(@Body() data: PostScreeningDto) {
+  sendPostScreeningEmails(@Body() data: SendingEmailsDto) {
     return this.mediator.sendPostScreeningEmails(data);
   }
 

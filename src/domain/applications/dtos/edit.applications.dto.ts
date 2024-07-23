@@ -44,4 +44,9 @@ export class EditApplicationsDto {
   @MinLength(1, { message: 'Status must be at least 1 character long' })
   @MaxLength(50, { message: 'Status must be at most 50 characters long' })
   status?: string;
+
+  @ApiProperty()
+  @IsNotEmpty({ message: 'Cycle Id must be provided' })
+  @IsNumber({}, { message: 'Cycle Id must be a number' })
+  cycleId: number;
 }

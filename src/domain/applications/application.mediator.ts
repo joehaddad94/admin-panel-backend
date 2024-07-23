@@ -5,7 +5,7 @@ import { GlobalEntities } from '../../core/data/types';
 import { catcher } from '../../core/helpers/operation';
 import { throwNotFound } from '../../core/settings/base/errors/errors';
 import { FiltersDto } from '../reports/dtos/filters.dto';
-import { PostScreeningDto } from './dtos/post.screening.dto';
+import { SendingEmailsDto } from './dtos/sending.emails.dto';
 import { CycleService } from '../cycles/cycle.service';
 import { throwError } from 'src/core/settings/base/errors/base.error';
 import { MailService } from '../mail/mail.service';
@@ -17,6 +17,7 @@ import { EditApplicationsDto } from './dtos/edit.applications.dto';
 import { convertToCamelCase } from 'src/core/helpers/camelCase';
 import { FindOptionsWhere } from 'typeorm';
 import { Application } from 'src/core/data/database/entities/application.entity';
+import { ApplicationCycle } from 'src/core/data/database/relations/application-cycle.entity';
 
 @Injectable()
 export class ApplicationMediator {
@@ -148,8 +149,36 @@ export class ApplicationMediator {
 
   editApplications = async (data: EditApplicationsDto) => {
     return catcher(async () => {
-      const { id, examScore, techInterviewScore, softInterviewScore, status } =
-        data;
+      const {
+        id,
+        examScore,
+        techInterviewScore,
+        softInterviewScore,
+        status,
+        cycleId,
+      } = data;
+
+      const options: GlobalEntities[] = ['thresholdCycle'];
+
+      const cycle = await this.cyclesService.findOne(
+        {
+          id: cycleId,
+        },
+        options,
+      );
+
+      if (
+        !cycle.thresholdCycle ||
+        !cycle.thresholdCycle.threshold ||
+        cycle.thresholdCycle.threshold.exam_passing_grade === null ||
+        cycle.thresholdCycle.threshold.exam_passing_grade === undefined ||
+        cycle.thresholdCycle.threshold.exam_passing_grade === 0
+      ) {
+        throwError(
+          'Exam Passing Grade must be provided.',
+          HttpStatus.BAD_REQUEST,
+        );
+      }
 
       const application = await this.applicationsService.findOne({ id });
 
@@ -160,22 +189,50 @@ export class ApplicationMediator {
 
       const updatedData: any = {};
 
-      if (examScore !== undefined) {
-        updatedData.exam_score = examScore;
+      const properties = {
+        exam_score: examScore,
+        tech_interview_score: techInterviewScore,
+        soft_interview_score: softInterviewScore,
+        status: status,
+      };
+
+      for (const [key, value] of Object.entries(properties)) {
+        if (value !== undefined) {
+          updatedData[key] = value;
+        }
       }
 
-      if (techInterviewScore !== undefined) {
-        updatedData.tech_interview_score = techInterviewScore;
+      // if (examScore !== undefined) {
+      //   updatedData.exam_score = examScore;
+      // }
+
+      // if (techInterviewScore !== undefined) {
+      //   updatedData.tech_interview_score = techInterviewScore;
+      // }
+
+      // if (softInterviewScore !== undefined) {
+      //   updatedData.soft_interview_score = softInterviewScore;
+      // }
+
+      // if (status !== undefined) {
+      //   updatedData.status = status;
+      // }
+
+      if (
+        cycle.thresholdCycle &&
+        cycle.thresholdCycle.threshold &&
+        updatedData.exam_score !== undefined &&
+        updatedData.exam_score >=
+          cycle.thresholdCycle.threshold.exam_passing_grade
+      ) {
+        updatedData.passed_exam = true;
+        updatedData.passed_exam_date = new Date();
+      } else {
+        updatedData.passed_exam = false;
+        updatedData.passed_exam_date = new Date();
       }
 
-      if (softInterviewScore !== undefined) {
-        updatedData.soft_interview_score = softInterviewScore;
-      }
-
-      if (status !== undefined) {
-        updatedData.status = status;
-      }
-
+      console.log('🚀 ~ returncatcher ~ updatedData:', updatedData);
       await this.applicationsService.update({ id }, updatedData);
 
       const updatedPayload = convertToCamelCase(updatedData);
@@ -187,7 +244,7 @@ export class ApplicationMediator {
     });
   };
 
-  sendPostScreeningEmails = async (data: PostScreeningDto) => {
+  sendPostScreeningEmails = async (data: SendingEmailsDto) => {
     return catcher(async () => {
       const { cycleId, emails } = data;
 
@@ -360,5 +417,38 @@ export class ApplicationMediator {
         HttpStatus.INTERNAL_SERVER_ERROR,
       );
     }
+  };
+
+  sendInterviewDateEmails = async (data: SendingEmailsDto) => {
+    const { cycleId, emails } = data;
+
+    const cyclesWhereConditions = cycleId ? { id: cycleId } : {};
+
+    const currentCycle = await this.cyclesService.findOne(
+      cyclesWhereConditions,
+      ['decisionDateCycle'],
+    );
+
+    if (
+      currentCycle.decisionDateCycle.decisionDate.interview_meet_link === null
+    ) {
+      throwError(
+        'Interview meet link should be provided before sending emails.',
+        HttpStatus.BAD_REQUEST,
+      );
+    }
+
+    const uniqueEmails: string[] = [...new Set(emails)];
+
+    const applicationsWhereConditions = cycleId
+      ? { applicationCycle: { cycleId } }
+      : {};
+
+    const applicationsByCycle = await this.applicationsService.findMany(
+      applicationsWhereConditions,
+      ['applicationInfo'],
+    );
+
+    return applicationsByCycle;
   };
 }
