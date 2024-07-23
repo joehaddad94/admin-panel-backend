@@ -99,7 +99,13 @@ export class CycleMediator {
       let cycle: Cycles;
 
       if (cycleId) {
-        cycle = await this.cycleService.findOne({ id: cycleId });
+        const cyclesOptions: GlobalEntities[] = [
+          'cycleProgram',
+          'decisionDateCycle',
+          'thresholdCycle',
+        ];
+
+        cycle = await this.cycleService.findOne({ id: cycleId }, cyclesOptions);
         if (!cycle) {
           throw new Error(`Cycle with ID ${cycleId} not found`);
         }
