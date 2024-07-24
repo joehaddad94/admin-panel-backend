@@ -15,7 +15,7 @@ import * as XLSX from 'xlsx';
 import * as fs from 'fs';
 import { EditApplicationsDto } from './dtos/edit.applications.dto';
 import { convertToCamelCase } from 'src/core/helpers/camelCase';
-import { FindOptionsWhere } from 'typeorm';
+import { FindOptionsWhere, UpdateDateColumn } from 'typeorm';
 import { Application } from 'src/core/data/database/entities/application.entity';
 import { ApplicationCycle } from 'src/core/data/database/relations/application-cycle.entity';
 
@@ -202,22 +202,6 @@ export class ApplicationMediator {
         }
       }
 
-      // if (examScore !== undefined) {
-      //   updatedData.exam_score = examScore;
-      // }
-
-      // if (techInterviewScore !== undefined) {
-      //   updatedData.tech_interview_score = techInterviewScore;
-      // }
-
-      // if (softInterviewScore !== undefined) {
-      //   updatedData.soft_interview_score = softInterviewScore;
-      // }
-
-      // if (status !== undefined) {
-      //   updatedData.status = status;
-      // }
-
       if (
         cycle.thresholdCycle &&
         cycle.thresholdCycle.threshold &&
@@ -317,69 +301,36 @@ export class ApplicationMediator {
   };
 
   importExamScores = async (data: ExamScoresDto) => {
-    const { sourceFilePath, cycleId } = data;
-    const cycleIdNumber = Number(cycleId);
-    console.log('🚀 ~ ApplicationMediator ~ importExamScores= ~ data:', data);
+    const { cycleId, examScores } = data;
 
     try {
-      const fileExtension = path.extname(sourceFilePath).toLowerCase();
-      if (fileExtension !== '.xls' && fileExtension !== '.xlsx') {
-        throwError(
-          'Invalid file type. Only Excel files are allowed',
-          HttpStatus.BAD_REQUEST,
-        );
-      }
-
-      if (!fs.existsSync(sourceFilePath)) {
-        throwError('Source file does not exist', HttpStatus.BAD_REQUEST);
-      }
-
-      const fileBuffer = fs.readFileSync(sourceFilePath);
-      console.log(
-        '🚀 ~ ApplicationMediator ~ importExamScores= ~ fileBuffer:',
-        fileBuffer,
+      const cycle = await this.cyclesService.findOne(
+        {
+          id: cycleId,
+        },
+        ['thresholdCycle'],
       );
 
-      let workbook;
-      try {
-        workbook = XLSX.read(fileBuffer, { type: 'buffer' });
-      } catch (err) {
+      if (!cycle) {
+        throwError('Cycle not found.', HttpStatus.BAD_REQUEST);
+      }
+
+      if (
+        !cycle.thresholdCycle ||
+        !cycle.thresholdCycle.threshold ||
+        cycle.thresholdCycle.threshold.exam_passing_grade === null ||
+        cycle.thresholdCycle.threshold.exam_passing_grade === undefined ||
+        cycle.thresholdCycle.threshold.exam_passing_grade === 0
+      ) {
         throwError(
-          'Error reading the Excel file. Please make sure the file exists and is accessible.',
+          'Exam Passing Grade must be provided.',
           HttpStatus.BAD_REQUEST,
         );
       }
 
-      if (!workbook || workbook.SheetNames.length === 0) {
-        throwError(
-          'The Excel file is empty or does not contain any sheets.',
-          HttpStatus.BAD_REQUEST,
-        );
-      }
-
-      const sheetName = workbook.SheetNames[0];
-      const worksheet = workbook.Sheets[sheetName];
-      if (!worksheet) {
-        throwError(
-          'The specified sheet in the Excel file could not be found.',
-          HttpStatus.BAD_REQUEST,
-        );
-      }
-
-      const examScores = XLSX.utils.sheet_to_json<{
-        email: string;
-        score: number;
-      }>(worksheet);
-
-      console.log(
-        '🚀 ~ ApplicationMediator ~ importExamScores= ~ examScores:',
-        examScores,
-      );
-
-      const applicationsWhereConditions: FindOptionsWhere<Application> =
-        cycleIdNumber
-          ? { applicationCycle: { id: cycleIdNumber } } // Adjusted to match the expected type
-          : {};
+      const applicationsWhereConditions = cycleId
+        ? { applicationCycle: { cycleId } }
+        : {};
 
       const applicationsByCycle = await this.applicationsService.findMany(
         applicationsWhereConditions,
@@ -389,28 +340,43 @@ export class ApplicationMediator {
       const applicationsMap = new Map(
         applicationsByCycle.map((app) => [
           app.applicationInfo[0].info.email,
-          app.id,
+          {
+            id: app.id,
+            passed_screening: app.passed_screening,
+          },
         ]),
       );
-      console.log(
-        '🚀 ~ ApplicationMediator ~ importExamScores= ~ applicationsMap:',
-        applicationsMap,
+
+      const updateResults = await Promise.all(
+        examScores.map(async ({ email, score }) => {
+          const application = applicationsMap.get(email);
+          if (application && application.passed_screening) {
+            let passed_exam = false;
+            const passed_exam_date = new Date();
+
+            if (score >= cycle.thresholdCycle.threshold.exam_passing_grade) {
+              passed_exam = true;
+            }
+
+            await this.applicationsService.update(
+              { id: application.id },
+              {
+                exam_score: score,
+                passed_exam,
+                passed_exam_date,
+              },
+            );
+            return { id: application.id, score, passed_exam, passed_exam_date };
+          }
+          return null;
+        }),
       );
 
-      for (const { email, score } of examScores) {
-        const applicationId = applicationsMap.get(email);
-        if (applicationId) {
-          await this.applicationsService.update(
-            { id: applicationId },
-            {
-              exam_score: score,
-            },
-          );
-        }
-      }
+      const updatedData = updateResults.filter((result) => result !== null);
 
-      return { message: 'Exam scores imported successfully.' };
+      return { message: 'Exam scores imported successfully.', updatedData };
     } catch (error) {
+      console.error('Error importing exam scores:', error);
       throwError(
         'Error importing exam scores: ' + error.message,
         HttpStatus.INTERNAL_SERVER_ERROR,
