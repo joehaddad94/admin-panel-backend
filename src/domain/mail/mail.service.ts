@@ -35,10 +35,11 @@ export class MailService {
       throw new Error(`Failed to send email to ${email}: ${error.message}`);
     }
   };
-  sendScreeningProcessEmail = async (
+  sendEmails = async (
     emails: string[],
     template: string,
     subject: string,
+    templateVariables?: Record<string, any>,
   ) => {
     const uniqueEmails = [...new Set(emails)];
 
@@ -61,6 +62,7 @@ export class MailService {
       foundEmails,
       template,
       subject,
+      templateVariables,
     );
 
     if (notFoundEmails.length) {

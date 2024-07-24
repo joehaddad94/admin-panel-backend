@@ -8,7 +8,7 @@ export const sendBulkEmails = async (
   emails: { email: string; name: string }[],
   template: string,
   subject: string,
-  examDate?: Date,
+  templateVariables?: Record<string, any>,
 ) => {
   const emailPromises = emails.map(async ({ email, name }) => {
     // const link = `${process.env.VERIFY_CLIENT_URL}?key=${resetToken}&email=${email}`;
@@ -22,6 +22,7 @@ export const sendBulkEmails = async (
         context: {
           name,
           //   link,
+          ...templateVariables,
         },
       });
 

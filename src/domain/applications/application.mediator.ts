@@ -285,7 +285,7 @@ export class ApplicationMediator {
       if (emailsToSend.length > 0) {
         const subject = 'SE Factory Screening Process';
         const templateName = 'invitation.hbs';
-        mailerResponse = this.mailService.sendScreeningProcessEmail(
+        mailerResponse = this.mailService.sendEmails(
           emailsToSend,
           templateName,
           subject,
@@ -394,9 +394,14 @@ export class ApplicationMediator {
       ['decisionDateCycle'],
     );
 
-    if (
-      currentCycle.decisionDateCycle.decisionDate.interview_meet_link === null
-    ) {
+    if (!currentCycle) {
+      throwError('Cycle not found.', HttpStatus.BAD_REQUEST);
+    }
+
+    const interviewMeetLink =
+      currentCycle.decisionDateCycle?.decisionDate?.interview_meet_link;
+
+    if (!interviewMeetLink) {
       throwError(
         'Interview meet link should be provided before sending emails.',
         HttpStatus.BAD_REQUEST,
@@ -414,6 +419,30 @@ export class ApplicationMediator {
       ['applicationUser'],
     );
 
-    return applicationsByCycle;
+    const emailsToSend = applicationsByCycle
+      .filter((application) => {
+        const email: string = application.applicationUser[0]?.user?.email;
+        return uniqueEmails.includes(email) && application.passed_exam;
+      })
+      .map((application) => application.applicationUser[0].user.email);
+
+    let mailerResponse: any = { foundEmails: [], notFoundEmails: [] };
+    if (emailsToSend.length > 0) {
+      const subject = 'SE Factory Screening Process';
+      const templateName = 'interview-mail.hbs';
+      const templateVariables = { interviewMeetLink };
+      mailerResponse = await this.mailService.sendEmails(
+        emailsToSend,
+        templateName,
+        subject,
+        templateVariables,
+      );
+    }
+
+    return {
+      message: 'Emails sent successfully.',
+      foundEmails: mailerResponse.foundEmails,
+      notFoundEmails: mailerResponse.notFoundEmails,
+    };
   };
 }
