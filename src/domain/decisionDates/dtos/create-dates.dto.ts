@@ -9,7 +9,6 @@ import {
 
 export class CreateEditDecisionDateDto {
   @ApiProperty()
-  @IsDateString({}, { message: 'examDate must be a valid date string' })
   @IsOptional()
   examDate?: Date;
 

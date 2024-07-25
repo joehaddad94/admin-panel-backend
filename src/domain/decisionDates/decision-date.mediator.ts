@@ -16,6 +16,7 @@ export class DecisionDateMediator {
       const { examDate, cycleId, decisionDateId, interviewMeetLink } = data;
 
       let decisionDate: DecisionDates;
+      let successMessage: string;
 
       if (decisionDateId) {
         decisionDate = await this.decisionDateService.findOne({
@@ -36,6 +37,7 @@ export class DecisionDateMediator {
         decisionDate = (await this.decisionDateService.save(
           decisionDate,
         )) as DecisionDates;
+        successMessage = 'Decision Date updated succesfully.';
       } else {
         decisionDate = this.decisionDateService.create({
           exam_date: examDate || null,
@@ -58,10 +60,11 @@ export class DecisionDateMediator {
         await decisionDateCycle.save();
 
         decisionDate.decisionDateCycle = decisionDateCycle;
+        successMessage = 'Decision Date created succesfully.';
       }
 
       const camelCaseCreatedDates = convertToCamelCase(decisionDate);
-      return camelCaseCreatedDates;
+      return { message: successMessage, decisionDate: camelCaseCreatedDates };
     });
   };
 }
