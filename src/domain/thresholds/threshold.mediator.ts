@@ -21,51 +21,35 @@ export class ThresholdMediator {
         weightSoft,
         weightTech,
       } = data;
-      console.log(
-        '🚀 ~ ThresholdMediator ~ returncatcher ~ data:',
-        thresholdId,
-      );
 
       let threshold: Threshold;
+      let successMessage: string;
 
       if (thresholdId) {
         threshold = await this.thresholdService.findOne({
           id: thresholdId,
         });
-        console.log(
-          '🚀 ~ ThresholdMediator ~ returncatcher ~ threshold:',
-          threshold,
-        );
 
         if (!threshold) {
           throw new Error(`Threshold with ID ${thresholdId} not found`);
         }
 
-        const updates = {
-          exam_passing_grade: examPassingGrade,
-          weight_soft: weightSoft,
-          weight_tech: weightTech,
-          primary_passing_grade: primaryPassingGrade,
-          secondary_passing_grade: secondaryPassingGrade,
-          updated_at: new Date(),
-        };
+        const updates: Partial<Threshold> = {};
+        if (examPassingGrade !== null)
+          updates.exam_passing_grade = examPassingGrade;
+        if (weightSoft !== null) updates.weight_soft = weightSoft;
+        if (weightTech !== null) updates.weight_tech = weightTech;
+        if (primaryPassingGrade !== null)
+          updates.primary_passing_grade = primaryPassingGrade;
+        if (secondaryPassingGrade !== null)
+          updates.secondary_passing_grade = secondaryPassingGrade;
+        updates.updated_at = new Date();
 
-        for (const key in updates) {
-          if (updates[key] !== undefined) {
-            threshold[key] = updates[key];
-          }
-        }
-
-        console.log(
-          '🚀 ~ ThresholdMediator ~ returncatcher ~ updates:',
-          updates,
-        );
+        Object.assign(threshold, updates);
 
         threshold = (await this.thresholdService.save(threshold)) as Threshold;
-        console.log(
-          '🚀 ~ ThresholdMediator ~ returncatcher ~ updatedthreshold:',
-          threshold,
-        );
+
+        successMessage = 'Threshold updated successfully';
       } else {
         threshold = this.thresholdService.create({
           exam_passing_grade: examPassingGrade || 0,
@@ -86,10 +70,11 @@ export class ThresholdMediator {
         await thresholdCycle.save();
 
         threshold.thresholdCycle = thresholdCycle;
+        successMessage = 'Threshold created successfully';
       }
 
       const camelCaseThresholds = convertToCamelCase(threshold);
-      return camelCaseThresholds;
+      return { message: successMessage, threshold: camelCaseThresholds };
     });
   };
 }
