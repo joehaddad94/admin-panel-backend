@@ -10,14 +10,8 @@ import { CycleService } from '../cycles/cycle.service';
 import { throwError } from 'src/core/settings/base/errors/base.error';
 import { MailService } from '../mail/mail.service';
 import { ExamScoresDto } from './dtos/exam.scores.dto';
-import * as path from 'path';
-import * as XLSX from 'xlsx';
-import * as fs from 'fs';
 import { EditApplicationsDto } from './dtos/edit.applications.dto';
 import { convertToCamelCase } from 'src/core/helpers/camelCase';
-import { FindOptionsWhere, UpdateDateColumn } from 'typeorm';
-import { Application } from 'src/core/data/database/entities/application.entity';
-import { ApplicationCycle } from 'src/core/data/database/relations/application-cycle.entity';
 import { validateThresholdEntity } from 'src/core/helpers/validateThresholds';
 import { Status } from 'src/core/data/types/applications/applications.types';
 
@@ -481,6 +475,92 @@ export class ApplicationMediator {
 
     return {
       message: 'Emails sent successfully.',
+      foundEmails: mailerResponse.foundEmails,
+      notFoundEmails: mailerResponse.notFoundEmails,
+    };
+  };
+
+  sendStatusEmail = async (data: SendingEmailsDto) => {
+    const { cycleId, emails } = data;
+
+    const cyclesWhereConditions = cycleId ? { id: cycleId } : {};
+
+    const currentCycle = await this.cyclesService.findOne(
+      cyclesWhereConditions,
+      ['decisionDateCycle'],
+    );
+
+    if (!currentCycle) {
+      throwError('Cycle not found.', HttpStatus.BAD_REQUEST);
+    }
+
+    const uniqueEmails: string[] = [...new Set(emails)];
+
+    const applicationWhereConditions = cycleId
+      ? { applicationCycle: { cycleId } }
+      : {};
+
+    const applicationsByCycle = await this.applicationsService.findMany(
+      applicationWhereConditions,
+      ['applicationUser'],
+    );
+
+    const applicationsToEmail = applicationsByCycle.filter((application) => {
+      const email: string = application.applicationUser[0]?.user?.email;
+      return uniqueEmails.includes(email);
+    });
+
+    const emailsToSend = applicationsToEmail
+      .map((application) => {
+        const email: string = application.applicationUser[0].user.email;
+        let templateName: string;
+        let subject: string;
+
+        switch (application.status) {
+          case Status.ACCEPTED:
+            templateName = 'acceptance-mail.hbs';
+            subject = 'SE Factory Acceptance';
+            break;
+          case Status.REJECTED:
+            templateName = 'rejection-mail.hbs';
+            subject = 'SE Factory Application Status';
+            break;
+          // case Status.WAITING_LIST:
+          //   templateName = 'waiting-list-mail.hbs';
+          //   subject = 'SE Factory Application Status';
+          //   break;
+          default:
+            return null;
+        }
+
+        return {
+          email,
+          templateName,
+          subject,
+        };
+      })
+      .filter((item) => item !== null);
+    let mailerResponse: any = { foundEmails: [], notFoundEmails: [] };
+
+    if (emailsToSend.length > 0) {
+      for (const emailData of emailsToSend) {
+        const { email, templateName, subject } = emailData;
+        const templateVariables = {};
+
+        const response = await this.mailService.sendEmails(
+          [email],
+          templateName,
+          subject,
+          templateVariables,
+        );
+
+        mailerResponse.foundEmails.push(email);
+        mailerResponse.notFoundEmails.push(...response.notFoundEmails);
+      }
+    }
+
+    return {
+      message: 'Status emails sent successfully.',
       foundEmails: mailerResponse.foundEmails,
       notFoundEmails: mailerResponse.notFoundEmails,
     };

@@ -46,4 +46,10 @@ export class ApplicationController {
   sendInterviewDateEmails(@Body() data: SendingEmailsDto) {
     return this.mediator.sendInterviewDateEmails(data);
   }
+
+  @Post('send-status-emails')
+  @UsePipes(new ValidationPipe({ whitelist: true }))
+  sendStatusEmails(@Body() data: SendingEmailsDto) {
+    return this.mediator.sendStatusEmail(data);
+  }
 }
