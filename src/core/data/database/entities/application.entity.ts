@@ -10,6 +10,7 @@ import { ApplicationInfo } from '../relations/application-info.entity';
 import { ApplicationProgram } from '../relations/application-program.entity';
 import { ApplicationUser } from '../relations/application-user.entity';
 import { ApplicationCycle } from '../relations/application-cycle.entity';
+import { Status } from '../../types/applications/applications.types';
 
 @Entity('application_news')
 export class Application extends BaseEntity {
@@ -67,7 +68,12 @@ export class Application extends BaseEntity {
   @Column({ type: 'bigint', nullable: true })
   soft_interview_score: number;
 
-  @Column({ type: 'varchar', length: 255, nullable: true })
+  @Column({
+    type: 'varchar',
+    length: 255,
+    nullable: true,
+    default: Status.PENDING,
+  })
   status: string;
 
   @OneToMany(

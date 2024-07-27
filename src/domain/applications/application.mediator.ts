@@ -18,6 +18,8 @@ import { convertToCamelCase } from 'src/core/helpers/camelCase';
 import { FindOptionsWhere, UpdateDateColumn } from 'typeorm';
 import { Application } from 'src/core/data/database/entities/application.entity';
 import { ApplicationCycle } from 'src/core/data/database/relations/application-cycle.entity';
+import { validateThresholdEntity } from 'src/core/helpers/validateThresholds';
+import { Status } from 'src/core/data/types/applications/applications.types';
 
 @Injectable()
 export class ApplicationMediator {
@@ -167,17 +169,17 @@ export class ApplicationMediator {
         options,
       );
 
-      if (
-        !cycle.thresholdCycle ||
-        !cycle.thresholdCycle.threshold ||
-        cycle.thresholdCycle.threshold.exam_passing_grade === null ||
-        cycle.thresholdCycle.threshold.exam_passing_grade === undefined ||
-        cycle.thresholdCycle.threshold.exam_passing_grade === 0
-      ) {
+      if (!cycle) {
+        throwError('Cycle is not found', HttpStatus.BAD_REQUEST);
+      }
+
+      if (!cycle.thresholdCycle || !cycle.thresholdCycle.threshold) {
         throwError(
-          'Exam Passing Grade must be provided.',
+          'Please provide thresholds for this cycle',
           HttpStatus.BAD_REQUEST,
         );
+      } else {
+        validateThresholdEntity(cycle.thresholdCycle.threshold);
       }
 
       const application = await this.applicationsService.findOne({ id });
@@ -203,20 +205,58 @@ export class ApplicationMediator {
       }
 
       if (
-        cycle.thresholdCycle &&
-        cycle.thresholdCycle.threshold &&
-        updatedData.exam_score !== undefined &&
-        updatedData.exam_score >=
-          cycle.thresholdCycle.threshold.exam_passing_grade
+        cycle.thresholdCycle.threshold.exam_passing_grade !== undefined &&
+        cycle.thresholdCycle.threshold.exam_passing_grade !== null &&
+        cycle.thresholdCycle.threshold.exam_passing_grade !== 0 &&
+        updatedData.exam_score !== undefined
       ) {
-        updatedData.passed_exam = true;
-        updatedData.passed_exam_date = new Date();
-      } else {
-        updatedData.passed_exam = false;
-        updatedData.passed_exam_date = new Date();
+        if (
+          updatedData.exam_score >=
+          cycle.thresholdCycle.threshold.exam_passing_grade
+        ) {
+          updatedData.passed_exam = true;
+          updatedData.passed_exam_date = new Date();
+        } else {
+          updatedData.passed_exam = false;
+          updatedData.passed_exam_date = new Date();
+        }
       }
 
-      console.log('🚀 ~ returncatcher ~ updatedData:', updatedData);
+      if (
+        softInterviewScore !== undefined &&
+        techInterviewScore !== undefined &&
+        cycle.thresholdCycle.threshold.weight_tech !== undefined &&
+        cycle.thresholdCycle.threshold.weight_soft !== undefined &&
+        cycle.thresholdCycle.threshold.weight_tech !== null &&
+        cycle.thresholdCycle.threshold.weight_soft !== null &&
+        cycle.thresholdCycle.threshold.weight_tech !== 0 &&
+        cycle.thresholdCycle.threshold.weight_soft !== 0
+      ) {
+        const interviewGrade =
+          (cycle.thresholdCycle.threshold.weight_tech * techInterviewScore +
+            cycle.thresholdCycle.threshold.weight_soft * softInterviewScore) /
+          2;
+
+        if (
+          interviewGrade >= cycle.thresholdCycle.threshold.primary_passing_grade
+        ) {
+          updatedData.passed_interview = true;
+          updatedData.status = Status.ACCEPTED;
+        } else if (
+          interviewGrade >=
+          cycle.thresholdCycle.threshold.secondary_passing_grade
+        ) {
+          updatedData.passed_interview = true;
+          updatedData.status = Status.WAITING_LIST;
+        } else {
+          updatedData.passed_interview = false;
+          updatedData.status = Status.REJECTED;
+        }
+        updatedData.passed_interview_date = new Date();
+      }
+
+      updatedData.updated_at = new Date();
+
       await this.applicationsService.update({ id }, updatedData);
 
       const updatedPayload = convertToCamelCase(updatedData);

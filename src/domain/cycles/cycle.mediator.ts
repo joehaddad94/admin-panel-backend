@@ -53,41 +53,6 @@ export class CycleMediator {
     });
   };
 
-  // createCycle = async (admin: Admin, data: CreateCycleDto) => {
-  //   return catcher(async () => {
-  //     const { programId, cycleName, fromDate, toDate } = data;
-  //     console.log('admin', admin);
-  //     // const created_by_id = admin.id;
-
-  //     const cycle = this.cycleService.create({
-  //       name: cycleName,
-  //       from_date: fromDate,
-  //       to_date: toDate,
-  //       created_at: format(new Date(), 'dd-MM-yyyy'),
-  //       updated_at: format(new Date(), 'dd-MM-yyyy'),
-  //       // created_by_id,
-  //       // updated_by_id: created_by_id,
-  //     });
-
-  //     const createdCycle = (await this.cycleService.save(cycle)) as Cycles;
-
-  //     if (!createdCycle || !createdCycle.id) {
-  //       throw new Error('Failed to create cycle or retrieve cycle ID');
-  //     }
-
-  //     const cycleProgram = new CycleProgram();
-  //     cycleProgram.cycle_id = createdCycle.id;
-  //     cycleProgram.program_id = programId;
-
-  //     await cycleProgram.save();
-
-  //     createdCycle.cycleProgram = cycleProgram;
-
-  //     const camelCaseCreatedCycle = convertToCamelCase(createdCycle);
-  //     return camelCaseCreatedCycle;
-  //   });
-  // };
-
   createEditCycle = async (admin: Admin, data: CreateEditCycleDto) => {
     return catcher(async () => {
       const { programId, cycleName, fromDate, toDate, cycleId } = data;
@@ -97,6 +62,7 @@ export class CycleMediator {
       }
 
       let cycle: Cycles;
+      let successMessage: string;
 
       if (cycleId) {
         const cyclesOptions: GlobalEntities[] = [
@@ -122,6 +88,7 @@ export class CycleMediator {
         cycle.updated_at = new Date();
 
         cycle = (await this.cycleService.save(cycle)) as Cycles;
+        successMessage = 'Cycle created succesfully.';
       } else {
         cycle = this.cycleService.create({
           name: cycleName,
@@ -144,10 +111,11 @@ export class CycleMediator {
         await cycleProgram.save();
 
         cycle.cycleProgram = cycleProgram;
+        successMessage = 'Cycle updated succesfully.';
       }
 
       const camelCaseCreatedCycle = convertToCamelCase(cycle);
-      return camelCaseCreatedCycle;
+      return { message: successMessage, cycle: camelCaseCreatedCycle };
     });
   };
 }
