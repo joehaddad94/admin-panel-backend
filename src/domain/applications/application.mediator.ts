@@ -120,8 +120,23 @@ export class ApplicationMediator {
         passedScreeningDate: app.passed_screening_date,
         examScore: app.exam_score,
         passedExam: app.passed_exam,
-        passedExamDate: app.passed_exam_date,
-        passedInterviewDate: app.passed_interview_date,
+        passedExamDate: new Date(app.passed_exam_date).toLocaleDateString(
+          'en-GB',
+          {
+            day: '2-digit',
+            month: '2-digit',
+            year: 'numeric',
+          },
+        ),
+        techInterviewScore: app.tech_interview_score,
+        softInterviewScore: app.soft_interview_score,
+        passedInterviewDate: new Date(
+          app.passed_interview_date,
+        ).toLocaleDateString('en-GB', {
+          day: '2-digit',
+          month: '2-digit',
+          year: 'numeric',
+        }),
         passedInterview: app.passed_interview,
         applicationStatus: app.status,
         remarks: app.remarks,
@@ -186,9 +201,16 @@ export class ApplicationMediator {
       const updatedData: any = {};
 
       const properties = {
-        exam_score: examScore,
-        tech_interview_score: techInterviewScore,
-        soft_interview_score: softInterviewScore,
+        exam_score:
+          examScore !== 0 ? examScore : Number(application.exam_score),
+        tech_interview_score:
+          techInterviewScore !== 0
+            ? techInterviewScore
+            : Number(application.tech_interview_score),
+        soft_interview_score:
+          softInterviewScore !== 0
+            ? softInterviewScore
+            : Number(application.soft_interview_score),
         status: status,
       };
 
@@ -216,6 +238,15 @@ export class ApplicationMediator {
         }
       }
 
+      const finalTechInterviewScore =
+        techInterviewScore !== undefined
+          ? techInterviewScore
+          : application.tech_interview_score;
+      const finalSoftInterviewScore =
+        softInterviewScore !== undefined
+          ? softInterviewScore
+          : application.soft_interview_score;
+
       if (
         softInterviewScore !== undefined &&
         techInterviewScore !== undefined &&
@@ -227,9 +258,8 @@ export class ApplicationMediator {
         cycle.thresholdCycle.threshold.weight_soft !== 0
       ) {
         const interviewGrade =
-          (cycle.thresholdCycle.threshold.weight_tech * techInterviewScore +
-            cycle.thresholdCycle.threshold.weight_soft * softInterviewScore) /
-          2;
+          cycle.thresholdCycle.threshold.weight_tech * finalTechInterviewScore +
+          cycle.thresholdCycle.threshold.weight_soft * finalSoftInterviewScore;
 
         if (
           interviewGrade >= cycle.thresholdCycle.threshold.primary_passing_grade
@@ -251,7 +281,10 @@ export class ApplicationMediator {
 
       updatedData.updated_at = new Date();
 
-      await this.applicationsService.update({ id }, updatedData);
+      const response = await this.applicationsService.update(
+        { id },
+        updatedData,
+      );
 
       const updatedPayload = convertToCamelCase(updatedData);
 
@@ -525,10 +558,10 @@ export class ApplicationMediator {
             templateName = 'rejection-mail.hbs';
             subject = 'SE Factory Application Status';
             break;
-          // case Status.WAITING_LIST:
-          //   templateName = 'waiting-list-mail.hbs';
-          //   subject = 'SE Factory Application Status';
-          //   break;
+          case Status.WAITING_LIST:
+            templateName = 'waiting-list-mail.hbs';
+            subject = 'SE Factory Application Status';
+            break;
           default:
             return null;
         }
