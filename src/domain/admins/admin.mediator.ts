@@ -4,17 +4,16 @@ import { AdminService } from './admin.service';
 import { JwtService } from '@nestjs/jwt';
 import { MailService } from '../mail/mail.service';
 import { InviteDto, ManualCreateDto } from '../admins';
-import { throwBadRequest } from 'src/core/settings/base/errors/errors';
-import { catcher } from 'src/core/helpers/operation';
+import { throwBadRequest } from '../../core/settings/base/errors/errors';
+import { catcher } from '../../core/helpers/operation';
 import { format } from 'date-fns';
-import { convertToCamelCase } from 'src/core/helpers/camelCase';
+import { convertToCamelCase } from '../../core/helpers/camelCase';
 
 @Injectable()
 export class AdminMediator {
   constructor(
     private readonly service: AdminService,
     private readonly mailService: MailService,
-    private readonly jwtService: JwtService,
   ) {}
 
   manualCreate = async (data: ManualCreateDto) => {
