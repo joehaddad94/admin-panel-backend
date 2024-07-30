@@ -64,6 +64,10 @@ export class CycleMediator {
       let cycle: Cycles;
       let successMessage: string;
 
+      const formatDate = (date: Date): string => {
+        return format(date, 'dd/MM/yyyy');
+      };
+
       if (cycleId) {
         const cyclesOptions: GlobalEntities[] = [
           'cycleProgram',
@@ -115,7 +119,14 @@ export class CycleMediator {
       }
 
       const camelCaseCreatedCycle = convertToCamelCase(cycle);
-      return { message: successMessage, cycle: camelCaseCreatedCycle };
+      return {
+        message: successMessage,
+        cycle: {
+          ...camelCaseCreatedCycle,
+          from_date: formatDate(new Date(camelCaseCreatedCycle.from_date)),
+          to_date: formatDate(new Date(camelCaseCreatedCycle.to_date)),
+        },
+      };
     });
   };
 }

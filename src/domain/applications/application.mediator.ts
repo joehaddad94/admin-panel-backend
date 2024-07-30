@@ -14,6 +14,8 @@ import { EditApplicationsDto } from './dtos/edit.applications.dto';
 import { convertToCamelCase } from 'src/core/helpers/camelCase';
 import { validateThresholdEntity } from 'src/core/helpers/validateThresholds';
 import { Status } from 'src/core/data/types/applications/applications.types';
+import { format } from 'date-fns';
+import { Application } from 'src/core/data/database/entities/application.entity';
 
 @Injectable()
 export class ApplicationMediator {
@@ -158,6 +160,177 @@ export class ApplicationMediator {
     });
   };
 
+  // editApplications = async (data: EditApplicationsDto) => {
+  //   return catcher(async () => {
+  //     const {
+  //       id,
+  //       examScore,
+  //       techInterviewScore,
+  //       softInterviewScore,
+  //       status,
+  //       cycleId,
+  //     } = data;
+
+  //     const options: GlobalEntities[] = ['thresholdCycle'];
+
+  //     const cycle = await this.cyclesService.findOne(
+  //       {
+  //         id: cycleId,
+  //       },
+  //       options,
+  //     );
+
+  //     if (!cycle) {
+  //       throwError('Cycle is not found', HttpStatus.BAD_REQUEST);
+  //     }
+
+  //     if (!cycle.thresholdCycle || !cycle.thresholdCycle.threshold) {
+  //       throwError(
+  //         'Please provide thresholds for this cycle',
+  //         HttpStatus.BAD_REQUEST,
+  //       );
+  //     } else {
+  //       validateThresholdEntity(cycle.thresholdCycle.threshold);
+  //     }
+
+  //     const application = await this.applicationsService.findOne({ id });
+
+  //     throwNotFound({
+  //       entity: 'application',
+  //       errorCheck: !application,
+  //     });
+
+  //     let updatedData: any = {};
+
+  //     const properties = {
+  //       exam_score:
+  //         examScore !== 0 ? examScore : Number(application.exam_score),
+  //       tech_interview_score:
+  //         techInterviewScore !== 0
+  //           ? techInterviewScore
+  //           : Number(application.tech_interview_score),
+  //       soft_interview_score:
+  //         softInterviewScore !== 0
+  //           ? softInterviewScore
+  //           : Number(application.soft_interview_score),
+  //       status: status,
+  //     };
+
+  //     for (const [key, value] of Object.entries(properties)) {
+  //       if (value !== undefined) {
+  //         updatedData[key] = value;
+  //       }
+  //     }
+
+  //     if (
+  //       cycle.thresholdCycle.threshold.exam_passing_grade !== undefined &&
+  //       cycle.thresholdCycle.threshold.exam_passing_grade !== null &&
+  //       cycle.thresholdCycle.threshold.exam_passing_grade !== 0 &&
+  //       updatedData.exam_score !== undefined
+  //     ) {
+  //       if (
+  //         updatedData.exam_score >=
+  //         cycle.thresholdCycle.threshold.exam_passing_grade
+  //       ) {
+  //         updatedData.passed_exam = true;
+  //         updatedData.passed_exam_date = new Date();
+  //       } else {
+  //         updatedData.passed_exam = false;
+  //         updatedData.passed_exam_date = new Date();
+  //       }
+  //     }
+
+  //     const finalTechInterviewScore =
+  //       techInterviewScore !== undefined
+  //         ? techInterviewScore
+  //         : application.tech_interview_score;
+  //     const finalSoftInterviewScore =
+  //       softInterviewScore !== undefined
+  //         ? softInterviewScore
+  //         : application.soft_interview_score;
+
+  //     if (
+  //       softInterviewScore !== undefined &&
+  //       techInterviewScore !== undefined &&
+  //       cycle.thresholdCycle.threshold.weight_tech !== undefined &&
+  //       cycle.thresholdCycle.threshold.weight_soft !== undefined &&
+  //       cycle.thresholdCycle.threshold.weight_tech !== null &&
+  //       cycle.thresholdCycle.threshold.weight_soft !== null &&
+  //       cycle.thresholdCycle.threshold.weight_tech !== 0 &&
+  //       cycle.thresholdCycle.threshold.weight_soft !== 0
+  //     ) {
+  //       const interviewGrade =
+  //         cycle.thresholdCycle.threshold.weight_tech * finalTechInterviewScore +
+  //         cycle.thresholdCycle.threshold.weight_soft * finalSoftInterviewScore;
+
+  //       console.log(
+  //         '🚀 ~ ApplicationMediator ~ returncatcher ~ finalSoftInterviewScore:',
+  //         finalSoftInterviewScore,
+  //       );
+  //       console.log(
+  //         '🚀 ~ ApplicationMediator ~ returncatcher ~ cycle.thresholdCycle.threshold.weight_soft:',
+  //         cycle.thresholdCycle.threshold.weight_soft,
+  //       );
+  //       console.log(
+  //         '🚀 ~ ApplicationMediator ~ returncatcher ~ finalTechInterviewScore:',
+  //         finalTechInterviewScore,
+  //       );
+  //       console.log(
+  //         '🚀 ~ ApplicationMediator ~ returncatcher ~ cycle.thresholdCycle.threshold.weight_tech:',
+  //         cycle.thresholdCycle.threshold.weight_tech,
+  //       );
+  //       console.log(
+  //         '🚀 ~ ApplicationMediator ~ returncatcher ~ interviewGrade:',
+  //         interviewGrade,
+  //       );
+  //       if (
+  //         interviewGrade >= cycle.thresholdCycle.threshold.primary_passing_grade
+  //       ) {
+  //         updatedData.passed_interview = true;
+  //         updatedData.status = Status.ACCEPTED;
+  //       } else if (
+  //         interviewGrade >=
+  //         cycle.thresholdCycle.threshold.secondary_passing_grade
+  //       ) {
+  //         updatedData.passed_interview = true;
+  //         updatedData.status = Status.WAITING_LIST;
+  //       } else {
+  //         updatedData.passed_interview = false;
+  //         updatedData.status = Status.REJECTED;
+  //       }
+  //       updatedData.passed_interview_date = new Date();
+  //     }
+
+  //     updatedData.updated_at = new Date();
+
+  //     const response = await this.applicationsService.update(
+  //       { id },
+  //       updatedData,
+  //     );
+
+  //     const formatDate = (date: Date) => format(date, 'dd/MM/yyyy');
+
+  //     const updatedPayload = convertToCamelCase({
+  //       ...updatedData,
+  //       applicationStatus: updatedData.status,
+  //       passedExamDate: updatedData.passed_exam_date
+  //         ? formatDate(updatedData.passed_exam_date)
+  //         : null,
+  //       passedInterviewDate: updatedData.passed_interview_date
+  //         ? formatDate(updatedData.passed_interview_date)
+  //         : null,
+  //       passedScreeningDate: updatedData.passed_screening_date
+  //         ? formatDate(updatedData.passed_screening_date)
+  //         : null,
+  //     });
+
+  //     return {
+  //       message: 'Application updated successfully.',
+  //       updatedPayload,
+  //     };
+  //   });
+  // };
+
   editApplications = async (data: EditApplicationsDto) => {
     return catcher(async () => {
       const {
@@ -170,37 +343,26 @@ export class ApplicationMediator {
       } = data;
 
       const options: GlobalEntities[] = ['thresholdCycle'];
-
-      const cycle = await this.cyclesService.findOne(
-        {
-          id: cycleId,
-        },
-        options,
-      );
+      const cycle = await this.cyclesService.findOne({ id: cycleId }, options);
 
       if (!cycle) {
         throwError('Cycle is not found', HttpStatus.BAD_REQUEST);
       }
 
-      if (!cycle.thresholdCycle || !cycle.thresholdCycle.threshold) {
+      const { thresholdCycle } = cycle;
+      if (!thresholdCycle || !thresholdCycle.threshold) {
         throwError(
           'Please provide thresholds for this cycle',
           HttpStatus.BAD_REQUEST,
         );
       } else {
-        validateThresholdEntity(cycle.thresholdCycle.threshold);
+        validateThresholdEntity(thresholdCycle.threshold);
       }
 
       const application = await this.applicationsService.findOne({ id });
+      throwNotFound({ entity: 'application', errorCheck: !application });
 
-      throwNotFound({
-        entity: 'application',
-        errorCheck: !application,
-      });
-
-      const updatedData: any = {};
-
-      const properties = {
+      const updatedData: any = {
         exam_score:
           examScore !== 0 ? examScore : Number(application.exam_score),
         tech_interview_score:
@@ -212,64 +374,33 @@ export class ApplicationMediator {
             ? softInterviewScore
             : Number(application.soft_interview_score),
         status: status,
+        updated_at: new Date(),
       };
 
-      for (const [key, value] of Object.entries(properties)) {
-        if (value !== undefined) {
-          updatedData[key] = value;
-        }
+      const { threshold } = thresholdCycle;
+      if (threshold.exam_passing_grade && updatedData.exam_score >= 0) {
+        updatedData.passed_exam =
+          updatedData.exam_score >= threshold.exam_passing_grade;
+        updatedData.passed_exam_date = new Date();
       }
 
-      if (
-        cycle.thresholdCycle.threshold.exam_passing_grade !== undefined &&
-        cycle.thresholdCycle.threshold.exam_passing_grade !== null &&
-        cycle.thresholdCycle.threshold.exam_passing_grade !== 0 &&
-        updatedData.exam_score !== undefined
-      ) {
-        if (
-          updatedData.exam_score >=
-          cycle.thresholdCycle.threshold.exam_passing_grade
-        ) {
-          updatedData.passed_exam = true;
-          updatedData.passed_exam_date = new Date();
-        } else {
-          updatedData.passed_exam = false;
-          updatedData.passed_exam_date = new Date();
-        }
-      }
-
-      const finalTechInterviewScore =
-        techInterviewScore !== undefined
-          ? techInterviewScore
-          : application.tech_interview_score;
-      const finalSoftInterviewScore =
-        softInterviewScore !== undefined
-          ? softInterviewScore
-          : application.soft_interview_score;
+      const finalTechInterviewScore = updatedData.tech_interview_score;
+      const finalSoftInterviewScore = updatedData.soft_interview_score;
 
       if (
-        softInterviewScore !== undefined &&
-        techInterviewScore !== undefined &&
-        cycle.thresholdCycle.threshold.weight_tech !== undefined &&
-        cycle.thresholdCycle.threshold.weight_soft !== undefined &&
-        cycle.thresholdCycle.threshold.weight_tech !== null &&
-        cycle.thresholdCycle.threshold.weight_soft !== null &&
-        cycle.thresholdCycle.threshold.weight_tech !== 0 &&
-        cycle.thresholdCycle.threshold.weight_soft !== 0
+        threshold.weight_tech &&
+        threshold.weight_soft &&
+        finalTechInterviewScore >= 0 &&
+        finalSoftInterviewScore >= 0
       ) {
         const interviewGrade =
-          cycle.thresholdCycle.threshold.weight_tech * finalTechInterviewScore +
-          cycle.thresholdCycle.threshold.weight_soft * finalSoftInterviewScore;
+          threshold.weight_tech * finalTechInterviewScore +
+          threshold.weight_soft * finalSoftInterviewScore;
 
-        if (
-          interviewGrade >= cycle.thresholdCycle.threshold.primary_passing_grade
-        ) {
+        if (interviewGrade >= threshold.primary_passing_grade) {
           updatedData.passed_interview = true;
           updatedData.status = Status.ACCEPTED;
-        } else if (
-          interviewGrade >=
-          cycle.thresholdCycle.threshold.secondary_passing_grade
-        ) {
+        } else if (interviewGrade >= threshold.secondary_passing_grade) {
           updatedData.passed_interview = true;
           updatedData.status = Status.WAITING_LIST;
         } else {
@@ -279,14 +410,28 @@ export class ApplicationMediator {
         updatedData.passed_interview_date = new Date();
       }
 
-      updatedData.updated_at = new Date();
-
       const response = await this.applicationsService.update(
         { id },
         updatedData,
       );
 
-      const updatedPayload = convertToCamelCase(updatedData);
+      const formatDate = (date: Date) => format(date, 'dd/MM/yyyy');
+
+      const updatedPayload = convertToCamelCase({
+        ...updatedData,
+        applicationStatus: updatedData.status,
+        passedExamDate: updatedData.passed_exam_date
+          ? formatDate(updatedData.passed_exam_date)
+          : null,
+        passedInterviewDate: updatedData.passed_interview_date
+          ? formatDate(updatedData.passed_interview_date)
+          : null,
+        passedScreeningDate: updatedData.passed_screening_date
+          ? formatDate(updatedData.passed_screening_date)
+          : null,
+      });
+
+      delete updatedPayload.status;
 
       return {
         message: 'Application updated successfully.',
