@@ -62,38 +62,34 @@ export class CycleMediator {
       }
 
       let cycle: Cycles;
+      let savedCycle: Cycles;
       let successMessage: string;
 
-      const formatDate = (date: Date): string => {
-        return format(date, 'dd/MM/yyyy');
-      };
-
       if (cycleId) {
-        const cyclesOptions: GlobalEntities[] = [
+        cycle = await this.cycleService.findOne({ id: cycleId }, [
           'cycleProgram',
-          'decisionDateCycle',
-          'thresholdCycle',
-        ];
-
-        cycle = await this.cycleService.findOne({ id: cycleId }, cyclesOptions);
+        ]);
         if (!cycle) {
           throw new Error(`Cycle with ID ${cycleId} not found`);
         }
 
-        if (cycleName) {
-          cycle.name = cycleName;
-        }
-        if (fromDate) {
-          cycle.from_date = fromDate;
-        }
-        if (toDate) {
-          cycle.to_date = toDate;
-        }
+        if (cycleName) cycle.name = cycleName;
+        if (fromDate) cycle.from_date = fromDate;
+        if (toDate) cycle.to_date = toDate;
         cycle.updated_at = new Date();
 
         cycle = (await this.cycleService.save(cycle)) as Cycles;
-        successMessage = 'Cycle created succesfully.';
+        successMessage = 'Cycle updated succesfully.';
       } else {
+        const exisitingCycle = await this.cycleService.findOne(
+          { name: cycleName },
+          ['cycleProgram'],
+        );
+
+        if (exisitingCycle) {
+          throw new Error('Cycle Name must be unique.');
+        }
+
         cycle = this.cycleService.create({
           name: cycleName,
           from_date: fromDate,
@@ -115,7 +111,15 @@ export class CycleMediator {
         await cycleProgram.save();
 
         cycle.cycleProgram = cycleProgram;
-        successMessage = 'Cycle updated succesfully.';
+        successMessage = 'Cycle created succesfully.';
+
+        savedCycle = await this.cycleService.findOne(
+          {
+            id: cycle.id,
+          },
+          ['cycleProgram'],
+        );
+        cycle.cycleProgram.program = savedCycle.cycleProgram.program;
       }
 
       const camelCaseCreatedCycle = convertToCamelCase(cycle);
@@ -123,8 +127,6 @@ export class CycleMediator {
         message: successMessage,
         cycle: {
           ...camelCaseCreatedCycle,
-          from_date: formatDate(new Date(camelCaseCreatedCycle.from_date)),
-          to_date: formatDate(new Date(camelCaseCreatedCycle.to_date)),
         },
       };
     });

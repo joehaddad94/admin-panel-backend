@@ -14,12 +14,10 @@ export class CreateEditCycleDto {
 
   @ApiProperty()
   @IsOptional()
-  @IsDateString({}, { message: 'fromDate must be a valid date string' })
   fromDate?: Date;
 
   @ApiProperty()
   @IsOptional()
-  @IsDateString({}, { message: 'toDate must be a valid date string' })
   toDate?: Date;
 
   @ApiProperty()
