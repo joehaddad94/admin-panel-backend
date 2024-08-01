@@ -36,6 +36,8 @@ jobs:
           chmod 600 ~/.ssh/id_rsa
           ssh-keyscan github.com >> ~/.ssh/known_hosts
           npm run redeploy:dev
+          cd ~
+          cd /etc/systemd/system
           sudo systemctl restart admin-dev.service
         env:
           SSH_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
