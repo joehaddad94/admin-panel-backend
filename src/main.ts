@@ -8,7 +8,11 @@ async function bootstrap() {
       logger: ['error', 'debug', 'log', 'verbose', 'warn'],
     });
 
-    app.enableCors();
+    app.enableCors({
+      origin: 'https://sef-admin-panel-development.vercel.app',
+      methods: 'GET,HEAD,PUT,PATCH,POST,DELETE,OPTIONS',
+      credentials: true,
+    });
 
     const port = process.env.SERVER_PORT || 3000;
 
