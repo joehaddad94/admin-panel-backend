@@ -5,16 +5,8 @@ import { initOpenApi } from './core/config/documentation/swagger';
 async function bootstrap() {
   try {
     const app = await NestFactory.create(AppModule, {
-      cors: {
-        origin: 'https://sef-admin-panel-development.vercel.app',
-      },
+      cors: true,
       logger: ['error', 'debug', 'log', 'verbose', 'warn'],
-    });
-
-    app.enableCors({
-      origin: 'https://sef-admin-panel-development.vercel.app',
-      methods: 'GET,HEAD,PUT,PATCH,POST,DELETE,OPTIONS',
-      credentials: true,
     });
 
     const port = process.env.SERVER_PORT || 3000;
