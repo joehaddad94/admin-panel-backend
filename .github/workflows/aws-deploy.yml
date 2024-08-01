@@ -38,7 +38,7 @@ jobs:
           npm run redeploy:dev
           cd ~
           cd /etc/systemd/system
-          sudo systemctl restart admin-dev.service
+          sudo systemctl daemon-reload
         env:
           SSH_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
 
