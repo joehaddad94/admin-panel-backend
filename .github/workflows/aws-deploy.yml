@@ -23,6 +23,9 @@ jobs:
       - name: Change Git remote URL to SSH
         run: git remote set-url origin git@github.com:sefact0ry/sef-admin-panel-server.git
 
+      - name: Pull latest changes from development branch
+        run: git pull origin development
+
       - name: Install dependencies
         run: npm install
 
