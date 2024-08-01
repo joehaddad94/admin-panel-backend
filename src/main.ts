@@ -6,7 +6,7 @@ async function bootstrap() {
   try {
     const app = await NestFactory.create(AppModule, {
       cors: {
-        origin: '*',
+        origin: 'https://sef-admin-panel-development.vercel.app',
       },
       logger: ['error', 'debug', 'log', 'verbose', 'warn'],
     });
