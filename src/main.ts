@@ -5,9 +5,10 @@ import { initOpenApi } from './core/config/documentation/swagger';
 async function bootstrap() {
   try {
     const app = await NestFactory.create(AppModule, {
-      cors: true,
       logger: ['error', 'debug', 'log', 'verbose', 'warn'],
     });
+
+    app.enableCors();
 
     const port = process.env.SERVER_PORT || 3000;
 
