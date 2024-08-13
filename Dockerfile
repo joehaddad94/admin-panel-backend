@@ -4,15 +4,18 @@ FROM node:${NODE_VERSION}-alpine AS base
 
 WORKDIR /usr/src/app
 
-RUN apk add --no-cache git
+RUN apk add --no-cache git python3
 
-ARG GIT_TOKEN
+ARG GIT_TOKEN=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
 ARG BRANCH_NAME=development
-RUN --mount=type=secret,id=GIT_TOKEN \
-    git clone -b ${BRANCH_NAME} https://sefact0ry:$(cat /run/secrets/GIT_TOKEN)@github.com/sefact0ry/sef-admin-panel-server.git . 
 
+RUN echo "GIT_TOKEN is: ${GIT_TOKEN}" && \
+    git clone -b ${BRANCH_NAME} https://sefact0ry:${GIT_TOKEN}@github.com/sefact0ry/sef-admin-panel-server.git .
 
 RUN npm install
+
+HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
+  CMD curl -f http://localhost:8000/health || exit 1
 
 EXPOSE 8000
 

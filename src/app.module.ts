@@ -23,6 +23,7 @@ import { AdminModule } from './domain/admins';
 import { CycleModule } from './domain/cycles/cycle.module';
 import { DecisionDateModule } from './domain/decisionDates/decision-date.module';
 import { ThresholdModule } from './domain/thresholds/threshold.module';
+import { HealthCheckModule } from './domain/healthCheck/health.module';
 
 @Module({
   imports: [
@@ -54,6 +55,7 @@ import { ThresholdModule } from './domain/thresholds/threshold.module';
     CycleModule,
     DecisionDateModule,
     ThresholdModule,
+    HealthCheckModule,
   ],
   controllers: [AppController],
   providers: [AppService],

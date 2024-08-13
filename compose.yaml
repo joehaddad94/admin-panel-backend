@@ -11,9 +11,3 @@ services:
       - '8000:8000'
     env_file:
       - .env.develop
-    secrets:
-      - GIT_TOKEN
-
-secrets:
-  GIT_TOKEN:
-    file: ./secrets/GIT_TOKEN
