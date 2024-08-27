@@ -6,11 +6,10 @@ WORKDIR /usr/src/app
 
 RUN apk add --no-cache git python3
 
-ARG GIT_TOKEN=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
+ARG GIT_TOKEN
 ARG BRANCH_NAME=development
 
-RUN echo "GIT_TOKEN is: ${GIT_TOKEN}" && \
-    git clone -b ${BRANCH_NAME} https://sefact0ry:${GIT_TOKEN}@github.com/sefact0ry/sef-admin-panel-server.git .
+RUN git clone -b ${BRANCH_NAME} https://sefact0ry:${GIT_TOKEN}@github.com/sefact0ry/sef-admin-panel-server.git .
 
 RUN npm install
 
