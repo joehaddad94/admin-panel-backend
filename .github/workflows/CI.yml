@@ -56,6 +56,12 @@ jobs:
       - name: Log in to Amazon ECR
         uses: aws-actions/amazon-ecr-login@v1
 
+      - name: Debug information
+        run: |
+          echo "AWS Account ID: ${{ secrets.AWS_ACCOUNT_ID }}"
+          echo "AWS Region: ${{ secrets.AWS_REGION }}"
+          echo "ECR Repository: ${{ secrets.ECR_REPOSITORY }}"
+
       - name: Build and push Docker image
         uses: docker/build-push-action@v3
         with:
