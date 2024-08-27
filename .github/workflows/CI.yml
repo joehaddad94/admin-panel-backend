@@ -58,7 +58,7 @@ jobs:
 
       - name: Debug information
         run: |
-          echo "AWS Account ID: ${{ secrets.AWS_ACCOUNT_ID }}"
+          echo "AWS Account ID: ${{ secrets.AWS_ACCESS_KEY_ID }}"
           echo "AWS Region: ${{ secrets.AWS_REGION }}"
           echo "ECR Repository: ${{ secrets.ECR_REPOSITORY }}"
 
@@ -68,7 +68,7 @@ jobs:
           context: .
           file: ./Dockerfile
           push: true
-          tags: ${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.${{ secrets.AWS_REGION }}.amazonaws.com/${{ secrets.ECR_REPOSITORY }}:${{ github.sha }}
+          tags: ${{ secrets.AWS_ACCESS_KEY_ID }}.dkr.ecr.${{ secrets.AWS_REGION }}.amazonaws.com/${{ secrets.ECR_REPOSITORY }}:${{ github.sha }}
           platforms: linux/amd64,linux/arm64
           build-args: |
             GIT_TOKEN=${{ secrets.GIT_TOKEN }}
