@@ -67,3 +67,19 @@ jobs:
           platforms: linux/amd64,linux/arm64
           build-args: |
             GIT_TOKEN=${{ secrets.GIT_TOKEN }}
+
+  deploy:
+    needs: build-and-push
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Set up AWS credentials
+        uses: aws-actions/configure-aws-credentials@v1
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ secrets.AWS_REGION }}
+
+      - name: Deploy to ECS
+        run: |
+          aws ecs update-service --cluster my-fargate-cluster --service my-app-service --force-new-deployment
