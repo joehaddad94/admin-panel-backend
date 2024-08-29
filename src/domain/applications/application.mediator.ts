@@ -119,26 +119,31 @@ export class ApplicationMediator {
             : app.is_eligible === false
             ? 'No'
             : '-',
-        passedScreeningDate: app.passed_screening_date,
+        passedScreeningDate: app.passed_screening_date
+          ? new Date(app.passed_screening_date).toLocaleDateString('en-GB', {
+              day: '2-digit',
+              month: '2-digit',
+              year: 'numeric',
+            })
+          : null,
         examScore: app.exam_score,
         passedExam: app.passed_exam,
-        passedExamDate: new Date(app.passed_exam_date).toLocaleDateString(
-          'en-GB',
-          {
-            day: '2-digit',
-            month: '2-digit',
-            year: 'numeric',
-          },
-        ),
+        passedExamDate: app.passed_exam_date
+          ? new Date(app.passed_exam_date).toLocaleDateString('en-GB', {
+              day: '2-digit',
+              month: '2-digit',
+              year: 'numeric',
+            })
+          : null,
         techInterviewScore: app.tech_interview_score,
         softInterviewScore: app.soft_interview_score,
-        passedInterviewDate: new Date(
-          app.passed_interview_date,
-        ).toLocaleDateString('en-GB', {
-          day: '2-digit',
-          month: '2-digit',
-          year: 'numeric',
-        }),
+        passedInterviewDate: app.passed_interview_date
+          ? new Date(app.passed_interview_date).toLocaleDateString('en-GB', {
+              day: '2-digit',
+              month: '2-digit',
+              year: 'numeric',
+            })
+          : null,
         passedInterview: app.passed_interview,
         applicationStatus: app.status,
         remarks: app.remarks,
