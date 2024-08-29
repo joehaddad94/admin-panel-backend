@@ -1,13 +1,15 @@
 name: Deploy Application
 
+# Defines when the action will run.
 on:
   push:
     branches:
-      - development
+      - development # Specify the branch to listen for push events
 
+# Jobs to execute
 jobs:
   build-and-deploy:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-latest # Specifies the runner environment
 
     steps:
       - name: Checkout code
@@ -17,6 +19,13 @@ jobs:
         uses: actions/setup-node@v3
         with:
           node-version: '20'
+
+      - name: Set up SSH key
+        run: |
+          mkdir -p ~/.ssh
+          echo "${{ secrets.SSH_PRIVATE_KEY }}" > ~/.ssh/id_rsa
+          chmod 600 ~/.ssh/id_rsa
+          ssh-keyscan github.com >> ~/.ssh/known_hosts
 
       - name: Change Git remote URL to SSH
         run: git remote set-url origin git@github.com:sefact0ry/sef-admin-panel-server.git
@@ -31,7 +40,9 @@ jobs:
         run: npm run build
 
       - name: Install dependencies and redeploy
-        run: |
-          mkdir -p ~/.ssh
-          echo "${{ secrets.SSH_PRIVATE_KEY }}" > ~/.ssh/id_rsa
-          chmod 600 ~/.
+        run: npm run redeploy:dev
+        env:
+          SSH_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
+
+env:
+  CI: true
