@@ -82,4 +82,4 @@ jobs:
 
       - name: Deploy to ECS
         run: |
-          aws ecs update-service --cluster my-fargate-cluster --service my-app-service --force-new-deployment
+          aws ecs update-service --cluster SEF-admin-panel-development --service SEF-admin-panel-deployment --force-new-deployment
