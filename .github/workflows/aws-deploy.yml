@@ -13,12 +13,15 @@ jobs:
 
     steps:
       - name: Checkout code
-        uses: actions/checkout@v3 # Checks-out your repository under $GITHUB_WORKSPACE
+        uses: actions/checkout@v3
+
+      - name: Pull latest changes from development branch
+        run: git pull origin development
 
       - name: Set up Node.js
         uses: actions/setup-node@v3
         with:
-          node-version: '20' # Sets up Node.js version
+          node-version: '20'
 
       - name: Change Git remote URL to SSH
         run: git remote set-url origin git@github.com:sefact0ry/sef-admin-panel-server.git
