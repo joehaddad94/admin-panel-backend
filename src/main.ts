@@ -9,7 +9,10 @@ async function bootstrap() {
     });
 
     app.enableCors({
-      origin: 'https://sef-admin-panel-development.vercel.app',
+      origin: [
+        'https://sef-admin-panel-development.vercel.app',
+        'http://localhost:3000',
+      ],
       methods: 'GET,HEAD,PUT,PATCH,POST,DELETE,OPTIONS',
       credentials: true,
     });
