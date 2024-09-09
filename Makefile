@@ -55,3 +55,10 @@ test-clean:
 	docker exec $(TESTING_CONTAINER_NAME) npm test
 	docker stop $(TESTING_CONTAINER_NAME)
 	docker rm $(TESTING_CONTAINER_NAME)
+
+push:
+	@echo "Tagging and pushing the Docker image to ECR..."
+	docker tag $(IMAGE_NAME):$(TAG) $$AWS_ACCOUNT_ID.dkr.ecr.$$AWS_REGION.amazonaws.com/$$ECR_REPOSITORY:$(TAG)
+	docker push $$AWS_ACCOUNT_ID.dkr.ecr.$$AWS_REGION.amazonaws.com/$$ECR_REPOSITORY:$(TAG)
+
+build-and-push: rebuild push
