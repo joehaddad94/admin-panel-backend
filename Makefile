@@ -30,8 +30,12 @@ clean:
 	fi
 
 rmi:
-	@echo "Removing the Docker image..."
-	docker rmi $(IMAGE_NAME):$(TAG)
+	@echo "Removing the Docker image (if exists)..."
+	@if [ $(shell docker images -q $(IMAGE_NAME):$(TAG)) ]; then \
+		docker rmi $(IMAGE_NAME):$(TAG); \
+	else \
+		echo "Image $(IMAGE_NAME):$(TAG) does not exist."; \
+	fi
 
 rebuild: stop clean build
 
