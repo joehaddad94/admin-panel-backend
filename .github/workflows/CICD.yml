@@ -27,8 +27,12 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-build-
 
-      - name: Install Make
-        run: sudo apt-get install make
+      - name: Install Make (cached)
+        uses: actions/cache@v3
+        with:
+          path: /usr/bin/make
+          key: ${{ runner.os }}-make
+          run: sudo apt-get install make
 
       - name: Build using Makefile
         run: make rebuild
@@ -55,8 +59,12 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-build-
 
-      - name: Install Make
-        run: sudo apt-get install make
+      - name: Install Make (cached)
+        uses: actions/cache@v3
+        with:
+          path: /usr/bin/make
+          key: ${{ runner.os }}-make
+          run: sudo apt-get install make
 
       - name: Set up AWS credentials
         uses: aws-actions/configure-aws-credentials@v1
