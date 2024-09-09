@@ -14,12 +14,20 @@ run:
 	docker run -d --name $(CONTAINER_NAME) -p $(PORT):8000 $(IMAGE_NAME):$(TAG)
 
 stop:
-	@echo "Stopping the Docker container..."
-	docker stop $(CONTAINER_NAME)
+	@echo "Stopping the Docker container (if running)..."
+	@if [ $(shell docker ps -q -f name=$(CONTAINER_NAME)) ]; then \
+		docker stop $(CONTAINER_NAME); \
+	else \
+		echo "Container $(CONTAINER_NAME) is not running."; \
+	fi
 
 clean:
-	@echo "Cleaning up the container..."
-	docker rm $(CONTAINER_NAME)
+	@echo "Cleaning up the container (if exists)..."
+	@if [ $(shell docker ps -a -q -f name=$(CONTAINER_NAME)) ]; then \
+		docker rm $(CONTAINER_NAME); \
+	else \
+		echo "Container $(CONTAINER_NAME) does not exist."; \
+	fi
 
 rmi:
 	@echo "Removing the Docker image..."
