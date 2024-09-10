@@ -1,15 +1,16 @@
 name: Deploy Application
 
-# Defines when the action will run.
 on:
   push:
     branches:
-      - development # Specify the branch to listen for push events
+      - development
+  pull_request:
+    branches:
+      - development
 
-# Jobs to execute
 jobs:
   build-and-deploy:
-    runs-on: ubuntu-latest # Specifies the runner environment
+    runs-on: ubuntu-latest
 
     steps:
       - name: Checkout code
