@@ -94,4 +94,21 @@ export class AdminMediator {
       return convertToCamelCase(adminsData);
     });
   };
+
+  deleteAdmin = async (email: string) => {
+    return catcher(async () => {
+      const admin = await this.service.findOne({ email });
+
+      if (!admin) {
+        throwBadRequest({
+          message: 'Admin with the provided email does not exist.',
+          errorCheck: true,
+        });
+      }
+
+      await this.service.delete({ email });
+
+      return { message: 'Admin successfully deleted.' };
+    });
+  };
 }

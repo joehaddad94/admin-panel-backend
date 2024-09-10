@@ -1,7 +1,9 @@
 import {
   Body,
   Controller,
+  Delete,
   Get,
+  Param,
   Post,
   UsePipes,
   ValidationPipe,
@@ -37,5 +39,22 @@ export class AdminController {
   @UsePipes(new ValidationPipe({ whitelist: true }))
   async getAdmins() {
     return this.mediator.getAdmins();
+  }
+
+  @ApiResponse({
+    status: 204,
+    description: 'Admin successfully deleted',
+  })
+  @ApiResponse({
+    status: 400,
+    description: 'Bad Request',
+  })
+  @Delete('delete-admin/:email')
+  @UsePipes(new ValidationPipe({ whitelist: true }))
+  async deleteAdmin(@Param('email') email: string) {
+    return catcher(async () => {
+      await this.mediator.deleteAdmin(email);
+      return;
+    });
   }
 }
