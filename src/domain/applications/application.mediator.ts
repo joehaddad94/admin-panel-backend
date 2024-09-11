@@ -61,6 +61,10 @@ export class ApplicationMediator {
         }
         whereConditions.applicationCycle.cycleId = cycleId;
       }
+      console.log(
+        '🚀 ~ ApplicationMediator ~ returncatcher ~ whereConditions:',
+        whereConditions,
+      );
 
       const [applications, total] = await this.applicationsService.findAndCount(
         whereConditions,
