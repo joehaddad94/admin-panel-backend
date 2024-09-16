@@ -27,19 +27,16 @@ export class DecisionDateMediator {
         }
 
         if (examDate !== undefined) {
-          if (!examDate) {
-            decisionDate.exam_date = null;
-          } else {
-            decisionDate.exam_date = new Date(examDate);
-          }
+          decisionDate.exam_date = examDate
+            ? new Date(examDate)
+            : decisionDate.exam_date;
         }
 
         if (interviewMeetLink !== undefined) {
-          if (interviewMeetLink.trim() === '') {
-            decisionDate.interview_meet_link = null;
-          } else {
-            decisionDate.interview_meet_link = interviewMeetLink;
-          }
+          decisionDate.interview_meet_link =
+            interviewMeetLink.trim() !== ''
+              ? interviewMeetLink
+              : decisionDate.interview_meet_link;
         }
 
         decisionDate.updated_at = new Date();
