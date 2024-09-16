@@ -26,12 +26,22 @@ export class DecisionDateMediator {
           throw new Error(`Decision date with ID ${decisionDateId} not found`);
         }
 
-        if (examDate) {
-          decisionDate.exam_date = examDate;
+        if (examDate !== undefined) {
+          if (!examDate) {
+            decisionDate.exam_date = null;
+          } else {
+            decisionDate.exam_date = new Date(examDate);
+          }
         }
-        if (interviewMeetLink && interviewMeetLink.trim() !== '') {
-          decisionDate.interview_meet_link = interviewMeetLink;
+
+        if (interviewMeetLink !== undefined) {
+          if (interviewMeetLink.trim() === '') {
+            decisionDate.interview_meet_link = null;
+          } else {
+            decisionDate.interview_meet_link = interviewMeetLink;
+          }
         }
+
         decisionDate.updated_at = new Date();
 
         decisionDate = (await this.decisionDateService.save(
