@@ -404,9 +404,6 @@ export class ApplicationMediator {
         passedInterviewDate: updatedData.passed_interview_date
           ? formatDate(updatedData.passed_interview_date)
           : null,
-        passedScreeningDate: updatedData.passed_screening_date
-          ? formatDate(updatedData.passed_screening_date)
-          : null,
       });
 
       delete updatedPayload.status;
@@ -560,13 +557,19 @@ export class ApplicationMediator {
                 passed_exam_date,
               },
             );
-            return { id: application.id, score, passed_exam, passed_exam_date };
+            return {
+              id: application.id,
+              examScore: score,
+              passed_exam,
+              passed_exam_date,
+            };
           }
           return null;
         }),
       );
 
-      const updatedData = updateResults.filter((result) => result !== null);
+      let updatedData = updateResults.filter((result) => result !== null);
+      updatedData = convertToCamelCase(updatedData);
 
       return { message: 'Exam scores imported successfully.', updatedData };
     } catch (error) {
