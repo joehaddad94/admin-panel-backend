@@ -304,6 +304,7 @@ export class ApplicationMediator {
         page: currentPage,
         pageSize: currentPageSize,
         relevantCycleName: relevantCycle.name,
+        relevantCycleId: relevantCycle.id,
       };
     });
   };
@@ -455,6 +456,7 @@ export class ApplicationMediator {
           !application.passed_screening
         ) {
           application.passed_screening = true;
+          application.passed_screening_date = new Date();
           await this.applicationsService.update(
             { id: application.id },
             {
@@ -481,10 +483,13 @@ export class ApplicationMediator {
         );
       }
 
+      const camelCaseApplications = convertToCamelCase(applicationsToEmail);
+
       return {
         message: 'Emails sent successfully.',
         foundEmails: mailerResponse?.foundEmails || [],
         notFoundEmails: mailerResponse?.notFoundEmails || [],
+        applications: camelCaseApplications,
       };
     });
   };
