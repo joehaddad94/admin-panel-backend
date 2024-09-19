@@ -31,7 +31,8 @@ jobs:
           ssh-keyscan github.com >> ~/.ssh/known_hosts
 
       - name: cd directory
-        run: cd sef-admin-panel-server
+        # run: cd sef-admin-panel-server
+        run: ls
 
       # - name: Change Git remote URL to SSH
       #   run: git remote set-url origin git@github.com:sefact0ry/sef-admin-panel-server.git
