@@ -90,12 +90,10 @@ jobs:
           ssh-keyscan github.com >> ~/.ssh/known_hosts
 
       - name: Navigate to sef-admin-panel-server folder
-        run: |
-          ls # List contents of the current directory
-          cd ~
-          ls
-          # cd sef-admin-panel-server || exit 1 # Change to sef-admin-panel-server folder
-          # ls # List contents to confirm you are in the right directory
+        run: cd ~
+
+      - name: Navigate to sef-admin-panel-server folder
+        run: ls # List contents of the current directory
 
       - name: Redeploy
         run: |
