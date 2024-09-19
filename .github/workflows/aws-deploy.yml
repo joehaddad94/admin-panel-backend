@@ -93,8 +93,9 @@ jobs:
         run: |
           ls # List contents of the current directory
           cd ~
-          cd sef-admin-panel-server || exit 1 # Change to sef-admin-panel-server folder
-          ls # List contents to confirm you are in the right directory
+          ls
+          # cd sef-admin-panel-server || exit 1 # Change to sef-admin-panel-server folder
+          # ls # List contents to confirm you are in the right directory
 
       - name: Redeploy
         run: |
