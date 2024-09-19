@@ -89,7 +89,7 @@ jobs:
 
       - name: Navigate to sef-admin-panel-server folder
         run: |
-          cd ~
+          cd /
           pwd
 
       - name: Redeploy
