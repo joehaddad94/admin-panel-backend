@@ -18,10 +18,6 @@ export class ReportController {
   @Post()
   generateReport(@Body() filtersDto: FiltersDto) {
     const { reportType } = filtersDto;
-    console.log(
-      '🚀 ~ ReportController ~ generateReport ~ reportType:',
-      reportType,
-    );
 
     switch (reportType) {
       case ReportType.APPLICATIONS:
