@@ -36,8 +36,8 @@ jobs:
       - name: Check git status before pull
         run: git status
 
-      # - name: Pull latest changes from development branch
-      #   run: git fetch origin development && git reset --hard origin/development
+      - name: Pull latest changes from development branch
+        run: git fetch origin development && git reset --hard origin/development
 
       - name: Check git status after pull
         run: git status
@@ -48,10 +48,13 @@ jobs:
       - name: Build the project
         run: npm run build
 
-      - name: Install dependencies and redeploy
+      - name: Redeploy
         run: npm run redeploy:dev
         env:
           SSH_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
+
+      - name: Set up tracking for development branch
+        run: git branch --set-upstream-to=origin/development development
 
 env:
   CI: true
