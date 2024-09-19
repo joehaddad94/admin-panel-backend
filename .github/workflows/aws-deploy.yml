@@ -13,15 +13,15 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v3
-        with:
-          fetch-depth: 0
+      # - name: Checkout code
+      #   uses: actions/checkout@v3
+      #   with:
+      #     fetch-depth: 0
 
-      - name: Set up Node.js
-        uses: actions/setup-node@v3
-        with:
-          node-version: '20'
+      # - name: Set up Node.js
+      #   uses: actions/setup-node@v3
+      #   with:
+      #     node-version: '20'
 
       - name: Set up SSH key
         run: |
@@ -30,29 +30,32 @@ jobs:
           chmod 600 ~/.ssh/id_rsa
           ssh-keyscan github.com >> ~/.ssh/known_hosts
 
-      - name: Change Git remote URL to SSH
-        run: git remote set-url origin git@github.com:sefact0ry/sef-admin-panel-server.git
+      - name: cd directory
+        run: cd sef-admin-panel-server
 
-      - name: Print current directory
-        run: pwd # Prints the current working directory
+      # - name: Change Git remote URL to SSH
+      #   run: git remote set-url origin git@github.com:sefact0ry/sef-admin-panel-server.git
 
-      - name: List contents of current directory
-        run: ls -al # Lists all files and directories in the current directory
+      # - name: Print current directory
+      #   run: pwd # Prints the current working directory
 
-      - name: Debug local git logs
-        run: git log --oneline --decorate -n 10
+      # - name: List contents of current directory
+      #   run: ls -al # Lists all files and directories in the current directory
 
-      - name: Debug remote git logs
-        run: git log origin/development --oneline --decorate -n 10
+      # - name: Debug local git logs
+      #   run: git log --oneline --decorate -n 10
 
-      - name: Pull latest changes from development branch
-        run: git checkout development && git pull origin development
+      # - name: Debug remote git logs
+      #   run: git log origin/development --oneline --decorate -n 10
 
-      - name: Install dependencies
-        run: npm install
+      # - name: Pull latest changes from development branch
+      #   run: git checkout development && git pull origin development
 
-      - name: Build the project
-        run: npm run build
+      # - name: Install dependencies
+      #   run: npm install
+
+      # - name: Build the project
+      #   run: npm run build
 
       - name: Redeploy
         run: npm run redeploy:dev
