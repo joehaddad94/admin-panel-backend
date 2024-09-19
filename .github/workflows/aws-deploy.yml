@@ -91,6 +91,7 @@ jobs:
         run: |
           cd /
           pwd
+          ls
 
       - name: Redeploy
         run: |
