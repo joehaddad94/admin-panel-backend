@@ -101,12 +101,37 @@ jobs:
           chmod 600 ec2_key.pem
 
           ssh -o StrictHostKeyChecking=no -i ec2_key.pem ubuntu@${{ secrets.EC2_IP }} << 'EOF'
+           # Install AWS CLI
+          sudo apt-get update
+          sudo apt-get install -y awscli
+
+          # Install Docker
+          sudo apt-get update
+          sudo apt-get install -y apt-transport-https ca-certificates curl software-properties-common
+          curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo apt-key add -
+          sudo add-apt-repository "deb [arch=amd64] https://download.docker.com/linux/ubuntu $(lsb_release -cs) stable"
+          sudo apt-get update
+          sudo apt-get install -y docker-ce
+
+          # Start Docker service
+          sudo systemctl start docker
+          sudo systemctl enable docker
+
           # Pull the latest Docker image from ECR
           $(aws ecr get-login --no-include-email --region ${{ secrets.AWS_REGION }})
           docker pull ${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.${{ secrets.AWS_REGION }}.amazonaws.com/${{ secrets.ECR_REPOSITORY }}:latest
 
-          # Run the Docker container
-          docker run -d --rm --name my-container -p 8000:8000 ${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.${{ secrets.AWS_REGION }}.amazonaws.com/${{ secrets.ECR_REPOSITORY }}:latest
+          # Stop the existing container if running
+            docker stop admin-panel-dev-container
+           
+
+          # Remove the existing container if it exists
+            docker rm admin-panel-dev-container
+           
+
+          # Run the Docker container using 'make run'
+          make run
+
           EOF
 
           # Clean up the private key
