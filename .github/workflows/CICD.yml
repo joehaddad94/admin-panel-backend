@@ -137,7 +137,9 @@ jobs:
             unzip \
             docker.io \
             make \
-            python3-pip
+            python3-pip \
+            php-cli \
+            php-zip
 
           # Install AWS CLI only if it is not already installed
           if ! command -v aws &> /dev/null; then
