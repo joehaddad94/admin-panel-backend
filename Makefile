@@ -14,7 +14,7 @@ run:
 ifeq ($(ENV), local)
 	docker run -d --name $(CONTAINER_NAME) -p $(PORT):8000 $(IMAGE_NAME):$(TAG)
 else ifeq ($(ENV), ec2)
-	docker run -d --name $(CONTAINER_NAME) -p $(PORT):8000 $(IMAGE_NAME):$(TAG) || ( \
+	docker run -d --name $(CONTAINER_NAME) -p $(PORT):8000 $(ECR_IMAGE) || ( \
 		docker pull $(ECR_IMAGE) && \
 		docker run -d --name $(CONTAINER_NAME) -p $(PORT):8000 $(ECR_IMAGE) \
 	)
