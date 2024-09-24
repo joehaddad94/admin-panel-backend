@@ -24,38 +24,16 @@ jobs:
         with:
           node-version: '20'
 
-      - name: Print working directory
-        run: pwd
-
-      - name: List contents of the working directory
-        run: ls -al
-
-      - name: Create debug directory
-        run: |
-          mkdir -p /tmp/debug-info
-          echo "Debug info for instance: $(hostname)" > /tmp/debug-info/instance_info.txt
-          echo "Working directory: $(pwd)" >> /tmp/debug-info/instance_info.txt
-          echo "Contents:" >> /tmp/debug-info/instance_info.txt
-          ls -al >> /tmp/debug-info/instance_info.txt
-
       - name: Install dependencies
         run: npm install
 
       - name: Build the project
         run: npm run build
 
-      - name: Redeploy
-        run: npm run redeploy:dev
-        env:
-          GITHUB_TOKEN: ${{ secrets.GIT_TOKEN }}
-
-      - name: ttt
+      - name: Copy files to EC2
         run: |
-          pwd
-          ls
-          cd /
-          pwd
-          ls -al
+          scp -o StrictHostKeyChecking=no -i ${{ secrets.SSH_PRIVATE_KEY }} -r ./ 13.37.244.145:/home/ubuntu/sef-admin-panel-server
 
-env:
-  CI: true
+      - name: Redeploy to EC2
+        run: |
+          ssh -o StrictHostKeyChecking=no -i ${{ secrets.SSH_PRIVATE_KEY }} ubuntu@13.37.244.145 'cd /home/ubuntu/sef-admin-panel-server && npm run redeploy:dev'
