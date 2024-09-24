@@ -30,12 +30,16 @@ jobs:
       - name: Build the project
         run: npm run build
 
-      - name: Copy files to EC2
+      - name: Create directory on EC2
         run: |
           echo "${{ secrets.SSH_PRIVATE_KEY }}" > private_key.pem
           chmod 600 private_key.pem
-          scp -o StrictHostKeyChecking=no -i private_key.pem -r ./ ubuntu@13.37.244.145:/home/ubuntu/sef-admin-panel-server/
+          ssh -o StrictHostKeyChecking=no -i private_key.pem ubuntu@13.37.244.145 'mkdir -p /home/ubuntu/sef-admin-panel-server'
+
+      - name: Copy files to EC2
+        run: |
+          scp -o StrictHostKeyChecking=no -i private_key.pem -r ./* ubuntu@13.37.244.145:/home/ubuntu/sef-admin-panel-server/
 
       - name: Redeploy to EC2
         run: |
-          ssh -o StrictHostKeyChecking=no -i ${{ secrets.SSH_PRIVATE_KEY }} ubuntu@13.37.244.145 'cd /home/ubuntu/sef-admin-panel-server && npm run redeploy:dev'
+          ssh -o StrictHostKeyChecking=no -i private_key.pem ubuntu@13.37.244.145 'cd /home/ubuntu/sef-admin-panel-server && npm run redeploy:dev'
