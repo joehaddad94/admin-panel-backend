@@ -2,41 +2,30 @@
 IMAGE_NAME=admin-panel-server-dev
 TAG=latest
 CONTAINER_NAME=admin-panel-dev-container
-TESTING_CONTAINER_NAME=admin-panel-test
 PORT=80
+DOCKER_COMPOSE_FILE=docker-compose.yml
 
 build:
-	@echo "Building the Docker image..."
-	docker build -t $(IMAGE_NAME):$(TAG) .
+	@echo "Building the Docker image using docker-compose..."
+	docker-compose -f $(DOCKER_COMPOSE_FILE) build
 
 run:
-	@echo "Running the Docker container in $(ENV) environment..."
+	@echo "Running the Docker container in $(ENV) environment using docker-compose..."
 ifeq ($(ENV), local)
-	docker run -d --name $(CONTAINER_NAME) -p $(PORT):8000 $(IMAGE_NAME):$(TAG)
+	docker-compose -f $(DOCKER_COMPOSE_FILE) up -d
 else ifeq ($(ENV), ec2)
-	docker run -d --name $(CONTAINER_NAME) -p $(PORT):8000 $(ECR_IMAGE) || ( \
-		docker pull $(ECR_IMAGE) && \
-		docker run -d --name $(CONTAINER_NAME) -p $(PORT):8000 $(ECR_IMAGE) \
-	)
+	docker-compose -f $(DOCKER_COMPOSE_FILE) -e ECR_IMAGE=$(ECR_IMAGE) up -d
 else
 	$(error Unsupported environment: $(ENV))
 endif
 
 stop:
-	@echo "Stopping the Docker container (if running)..."
-	@if [ $(shell docker ps -q -f name=$(CONTAINER_NAME)) ]; then \
-		docker stop $(CONTAINER_NAME); \
-	else \
-		echo "Container $(CONTAINER_NAME) is not running."; \
-	fi
+	@echo "Stopping the Docker container using docker-compose..."
+	docker-compose -f $(DOCKER_COMPOSE_FILE) down
 
 clean:
-	@echo "Cleaning up the container (if exists)..."
-	@if [ $(shell docker ps -a -q -f name=$(CONTAINER_NAME)) ]; then \
-		docker rm $(CONTAINER_NAME); \
-	else \
-		echo "Container $(CONTAINER_NAME) does not exist."; \
-	fi
+	@echo "Cleaning up the container using docker-compose..."
+	docker-compose -f $(DOCKER_COMPOSE_FILE) down --rmi all --volumes --remove-orphans
 
 rmi:
 	@echo "Removing the Docker image (if exists)..."
@@ -51,19 +40,18 @@ rebuild: stop clean build
 rebuild-run: stop clean build run
 
 ps:
-	@echo "Listing running containers..."
-	docker ps
+	@echo "Listing running containers using docker-compose..."
+	docker-compose -f $(DOCKER_COMPOSE_FILE) ps
 
 logs:
-	@echo "Showing logs for the container..."
-	docker logs $(CONTAINER_NAME)
+	@echo "Showing logs for the container using docker-compose..."
+	docker-compose -f $(DOCKER_COMPOSE_FILE) logs $(CONTAINER_NAME)
 
 test-clean:
-	@echo "Running tests and cleaning up..."
-	docker run -d --name $(TESTING_CONTAINER_NAME) $(IMAGE_NAME):$(TAG)
-	docker exec $(TESTING_CONTAINER_NAME) npm test
-	docker stop $(TESTING_CONTAINER_NAME)
-	docker rm $(TESTING_CONTAINER_NAME)
+	@echo "Running tests and cleaning up using docker-compose..."
+	docker-compose -f $(DOCKER_COMPOSE_FILE) up -d $(TESTING_CONTAINER_NAME)
+	docker-compose -f $(DOCKER_COMPOSE_FILE) exec $(TESTING_CONTAINER_NAME) npm test
+	docker-compose -f $(DOCKER_COMPOSE_FILE) down --remove-orphans
 
 push:
 	@echo "Tagging and pushing the Docker image to ECR..."

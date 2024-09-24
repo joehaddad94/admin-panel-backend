@@ -1,13 +1,22 @@
+version: '3'
+
 services:
   app:
+    image: 677570184482.dkr.ecr.eu-west-3.amazonaws.com/admin-panel-server-dev:latest
+    container_name: admin-panel-server-dev-container
     build:
       context: .
       dockerfile: Dockerfile
       args:
         NODE_VERSION: 20.15.1
-    image: admin-panel-server-dev-image:latest
-    container_name: admin-panel-server-dev-container
     ports:
-      - '8000:80'
+      - '80:8000'
     env_file:
       - .env.develop
+    healthcheck:
+      test: ['CMD', 'curl', '-f', 'http://localhost:8000/health']
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 5s
+    restart: always
