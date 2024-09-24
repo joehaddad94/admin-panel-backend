@@ -1,5 +1,5 @@
 # Variables
-IMAGE_NAME=admin-panel-dev
+IMAGE_NAME=admin-panel-server-dev
 TAG=latest
 CONTAINER_NAME=admin-panel-dev-container
 TESTING_CONTAINER_NAME=admin-panel-test
