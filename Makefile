@@ -51,7 +51,7 @@ logs:
 test-clean:
 	@echo "Running tests and cleaning up using docker-compose..."
 	docker-compose -f $(DOCKER_COMPOSE_FILE) up -d $(TESTING_CONTAINER_NAME)
-	docker-compose -f $(DOCKER_COMPOSE_FILE) exec $(TESTING_CONTAINER_NAME) npm test
+	docker-compose -f $(DOCKER_COMPOSE_FILE) exec -T $(TESTING_CONTAINER_NAME) npm test
 	docker-compose -f $(DOCKER_COMPOSE_FILE) down --remove-orphans
 
 push:
