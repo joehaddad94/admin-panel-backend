@@ -35,6 +35,24 @@ jobs:
           sudo apt-get update
           sudo apt-get install -y make docker-compose
 
+      - name: Create .env.develop file
+        run: |
+          echo "SERVER_PORT=8000" >> .env.develop
+          echo "NODE_ENV=develop" >> .env.develop
+          echo "DB_TYPE=postgres" >> .env.develop
+          echo "DB_USER=${{ secrets.DB_USER }}" >> .env.develop
+          echo "DB_PASSWORD=${{ secrets.DB_PASSWORD }}" >> .env.develop
+          echo "DB_HOST=${{ secrets.DB_HOST }}" >> .env.develop
+          echo "DB_PORT=${{ secrets.DB_PORT }}" >> .env.develop
+          echo "DB_NAME=${{ secrets.DB_NAME }}" >> .env.develop
+          echo "DB_SSL_PROFILE=require" >> .env.develop
+          echo "JWT_SECRET=${{ secrets.JWT_SECRET }}" >> .env.develop
+          echo "AUTH_HEADER_PREFIX=Bearer" >> .env.develop
+          echo "SMTP_HOST=smtp.gmail.com" >> .env.develop
+          echo "SMTP_USER=${{ secrets.SMTP_USER }}" >> .env.develop
+          echo "SMTP_PASS=${{ secrets.SMTP_PASS }}" >> .env.develop
+          echo "VERIFY_CLIENT_URL=https://sef-admin-panel-development.vercel.app/reset-password" >> .env.develop
+
       - name: Build using Makefile
         run: make rebuild
 
