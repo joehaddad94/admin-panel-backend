@@ -98,35 +98,45 @@ jobs:
       - name: Deploy to EC2
         run: |
           ssh -o StrictHostKeyChecking=no ubuntu@${{ secrets.EC2_IP }} << 'EOF'
-            # Update and install necessary packages
-            sudo apt-get update
-            sudo apt-get install -y \
-              awscli \
-              make \
-              docker.io
+          # Update the package list and install necessary packages
+          sudo apt-get update
+          sudo apt-get install -y \
+            curl \
+            unzip \
+            docker.io \
+            make
 
-            # Start Docker service and enable it
-            sudo systemctl start docker
-            sudo systemctl enable docker
+          # Install AWS CLI
+          curl "https://d1wnz8r9y1vob1.cloudfront.net/awscli-exe-linux-x86_64.zip" -o "awscliv2.zip"
+          unzip awscliv2.zip
+          sudo ./aws/install
 
-            # Add the ubuntu user to the Docker group
-            sudo usermod -aG docker ubuntu
+          # Start Docker service and enable it
+          sudo systemctl start docker
+          sudo systemctl enable docker
 
-            # Log out and log back in to apply group changes (not effective in a script)
-            # Instead, we'll run commands with sudo for now
-            newgrp docker || true
+          # Add the ubuntu user to the Docker group
+          sudo usermod -aG docker ubuntu
 
-            # Pull the latest Docker image from ECR
-            aws ecr get-login-password --region ${{ secrets.AWS_REGION }} | docker login --username AWS --password-stdin ${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.${{ secrets.AWS_REGION }}.amazonaws.com
-            docker pull ${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.${{ secrets.AWS_REGION }}.amazonaws.com/${{ secrets.ECR_REPOSITORY }}:latest
+          # Log out and log back in to apply group changes (not effective in a script)
+          # Instead, we'll run commands with sudo for now
+          newgrp docker || true
 
-            # Stop the existing container if running
-              docker stop admin-panel-dev-container
+          # Pull the latest Docker image from ECR
+          aws ecr get-login-password --region ${{ secrets.AWS_REGION }} | docker login --username AWS --password-stdin ${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.${{ secrets.AWS_REGION }}.amazonaws.com
+          docker pull ${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.${{ secrets.AWS_REGION }}.amazonaws.com/${{ secrets.ECR_REPOSITORY }}:latest
 
-            # Remove the existing container if it exists
-              docker rm admin-panel-dev-container
+          # Stop the existing container if running
+          if [ "$(docker ps -q -f name=admin-panel-dev-container)" ]; then
+            docker stop admin-panel-dev-container
+          fi
 
-            # Run the Docker container using 'make run'
-            make run
+          # Remove the existing container if it exists
+          if [ "$(docker ps -a -q -f name=admin-panel-dev-container)" ]; then
+            docker rm admin-panel-dev-container
+          fi
+
+          # Run the Docker container using 'make run'
+          make run
 
           EOF
