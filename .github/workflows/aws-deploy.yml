@@ -13,38 +13,35 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Create SSH Key
-        run: |
-          echo "${{ secrets.SSH_PRIVATE_KEY }}" > private_key.pem
-          chmod 600 private_key.pem
+      - name: Deploy to EC2
+        uses: appleboy/ssh-action@v0.1.3
+        with:
+          host: ${{ secrets.EC2_IP }}
+          username: ubuntu
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          port: 22
+          script: |
+            echo "SSH connection established."
 
-      - name: Check if the repository exists on EC2 and clone or pull
-        run: |
-          ssh -o StrictHostKeyChecking=no -i private_key.pem ubuntu@13.37.244.145 '
-          if [ ! -d /home/ubuntu/sef-admin-panel-server ]; then
-            git clone https://github.com/your-org/your-repo.git /home/ubuntu/sef-admin-panel-server;
-          else
-            cd /home/ubuntu/sef-admin-panel-server && git pull origin development;
-          fi
-          '
+            # Check if the repository exists, clone if not, otherwise pull the latest changes
+            if [ ! -d /home/ubuntu/sef-admin-panel-server ]; then
+              echo "Cloning repository as it does not exist."
+              git clone https://github.com/your-org/your-repo.git /home/ubuntu/sef-admin-panel-server;
+            else
+              echo "Repository exists, pulling the latest changes."
+              cd /home/ubuntu/sef-admin-panel-server && git pull origin development;
+            fi
 
-      - name: Install dependencies on EC2
-        run: |
-          ssh -o StrictHostKeyChecking=no -i private_key.pem ubuntu@13.37.244.145 '
-          cd /home/ubuntu/sef-admin-panel-server &&
-          npm install
-          '
+            # Install dependencies
+            echo "Installing dependencies..."
+            cd /home/ubuntu/sef-admin-panel-server && npm install
 
-      - name: Build project on EC2
-        run: |
-          ssh -o StrictHostKeyChecking=no -i private_key.pem ubuntu@13.37.244.145 '
-          cd /home/ubuntu/sef-admin-panel-server &&
-          npm run build
-          '
+            # Build the project
+            echo "Building the project..."
+            npm run build
 
-      - name: Redeploy to EC2
-        run: |
-          ssh -o StrictHostKeyChecking=no -i private_key.pem ubuntu@13.37.244.145 '
-          cd /home/ubuntu/sef-admin-panel-server &&
-          npm run redeploy:dev
-          '
+            # Redeploy the project
+            echo "Redeploying the application..."
+            npm run redeploy:dev
+
+            echo "Deployment complete."
