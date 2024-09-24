@@ -55,6 +55,7 @@ jobs:
           ls
           cd ~
           pwd
+          ls -al
 
 env:
   CI: true
