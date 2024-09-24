@@ -30,6 +30,7 @@ jobs:
       - name: Check if the repository exists on EC2 and clone or pull
         run: |
           ssh -o StrictHostKeyChecking=no -i private_key.pem ubuntu@13.37.244.145 '
+          ssh-keyscan github.com >> ~/.ssh/known_hosts;
           if [ ! -d /home/ubuntu/sef-admin-panel-server ]; then
             git clone git@github.com:sefact0ry/sef-admin-panel-server.git /home/ubuntu/sef-admin-panel-server;
           else
