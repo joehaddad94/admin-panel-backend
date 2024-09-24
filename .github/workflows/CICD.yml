@@ -16,6 +16,9 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v3
 
+      - name: List files
+        run: ls -alh
+
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v2
 
@@ -38,130 +41,130 @@ jobs:
       - name: Run tests inside Docker container
         run: make test-clean
 
-  build-and-push:
-    needs: build-test
-    runs-on: ubuntu-latest
+  # build-and-push:
+  #   needs: build-test
+  #   runs-on: ubuntu-latest
 
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v3
+  #   steps:
+  #     - name: Checkout code
+  #       uses: actions/checkout@v3
 
-      - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v2
+  #     - name: Set up Docker Buildx
+  #       uses: docker/setup-buildx-action@v2
 
-      - name: Cache Docker layers
-        uses: actions/cache@v3
-        with:
-          path: /tmp/.buildx-cache
-          key: ${{ runner.os }}-build-${{ github.sha }}
-          restore-keys: |
-            ${{ runner.os }}-build-
+  #     - name: Cache Docker layers
+  #       uses: actions/cache@v3
+  #       with:
+  #         path: /tmp/.buildx-cache
+  #         key: ${{ runner.os }}-build-${{ github.sha }}
+  #         restore-keys: |
+  #           ${{ runner.os }}-build-
 
-      - name: Install Make (cached)
-        uses: actions/cache@v3
-        with:
-          path: /usr/bin/make
-          key: ${{ runner.os }}-make
-          run: sudo apt-get install make
+  #     - name: Install Make (cached)
+  #       uses: actions/cache@v3
+  #       with:
+  #         path: /usr/bin/make
+  #         key: ${{ runner.os }}-make
+  #         run: sudo apt-get install make
 
-      - name: Set up AWS credentials
-        uses: aws-actions/configure-aws-credentials@v1
-        with:
-          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
-          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          aws-region: ${{ secrets.AWS_REGION }}
+  #     - name: Set up AWS credentials
+  #       uses: aws-actions/configure-aws-credentials@v1
+  #       with:
+  #         aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+  #         aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+  #         aws-region: ${{ secrets.AWS_REGION }}
 
-      - name: Log in to Amazon ECR
-        uses: aws-actions/amazon-ecr-login@v1
+  #     - name: Log in to Amazon ECR
+  #       uses: aws-actions/amazon-ecr-login@v1
 
-      - name: Build and push Docker image using Makefile
-        run: make build-and-push
-        env:
-          AWS_ACCOUNT_ID: ${{ secrets.AWS_ACCOUNT_ID }}
-          AWS_REGION: ${{ secrets.AWS_REGION }}
-          ECR_REPOSITORY: ${{ secrets.ECR_REPOSITORY }}
+  #     - name: Build and push Docker image using Makefile
+  #       run: make build-and-push
+  #       env:
+  #         AWS_ACCOUNT_ID: ${{ secrets.AWS_ACCOUNT_ID }}
+  #         AWS_REGION: ${{ secrets.AWS_REGION }}
+  #         ECR_REPOSITORY: ${{ secrets.ECR_REPOSITORY }}
 
-  deploy:
-    needs: build-and-push
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v3
+  # deploy:
+  #   needs: build-and-push
+  #   runs-on: ubuntu-latest
+  #   steps:
+  #     - name: Checkout code
+  #       uses: actions/checkout@v3
 
-      - name: Set up SSH for deployment
-        uses: webfactory/ssh-agent@v0.5.3
-        with:
-          ssh-private-key: ${{ secrets.EC2_SSH_PRIVATE_KEY }}
+  #     - name: Set up SSH for deployment
+  #       uses: webfactory/ssh-agent@v0.5.3
+  #       with:
+  #         ssh-private-key: ${{ secrets.EC2_SSH_PRIVATE_KEY }}
 
-      - name: Deploy to EC2
-        run: |
-          ssh -o StrictHostKeyChecking=no ubuntu@${{ secrets.EC2_IP }} << 'EOF'
-          # Update the package list and install necessary packages
-          sudo apt-get update
-          sudo apt-get install -y \
-            curl \
-            unzip \
-            docker.io \
-            make \
-            python3-pip
+  #     - name: Deploy to EC2
+  #       run: |
+  #         ssh -o StrictHostKeyChecking=no ubuntu@${{ secrets.EC2_IP }} << 'EOF'
+  #         # Update the package list and install necessary packages
+  #         sudo apt-get update
+  #         sudo apt-get install -y \
+  #           curl \
+  #           unzip \
+  #           docker.io \
+  #           make \
+  #           python3-pip
 
-          # Install AWS CLI only if it is not already installed
-          if ! command -v aws &> /dev/null; then
-            echo "AWS CLI not found. Installing..."
-            curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2.zip"
-            unzip awscliv2.zip
-            sudo ./aws/install
-            echo "AWS CLI installed successfully."
-          else
-            echo "AWS CLI is already installed."
-          fi
+  #         # Install AWS CLI only if it is not already installed
+  #         if ! command -v aws &> /dev/null; then
+  #           echo "AWS CLI not found. Installing..."
+  #           curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2.zip"
+  #           unzip awscliv2.zip
+  #           sudo ./aws/install
+  #           echo "AWS CLI installed successfully."
+  #         else
+  #           echo "AWS CLI is already installed."
+  #         fi
 
-          # Check if Docker is running; if not, start it
-          if ! systemctl is-active --quiet docker; then
-            echo "Starting Docker service..."
-            sudo systemctl start docker
-          else
-            echo "Docker service is already running."
-          fi
+  #         # Check if Docker is running; if not, start it
+  #         if ! systemctl is-active --quiet docker; then
+  #           echo "Starting Docker service..."
+  #           sudo systemctl start docker
+  #         else
+  #           echo "Docker service is already running."
+  #         fi
 
-          # Enable Docker to start on boot
-          if ! systemctl is-enabled --quiet docker; then
-            echo "Enabling Docker service to start on boot..."
-            sudo systemctl enable docker
-          else
-            echo "Docker service is already enabled to start on boot."
-          fi
+  #         # Enable Docker to start on boot
+  #         if ! systemctl is-enabled --quiet docker; then
+  #           echo "Enabling Docker service to start on boot..."
+  #           sudo systemctl enable docker
+  #         else
+  #           echo "Docker service is already enabled to start on boot."
+  #         fi
 
-          # Add the ubuntu user to the Docker group
-          sudo usermod -aG docker ubuntu
-          newgrp docker || true
+  #         # Add the ubuntu user to the Docker group
+  #         sudo usermod -aG docker ubuntu
+  #         newgrp docker || true
 
-          # Exit the SSH session
-          exit
-          EOF
+  #         # Exit the SSH session
+  #         exit
+  #         EOF
 
-      - name: Set up AWS credentials
-        uses: aws-actions/configure-aws-credentials@v1
-        with:
-          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
-          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          aws-region: ${{ secrets.AWS_REGION }}
+  #     - name: Set up AWS credentials
+  #       uses: aws-actions/configure-aws-credentials@v1
+  #       with:
+  #         aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+  #         aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+  #         aws-region: ${{ secrets.AWS_REGION }}
 
-      - name: Log in to Amazon ECR
-        uses: aws-actions/amazon-ecr-login@v1
+  #     - name: Log in to Amazon ECR
+  #       uses: aws-actions/amazon-ecr-login@v1
 
-      # - name: Pull Docker image
-      #   run: |
-      #     docker pull ${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.${{ secrets.AWS_REGION }}.amazonaws.com/${{ secrets.ECR_REPOSITORY }}:latest
+  #     # - name: Pull Docker image
+  #     #   run: |
+  #     #     docker pull ${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.${{ secrets.AWS_REGION }}.amazonaws.com/${{ secrets.ECR_REPOSITORY }}:latest
 
-      - name: Stop existing container
-        run: |
-          make stop
+  #     - name: Stop existing container
+  #       run: |
+  #         make stop
 
-      - name: Remove existing container
-        run: |
-          make rmi
+  #     - name: Remove existing container
+  #       run: |
+  #         make rmi
 
-      - name: Run the Docker container
-        run: |
-          make run ENV=ec2 ECR_IMAGE=${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.${{ secrets.AWS_REGION }}.amazonaws.com/${{ secrets.ECR_REPOSITORY }}:latest
+  #     - name: Run the Docker container
+  #       run: |
+  #         make run ENV=ec2 ECR_IMAGE=${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.${{ secrets.AWS_REGION }}.amazonaws.com/${{ secrets.ECR_REPOSITORY }}:latest
