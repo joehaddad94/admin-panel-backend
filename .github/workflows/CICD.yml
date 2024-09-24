@@ -137,8 +137,7 @@ jobs:
             unzip \
             docker.io \
             make \
-            python3-pip \
-            docker-compose
+            python3-pip
 
           # Install AWS CLI only if it is not already installed
           if ! command -v aws &> /dev/null; then
@@ -149,6 +148,15 @@ jobs:
             echo "AWS CLI installed successfully."
           else
             echo "AWS CLI is already installed."
+          fi
+
+          # Install Composer
+          if ! command -v composer &> /dev/null; then
+            echo "Composer not found. Installing..."
+            curl -sS https://getcomposer.org/installer | php -- --install-dir=/usr/local/bin --filename=composer
+            echo "Composer installed successfully."
+          else
+            echo "Composer is already installed."
           fi
 
           # Check if Docker is running; if not, start it
