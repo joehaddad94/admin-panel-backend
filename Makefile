@@ -1,5 +1,5 @@
 # Variables
-IMAGE_NAME=admin-panel-server-dev
+IMAGE_NAME=677570184482.dkr.ecr.eu-west-3.amazonaws.com/admin-panel-server-dev
 TAG=latest
 CONTAINER_NAME=admin-panel-dev-container
 PORT=80
@@ -9,7 +9,11 @@ TESTING_CONTAINER_NAME=app
 build:
 	@echo "Building the Docker image using docker-compose..."
 	docker-compose -f $(DOCKER_COMPOSE_FILE) build
-
+	@echo "Showing build logs..."
+	docker-compose -f $(DOCKER_COMPOSE_FILE) logs
+	@echo "Checking if the image was built..."
+	@docker images | grep $(IMAGE_NAME)
+	
 run:
 	@echo "Running the Docker container in $(ENV) environment using docker-compose..."
 ifeq ($(ENV), local)
