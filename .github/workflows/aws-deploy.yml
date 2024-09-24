@@ -32,7 +32,9 @@ jobs:
 
       - name: Copy files to EC2
         run: |
-          scp -o StrictHostKeyChecking=no -i ${{ secrets.SSH_PRIVATE_KEY }} -r ./ 13.37.244.145:/home/ubuntu/sef-admin-panel-server
+          echo "${{ secrets.SSH_PRIVATE_KEY }}" > private_key.pem
+          chmod 600 private_key.pem
+          scp -o StrictHostKeyChecking=no -i private_key.pem -r ./ ubuntu@13.37.244.145:/home/ubuntu/sef-admin-panel-server
 
       - name: Redeploy to EC2
         run: |
