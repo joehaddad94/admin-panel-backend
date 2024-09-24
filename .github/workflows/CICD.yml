@@ -9,15 +9,60 @@ on:
       - development
 
 jobs:
-  build-test:
+  # build-test:
+  #   runs-on: ubuntu-latest
+
+  #   steps:
+  #     - name: Checkout code
+  #       uses: actions/checkout@v3
+
+  #     - name: Set up Docker Buildx
+  #       uses: docker/setup-buildx-action@v2
+
+  #     - name: Cache Docker layers
+  #       uses: actions/cache@v3
+  #       with:
+  #         path: /tmp/.buildx-cache
+  #         key: ${{ runner.os }}-build-${{ github.sha }}
+  #         restore-keys: |
+  #           ${{ runner.os }}-build-
+
+  #     - name: Install Make and Docker Compose
+  #       run: |
+  #         sudo apt-get update
+  #         sudo apt-get install -y make docker-compose
+
+  #     - name: Create .env.develop file
+  #       run: |
+  #         echo "SERVER_PORT=8000" >> .env.develop
+  #         echo "NODE_ENV=develop" >> .env.develop
+  #         echo "DB_TYPE=postgres" >> .env.develop
+  #         echo "DB_USER=${{ secrets.DB_USER }}" >> .env.develop
+  #         echo "DB_PASSWORD=${{ secrets.DB_PASSWORD }}" >> .env.develop
+  #         echo "DB_HOST=${{ secrets.DB_HOST }}" >> .env.develop
+  #         echo "DB_PORT=${{ secrets.DB_PORT }}" >> .env.develop
+  #         echo "DB_NAME=${{ secrets.DB_NAME }}" >> .env.develop
+  #         echo "DB_SSL_PROFILE=require" >> .env.develop
+  #         echo "JWT_SECRET=${{ secrets.JWT_SECRET }}" >> .env.develop
+  #         echo "AUTH_HEADER_PREFIX=Bearer" >> .env.develop
+  #         echo "SMTP_HOST=smtp.gmail.com" >> .env.develop
+  #         echo "SMTP_USER=${{ secrets.SMTP_USER }}" >> .env.develop
+  #         echo "SMTP_PASS=${{ secrets.SMTP_PASS }}" >> .env.develop
+  #         echo "VERIFY_CLIENT_URL=https://sef-admin-panel-development.vercel.app/reset-password" >> .env.develop
+
+  #     - name: Build using Makefile
+  #       run: make rebuild
+
+  #     - name: Run tests inside Docker container
+  #       run: make test-clean
+
+  build-and-push:
+    # needs: build-test
     runs-on: ubuntu-latest
 
     steps:
       - name: Checkout code
         uses: actions/checkout@v3
-
-      - name: List files
-        run: ls -alh
 
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v2
@@ -34,56 +79,6 @@ jobs:
         run: |
           sudo apt-get update
           sudo apt-get install -y make docker-compose
-
-      - name: Create .env.develop file
-        run: |
-          echo "SERVER_PORT=8000" >> .env.develop
-          echo "NODE_ENV=develop" >> .env.develop
-          echo "DB_TYPE=postgres" >> .env.develop
-          echo "DB_USER=${{ secrets.DB_USER }}" >> .env.develop
-          echo "DB_PASSWORD=${{ secrets.DB_PASSWORD }}" >> .env.develop
-          echo "DB_HOST=${{ secrets.DB_HOST }}" >> .env.develop
-          echo "DB_PORT=${{ secrets.DB_PORT }}" >> .env.develop
-          echo "DB_NAME=${{ secrets.DB_NAME }}" >> .env.develop
-          echo "DB_SSL_PROFILE=require" >> .env.develop
-          echo "JWT_SECRET=${{ secrets.JWT_SECRET }}" >> .env.develop
-          echo "AUTH_HEADER_PREFIX=Bearer" >> .env.develop
-          echo "SMTP_HOST=smtp.gmail.com" >> .env.develop
-          echo "SMTP_USER=${{ secrets.SMTP_USER }}" >> .env.develop
-          echo "SMTP_PASS=${{ secrets.SMTP_PASS }}" >> .env.develop
-          echo "VERIFY_CLIENT_URL=https://sef-admin-panel-development.vercel.app/reset-password" >> .env.develop
-
-      - name: Build using Makefile
-        run: make rebuild
-
-      - name: Run tests inside Docker container
-        run: make test-clean
-
-  build-and-push:
-    needs: build-test
-    runs-on: ubuntu-latest
-
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v3
-
-      - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v2
-
-      - name: Cache Docker layers
-        uses: actions/cache@v3
-        with:
-          path: /tmp/.buildx-cache
-          key: ${{ runner.os }}-build-${{ github.sha }}
-          restore-keys: |
-            ${{ runner.os }}-build-
-
-      - name: Install Make (cached)
-        uses: actions/cache@v3
-        with:
-          path: /usr/bin/make
-          key: ${{ runner.os }}-make
-          run: sudo apt-get install make
 
       - name: Set up AWS credentials
         uses: aws-actions/configure-aws-credentials@v1
