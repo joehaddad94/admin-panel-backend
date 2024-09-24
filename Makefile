@@ -10,8 +10,17 @@ build:
 	docker build -t $(IMAGE_NAME):$(TAG) .
 
 run:
-	@echo "Running the Docker container..."
+	@echo "Running the Docker container in $(ENV) environment..."
+ifeq ($(ENV), local)
 	docker run -d --name $(CONTAINER_NAME) -p $(PORT):8000 $(IMAGE_NAME):$(TAG)
+else ifeq ($(ENV), ec2)
+	docker run -d --name $(CONTAINER_NAME) -p $(PORT):8000 $(IMAGE_NAME):$(TAG) || ( \
+		docker pull $(ECR_IMAGE) && \
+		docker run -d --name $(CONTAINER_NAME) -p $(PORT):8000 $(ECR_IMAGE) \
+	)
+else
+	$(error Unsupported environment: $(ENV))
+endif
 
 stop:
 	@echo "Stopping the Docker container (if running)..."
