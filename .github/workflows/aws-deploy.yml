@@ -49,5 +49,11 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GIT_TOKEN }}
 
+      - name: ttt
+        run: |
+          pwd
+          ls
+          cd ~
+
 env:
   CI: true
