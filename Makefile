@@ -3,7 +3,7 @@ IMAGE_NAME=admin-panel-server-dev
 TAG=latest
 CONTAINER_NAME=admin-panel-dev-container
 PORT=80
-DOCKER_COMPOSE_FILE=docker-compose.yml
+DOCKER_COMPOSE_FILE=compose.yaml
 
 build:
 	@echo "Building the Docker image using docker-compose..."

@@ -1,5 +1,3 @@
-version: '3'
-
 services:
   app:
     image: 677570184482.dkr.ecr.eu-west-3.amazonaws.com/admin-panel-server-dev:latest
