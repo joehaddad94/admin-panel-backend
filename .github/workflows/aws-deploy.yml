@@ -30,6 +30,14 @@ jobs:
       - name: List contents of the working directory
         run: ls -al
 
+      - name: Create debug directory
+        run: |
+          mkdir -p /tmp/debug-info
+          echo "Debug info for instance: $(hostname)" > /tmp/debug-info/instance_info.txt
+          echo "Working directory: $(pwd)" >> /tmp/debug-info/instance_info.txt
+          echo "Contents:" >> /tmp/debug-info/instance_info.txt
+          ls -al >> /tmp/debug-info/instance_info.txt
+
       - name: Install dependencies
         run: npm install
 
