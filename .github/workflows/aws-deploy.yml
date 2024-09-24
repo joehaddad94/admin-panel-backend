@@ -18,7 +18,6 @@ jobs:
         with:
           fetch-depth: 0
           token: ${{ secrets.GIT_TOKEN }}
-          path: /home/ubuntu/sef-admin-panel-server
 
       - name: Set up Node.js
         uses: actions/setup-node@v3
