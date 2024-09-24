@@ -14,9 +14,9 @@ jobs:
 
     steps:
       - name: Checkout code
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
         with:
-          fetch-depth: 0
+          ref: development
           token: ${{ secrets.GIT_TOKEN }}
 
       - name: Set up Node.js
@@ -24,20 +24,11 @@ jobs:
         with:
           node-version: '20'
 
-      - name: Print Runner Environment
-        run: |
-          echo "Runner Information:"
-          echo "===================="
-          echo "OS: $(uname -s)"
-          echo "OS Version: $(uname -r)"
-          echo "Architecture: $(uname -m)"
-          echo "Host Name: $(hostname)"
-          echo "GitHub Actions Runner ID: $RUNNER_ID"
-          echo "GitHub Actions Runner Name: $RUNNER_NAME"
-          echo "GitHub Actions Runner OS: $RUNNER_OS"
-
       - name: Print working directory
         run: pwd
+
+      - name: List contents of the working directory
+        run: ls -al
 
       - name: Install dependencies
         run: npm install
