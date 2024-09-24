@@ -108,60 +108,62 @@ jobs:
             python3-pip
 
           # Install AWS CLI only if it is not already installed
-            if ! command -v aws &> /dev/null; then
-              echo "AWS CLI not found. Installing..."
-              curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2.zip"
-              unzip awscliv2.zip
-              sudo ./aws/install
-              echo "AWS CLI installed successfully."
-            else
-              echo "AWS CLI is already installed."
-            fi
+          if ! command -v aws &> /dev/null; then
+            echo "AWS CLI not found. Installing..."
+            curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2.zip"
+            unzip awscliv2.zip
+            sudo ./aws/install
+            echo "AWS CLI installed successfully."
+          else
+            echo "AWS CLI is already installed."
+          fi
 
           # Check if Docker is running; if not, start it
-            if ! systemctl is-active --quiet docker; then
-              echo "Starting Docker service..."
-              sudo systemctl start docker
-            else
-              echo "Docker service is already running."
-            fi
+          if ! systemctl is-active --quiet docker; then
+            echo "Starting Docker service..."
+            sudo systemctl start docker
+          else
+            echo "Docker service is already running."
+          fi
 
-            # Enable Docker to start on boot
-            if ! systemctl is-enabled --quiet docker; then
-              echo "Enabling Docker service to start on boot..."
-              sudo systemctl enable docker
-            else
-              echo "Docker service is already enabled to start on boot."
-            fi
+          # Enable Docker to start on boot
+          if ! systemctl is-enabled --quiet docker; then
+            echo "Enabling Docker service to start on boot..."
+            sudo systemctl enable docker
+          else
+            echo "Docker service is already enabled to start on boot."
+          fi
 
           # Add the ubuntu user to the Docker group
           sudo usermod -aG docker ubuntu
-
-          # Log out and log back in to apply group changes (not effective in a script)
-          # Instead, we'll run commands with sudo for now
           newgrp docker || true
 
-          - name: Set up AWS credentials
-            uses: aws-actions/configure-aws-credentials@v1
-            with:
-              aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
-              aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-              aws-region: ${{ secrets.AWS_REGION }}
-
-          - name: Log in to Amazon ECR
-            uses: aws-actions/amazon-ecr-login@v1
-
-          - name: Pull Docker image
-            run: |
-              docker pull ${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.${{ secrets.AWS_REGION }}.amazonaws.com/${{ secrets.ECR_REPOSITORY }}:latest
-
-          # Stop the existing container if running
-            docker stop admin-panel-dev-container
-
-          # Remove the existing container if it exists
-            docker rm admin-panel-dev-container
-
-          # Run the Docker container using 'make run'
-          make run
-
+          # Exit the SSH session
+          exit
           EOF
+
+      - name: Set up AWS credentials
+        uses: aws-actions/configure-aws-credentials@v1
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ secrets.AWS_REGION }}
+
+      - name: Log in to Amazon ECR
+        uses: aws-actions/amazon-ecr-login@v1
+
+      - name: Pull Docker image
+        run: |
+          docker pull ${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.${{ secrets.AWS_REGION }}.amazonaws.com/${{ secrets.ECR_REPOSITORY }}:latest
+
+      - name: Stop existing container
+        run: |
+          docker stop admin-panel-dev-container || true
+
+      - name: Remove existing container
+        run: |
+          docker rm admin-panel-dev-container || true
+
+      - name: Run the Docker container
+        run: |
+          make run
