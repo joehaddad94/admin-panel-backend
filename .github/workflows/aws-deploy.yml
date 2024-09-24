@@ -9,37 +9,42 @@ on:
       - development
 
 jobs:
-  build-and-deploy:
+  deploy:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-        with:
-          ref: development
-          token: ${{ secrets.GIT_TOKEN }}
-
-      - name: Set up Node.js
-        uses: actions/setup-node@v3
-        with:
-          node-version: '20'
-
-      - name: Install dependencies
-        run: npm install
-
-      - name: Build the project
-        run: npm run build
-
-      - name: Create directory on EC2
+      - name: Create SSH Key
         run: |
           echo "${{ secrets.SSH_PRIVATE_KEY }}" > private_key.pem
           chmod 600 private_key.pem
-          ssh -o StrictHostKeyChecking=no -i private_key.pem ubuntu@13.37.244.145 'mkdir -p /home/ubuntu/sef-admin-panel-server'
 
-      - name: Copy files to EC2
+      - name: Check if the repository exists on EC2 and clone or pull
         run: |
-          scp -o StrictHostKeyChecking=no -i private_key.pem -r ./* ubuntu@13.37.244.145:/home/ubuntu/sef-admin-panel-server/
+          ssh -o StrictHostKeyChecking=no -i private_key.pem ubuntu@13.37.244.145 '
+          if [ ! -d /home/ubuntu/sef-admin-panel-server ]; then
+            git clone https://github.com/your-org/your-repo.git /home/ubuntu/sef-admin-panel-server;
+          else
+            cd /home/ubuntu/sef-admin-panel-server && git pull origin development;
+          fi
+          '
+
+      - name: Install dependencies on EC2
+        run: |
+          ssh -o StrictHostKeyChecking=no -i private_key.pem ubuntu@13.37.244.145 '
+          cd /home/ubuntu/sef-admin-panel-server &&
+          npm install
+          '
+
+      - name: Build project on EC2
+        run: |
+          ssh -o StrictHostKeyChecking=no -i private_key.pem ubuntu@13.37.244.145 '
+          cd /home/ubuntu/sef-admin-panel-server &&
+          npm run build
+          '
 
       - name: Redeploy to EC2
         run: |
-          ssh -o StrictHostKeyChecking=no -i private_key.pem ubuntu@13.37.244.145 'cd /home/ubuntu/sef-admin-panel-server && npm run redeploy:dev'
+          ssh -o StrictHostKeyChecking=no -i private_key.pem ubuntu@13.37.244.145 '
+          cd /home/ubuntu/sef-admin-panel-server &&
+          npm run redeploy:dev
+          '
