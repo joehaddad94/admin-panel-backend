@@ -4,6 +4,7 @@ TAG=latest
 CONTAINER_NAME=admin-panel-dev-container
 PORT=80
 DOCKER_COMPOSE_FILE=compose.yaml
+TESTING_CONTAINER_NAME=admin-panel-dev-container-test
 
 build:
 	@echo "Building the Docker image using docker-compose..."
