@@ -98,12 +98,12 @@ jobs:
           fi
           '
 
-      # - name: Add GitHub SSH Key to Authorized Keys on EC2
-      #   run: |
-      #     ssh -o StrictHostKeyChecking=no -i private_key.pem ubuntu@${{ secrets.EC2_IP }} '
-      #     echo "${{ secrets.GITHUB_SSH_KEY }}" >> ~/.ssh/authorized_keys
-      #     chmod 600 ~/.ssh/authorized_keys
-      #     '
+      - name: Add GitHub SSH Key to Authorized Keys on EC2
+        run: |
+          ssh -o StrictHostKeyChecking=no -i private_key.pem ubuntu@${{ secrets.EC2_IP }} '
+          echo "${{ secrets.GITHUB_SSH_KEY }}" >> ~/.ssh/authorized_keys
+          chmod 600 ~/.ssh/authorized_keys
+          '
 
       - name: Deploy to EC2 using easingthemes/ssh-deploy
         uses: easingthemes/ssh-deploy@main
