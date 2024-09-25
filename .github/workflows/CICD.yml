@@ -207,6 +207,9 @@ jobs:
       #   run: |
       #     make rmi
       # make run ENV=ec2 ECR_IMAGE=${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.${{ secrets.AWS_REGION }}.amazonaws.com/${{ secrets.ECR_REPOSITORY }}:latest
+      - name: Check Docker Compose version
+        run: |
+          docker-compose --version
 
       - name: Run the Docker container
         run: |
