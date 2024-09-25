@@ -132,6 +132,7 @@ jobs:
         run: |
           sudo apt-get update
           sudo apt-get install -y make docker-compose
+          docker-compose --version
 
       - name: Create .env.develop file
         run: |
