@@ -10,7 +10,7 @@ RUN apt-get update && apt-get install -y python3 make g++ \
     && rm -rf /var/lib/apt/lists/*
 
 COPY package*.json ./
-RUN node --max-old-space-size=512 $(which npm) install
+RUN npm install
 
 COPY . .
 
