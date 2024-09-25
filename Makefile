@@ -26,7 +26,7 @@ endif
 
 stop:
 	@echo "Stopping the Docker container using docker-compose..."
-	docker-compose -f $(DOCKER_COMPOSE_FILE) down
+	/usr/local/bin/docker-compose -f $(DOCKER_COMPOSE_FILE) down
 
 clean:
 	@echo "Cleaning up the container using docker-compose..."
