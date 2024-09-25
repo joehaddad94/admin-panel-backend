@@ -139,7 +139,7 @@ jobs:
           username: ubuntu
           key: ${{ secrets.EC2_SSH_PRIVATE_KEY }}
           port: 22
-          source: 'compose.yaml'
+          source: 'compose.yaml, Dockerfile'
           target: '/home/ubuntu/sef-admin-panel-server'
           debug: true
 
@@ -173,8 +173,7 @@ jobs:
 
             # Run Docker Compose commands
             cd /home/ubuntu/sef-admin-panel-server
-            docker-compose down  # Optional: Stop existing containers
-            docker-compose pull  # Pull the latest image
+            docker-compose build app  # Build the image
             docker-compose up -d  # Start the containers in detached mode
 
   # deploy:
