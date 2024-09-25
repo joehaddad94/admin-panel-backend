@@ -1,7 +1,7 @@
 ARG NODE_VERSION=20.15.1
 
 # Stage 1: Build
-FROM node:${NODE_VERSION}-alpine AS build
+FROM node:${NODE_VERSION} AS build
 
 WORKDIR /usr/src/app
 
@@ -13,7 +13,7 @@ RUN npm install
 COPY . .
 
 # Stage 2: Runtime
-FROM node:${NODE_VERSION}-alpine AS runtime
+FROM node:${NODE_VERSION} AS runtime
 
 WORKDIR /usr/src/app
 
