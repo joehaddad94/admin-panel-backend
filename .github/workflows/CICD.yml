@@ -115,75 +115,151 @@ jobs:
   #         AWS_REGION: ${{ secrets.AWS_REGION }}
   #         ECR_REPOSITORY: ${{ secrets.ECR_REPOSITORY }}
 
+  # deploy:
+  #   # needs: build-and-push
+  #   runs-on: ubuntu-latest
+  #   steps:
+  #     - name: Checkout code
+  #       uses: actions/checkout@v3
+
+  #     - name: Set up SSH for deployment
+  #       uses: webfactory/ssh-agent@v0.5.3
+  #       with:
+  #         ssh-private-key: ${{ secrets.EC2_SSH_PRIVATE_KEY }}
+
+  #     - name: Deploy to EC2
+  #       run: |
+  #         ssh -o StrictHostKeyChecking=no ubuntu@${{ secrets.EC2_IP }} << 'EOF'
+  #         # Update the package list and install necessary packages
+  #         sudo apt-get update
+  #         sudo apt-get install -y \
+  #           curl \
+  #           unzip \
+  #           docker.io \
+  #           make \
+  #           python3-pip \
+  #           php-cli \
+  #           php-zip
+
+  #         # Install AWS CLI only if it is not already installed
+  #         if ! command -v aws &> /dev/null; then
+  #           echo "AWS CLI not found. Installing..."
+  #           curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2.zip"
+  #           unzip awscliv2.zip
+  #           sudo ./aws/install
+  #           echo "AWS CLI installed successfully."
+  #         else
+  #           echo "AWS CLI is already installed."
+  #         fi
+
+  #         # Install Composer
+  #         if ! command -v composer &> /dev/null; then
+  #           echo "Composer not found. Installing..."
+  #           sudo curl -sS https://getcomposer.org/installer | php -- --install-dir=/usr/local/bin --filename=composer
+  #           echo "Composer installed successfully."
+  #         else
+  #           echo "Composer is already installed."
+  #         fi
+
+  #         # Check if Docker is running; if not, start it
+  #         if ! systemctl is-active --quiet docker; then
+  #           echo "Starting Docker service..."
+  #           sudo systemctl start docker
+  #         else
+  #           echo "Docker service is already running."
+  #         fi
+
+  #         # Enable Docker to start on boot
+  #         if ! systemctl is-enabled --quiet docker; then
+  #           echo "Enabling Docker service to start on boot..."
+  #           sudo systemctl enable docker
+  #         else
+  #           echo "Docker service is already enabled to start on boot."
+  #         fi
+
+  #         # Add the ubuntu user to the Docker group
+  #         sudo usermod -aG docker ubuntu
+  #         newgrp docker || true
+
+  #         # Exit the SSH session
+  #         exit
+  #         EOF
+
+  #     - name: Set up AWS credentials
+  #       uses: aws-actions/configure-aws-credentials@v1
+  #       with:
+  #         aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+  #         aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+  #         aws-region: ${{ secrets.AWS_REGION }}
+
+  #     - name: Log in to Amazon ECR
+  #       uses: aws-actions/amazon-ecr-login@v1
+
+  #     - name: Pull Docker image
+  #       run: |
+  #         docker pull ${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.${{ secrets.AWS_REGION }}.amazonaws.com/${{ secrets.ECR_REPOSITORY }}:latest
+
+  #     # - name: Stop existing container
+  #     #   run: |
+  #     #     make stop
+
+  #     # - name: Remove existing container
+  #     #   run: |
+  #     #     make rmi
+  #     # make run ENV=ec2 ECR_IMAGE=${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.${{ secrets.AWS_REGION }}.amazonaws.com/${{ secrets.ECR_REPOSITORY }}:latest
+  #     - name: Check Docker Compose version
+  #       run: |
+  #         docker-compose --version
+
+  #     - name: Run the Docker container
+  #       run: |
+  #         docker-compose -f compose.yaml -e ECR_IMAGE=${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.${{ secrets.AWS_REGION }}.amazonaws.com/${{ secrets.ECR_REPOSITORY }}:latest up -d
+
+  # deploy:
+  #   runs-on: ubuntu-latest
+  #   steps:
+  #     - name: Checkout code
+  #       uses: actions/checkout@v3
+
+  #     - name: Set up SSH for deployment
+  #       uses: webfactory/ssh-agent@v0.5.3
+  #       with:
+  #         ssh-private-key: ${{ secrets.EC2_SSH_PRIVATE_KEY }}
+
+  #     - name: Deploy to EC2
+  #       run: |
+  #         ssh -o StrictHostKeyChecking=no ubuntu@${{ secrets.EC2_IP }} << 'EOF'
+  #         # Navigate to the directory with docker-compose file
+  #         cd /home/ubuntu/sef-admin-panel-server
+
+  #         # Install Docker and Docker Compose
+  #         sudo apt-get update
+  #         sudo apt-get install -y docker.io docker-compose
+
+  #         # Start Docker if not running
+  #         sudo systemctl start docker
+
+  #         # Log in to ECR
+  #         aws ecr get-login-password --region ${{ secrets.AWS_REGION }} | docker login --username AWS --password-stdin ${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.${{ secrets.AWS_REGION }}.amazonaws.com
+
+  #         # Pull the latest image
+  #         export ECR_IMAGE=${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.${{ secrets.AWS_REGION }}.amazonaws.com/${{ secrets.ECR_REPOSITORY }}:latest
+
+  #         # Stop and remove existing containers
+  #         docker-compose down
+
+  #         # Run the new container
+  #         docker-compose up -d
+
+  #         exit
+  #         EOF
+
   deploy:
-    # needs: build-and-push
     runs-on: ubuntu-latest
+
     steps:
       - name: Checkout code
         uses: actions/checkout@v3
-
-      - name: Set up SSH for deployment
-        uses: webfactory/ssh-agent@v0.5.3
-        with:
-          ssh-private-key: ${{ secrets.EC2_SSH_PRIVATE_KEY }}
-
-      - name: Deploy to EC2
-        run: |
-          ssh -o StrictHostKeyChecking=no ubuntu@${{ secrets.EC2_IP }} << 'EOF'
-          # Update the package list and install necessary packages
-          sudo apt-get update
-          sudo apt-get install -y \
-            curl \
-            unzip \
-            docker.io \
-            make \
-            python3-pip \
-            php-cli \
-            php-zip
-
-          # Install AWS CLI only if it is not already installed
-          if ! command -v aws &> /dev/null; then
-            echo "AWS CLI not found. Installing..."
-            curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2.zip"
-            unzip awscliv2.zip
-            sudo ./aws/install
-            echo "AWS CLI installed successfully."
-          else
-            echo "AWS CLI is already installed."
-          fi
-
-          # Install Composer
-          if ! command -v composer &> /dev/null; then
-            echo "Composer not found. Installing..."
-            sudo curl -sS https://getcomposer.org/installer | php -- --install-dir=/usr/local/bin --filename=composer
-            echo "Composer installed successfully."
-          else
-            echo "Composer is already installed."
-          fi
-
-          # Check if Docker is running; if not, start it
-          if ! systemctl is-active --quiet docker; then
-            echo "Starting Docker service..."
-            sudo systemctl start docker
-          else
-            echo "Docker service is already running."
-          fi
-
-          # Enable Docker to start on boot
-          if ! systemctl is-enabled --quiet docker; then
-            echo "Enabling Docker service to start on boot..."
-            sudo systemctl enable docker
-          else
-            echo "Docker service is already enabled to start on boot."
-          fi
-
-          # Add the ubuntu user to the Docker group
-          sudo usermod -aG docker ubuntu
-          newgrp docker || true
-
-          # Exit the SSH session
-          exit
-          EOF
 
       - name: Set up AWS credentials
         uses: aws-actions/configure-aws-credentials@v1
@@ -195,22 +271,15 @@ jobs:
       - name: Log in to Amazon ECR
         uses: aws-actions/amazon-ecr-login@v1
 
-      # - name: Pull Docker image
-      #   run: |
-      #     docker pull ${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.${{ secrets.AWS_REGION }}.amazonaws.com/${{ secrets.ECR_REPOSITORY }}:latest
-
-      # - name: Stop existing container
-      #   run: |
-      #     make stop
-
-      # - name: Remove existing container
-      #   run: |
-      #     make rmi
-      # make run ENV=ec2 ECR_IMAGE=${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.${{ secrets.AWS_REGION }}.amazonaws.com/${{ secrets.ECR_REPOSITORY }}:latest
-      - name: Check Docker Compose version
+      - name: Pull Docker image
         run: |
-          docker-compose --version
+          docker pull ${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.${{ secrets.AWS_REGION }}.amazonaws.com/${{ secrets.ECR_REPOSITORY }}:latest
 
-      - name: Run the Docker container
+      - name: Set up Docker Compose
+        uses: docker/compose-action@v2
+        with:
+          compose-file: compose.yaml
+
+      - name: Run Docker Compose
         run: |
-          docker-compose -f compose.yaml -e ECR_IMAGE=${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.${{ secrets.AWS_REGION }}.amazonaws.com/${{ secrets.ECR_REPOSITORY }}:latest up -d
+          docker-compose up -d
