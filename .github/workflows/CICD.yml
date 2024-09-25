@@ -199,13 +199,13 @@ jobs:
       #   run: |
       #     docker pull ${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.${{ secrets.AWS_REGION }}.amazonaws.com/${{ secrets.ECR_REPOSITORY }}:latest
 
-      - name: Stop existing container
-        run: |
-          make stop
+      # - name: Stop existing container
+      #   run: |
+      #     make stop
 
-      - name: Remove existing container
-        run: |
-          make rmi
+      # - name: Remove existing container
+      #   run: |
+      #     make rmi
 
       - name: Run the Docker container
         run: |
