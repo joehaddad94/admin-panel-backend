@@ -60,6 +60,8 @@ jobs:
             # Refresh group membership
             newgrp docker
 
+            sudo apt-get install make -y
+
   build-test:
     runs-on: ubuntu-latest
     needs: install-ec2-instance-requirements
