@@ -125,6 +125,8 @@ jobs:
       - name: Log in to Amazon ECR
         id: ecr-login
         uses: aws-actions/amazon-ecr-login@v1
+        with:
+          region: ${{ secrets.AWS_REGION }}
 
       - name: SSH to EC2 and deploy
         uses: appleboy/scp-action@v0.1.0
@@ -141,7 +143,7 @@ jobs:
         with:
           host: ${{ secrets.EC2_HOST }}
           username: ${{ secrets.EC2_USERNAME }}
-          key: ${{ secrets.EC2_SSH_KEY }}
+          key: ${{ secrets.EC2_SSH_PRIVATE_KEY }}
           port: 22
           script: |
             cd /home/ubuntu/sef-admin-panel-server  # Change to your target path
