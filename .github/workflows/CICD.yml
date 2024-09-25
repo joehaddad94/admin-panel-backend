@@ -133,17 +133,18 @@ jobs:
         uses: aws-actions/amazon-ecr-login@v1
 
       - name: SSH to EC2 and deploy
-        uses: appleboy/scp-action@v0.1.0
+        uses: appleboy/scp-action@v0.1.7
         with:
           host: ${{ secrets.EC2_IP }}
           username: ubuntu
-          key: ${{ secrets.GIT_SSH_KEY }}
+          key: ${{ secrets.EC2_SSH_PRIVATE_KEY }}
           port: 22
           source: 'compose.yaml'
           target: '/home/ubuntu/sef-admin-panel-server'
+          debug: true
 
       - name: SSH to EC2 and run Docker Compose
-        uses: appleboy/ssh-action@v0.1.0
+        uses: appleboy/ssh-action@v0.1.7
         with:
           host: ${{ secrets.EC2_HOST }}
           username: ${{ secrets.EC2_USERNAME }}
