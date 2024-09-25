@@ -54,7 +54,7 @@ jobs:
 
   build-test:
     runs-on: ubuntu-latest
-
+    needs: install-ec2-instance-requirements
     steps:
       - name: Checkout code
         uses: actions/checkout@v3
