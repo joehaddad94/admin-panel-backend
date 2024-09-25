@@ -9,6 +9,49 @@ on:
       - development
 
 jobs:
+  install-ec2-instance-requirements:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: SSH to EC2 and install Docker and Docker Compose (Alpine)
+        uses: appleboy/ssh-action@v0.1.7
+        with:
+          host: ${{ secrets.EC2_IP }}
+          username: ubuntu
+          key: ${{ secrets.EC2_SSH_PRIVATE_KEY }}
+          port: 22
+          script: |
+            # Update package list
+            sudo apk update
+
+            # Install Docker
+            sudo apk add docker
+
+            # Start and enable Docker service
+            sudo rc-update add docker boot
+            sudo service docker start
+
+            # Verify Docker installation
+            docker --version
+
+            # Install dependencies for Docker Compose
+            sudo apk add python3 py3-pip
+
+            # Install Docker Compose via pip
+            sudo pip3 install docker-compose
+
+            # Verify Docker Compose installation
+            docker-compose --version
+
+            # Optional: Add current user to the docker group
+            sudo addgroup $USER docker
+
+            # Refresh group membership
+            newgrp docker
+
   build-test:
     runs-on: ubuntu-latest
 
@@ -57,7 +100,7 @@ jobs:
         run: make test-clean
 
   build-and-push:
-    # needs: build-test
+    needs: build-test
     runs-on: ubuntu-latest
 
     steps:
