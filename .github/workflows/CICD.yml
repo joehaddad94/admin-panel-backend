@@ -211,6 +211,29 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v2
 
+      - name: Install Make and Docker Compose
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y make
+          # Check if Docker Compose is installed
+            if ! command -v docker-compose &> /dev/null
+            then
+              echo "Docker Compose not found. Installing Docker Compose..."
+              sudo curl -L "https://github.com/docker/compose/releases/download/v2.20.2/docker-compose-$(uname -s)-$(uname -m)" -o /usr/local/bin/docker-compose
+              sudo chmod +x /usr/local/bin/docker-compose
+            else
+              echo "Docker Compose is already installed. Skipping installation."
+            fi
+
+            # Verify Docker Compose installation
+            docker-compose --version
+
+            # Optional: Add current user to the docker group (avoid using sudo for Docker commands)
+            sudo usermod -aG docker $USER
+
+            # Refresh group membership
+            newgrp docker
+
       - name: Set up AWS credentials
         uses: aws-actions/configure-aws-credentials@v1
         with:
