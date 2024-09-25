@@ -143,24 +143,6 @@ jobs:
           target: '/home/ubuntu/sef-admin-panel-server'
           debug: true
 
-      - name: Create .env.develop file
-        run: |
-          echo "SERVER_PORT=8000" >> /home/ubuntu/sef-admin-panel-server/.env.develop
-          echo "NODE_ENV=develop" >> /home/ubuntu/sef-admin-panel-server/.env.develop
-          echo "DB_TYPE=postgres" >> /home/ubuntu/sef-admin-panel-server/.env.develop
-          echo "DB_USER=${{ secrets.DB_USER }}" >> /home/ubuntu/sef-admin-panel-server/.env.develop
-          echo "DB_PASSWORD=${{ secrets.DB_PASSWORD }}" >> /home/ubuntu/sef-admin-panel-server/.env.develop
-          echo "DB_HOST=${{ secrets.DB_HOST }}" >> /home/ubuntu/sef-admin-panel-server/.env.develop
-          echo "DB_PORT=${{ secrets.DB_PORT }}" >> /home/ubuntu/sef-admin-panel-server/.env.develop
-          echo "DB_NAME=${{ secrets.DB_NAME }}" >> /home/ubuntu/sef-admin-panel-server/.env.develop
-          echo "DB_SSL_PROFILE=require" >> /home/ubuntu/sef-admin-panel-server/.env.develop
-          echo "JWT_SECRET=${{ secrets.JWT_SECRET }}" >> /home/ubuntu/sef-admin-panel-server/.env.develop
-          echo "AUTH_HEADER_PREFIX=Bearer" >> /home/ubuntu/sef-admin-panel-server/.env.develop
-          echo "SMTP_HOST=smtp.gmail.com" >> /home/ubuntu/sef-admin-panel-server/.env.develop
-          echo "SMTP_USER=${{ secrets.SMTP_USER }}" >> /home/ubuntu/sef-admin-panel-server/.env.develop
-          echo "SMTP_PASS=${{ secrets.SMTP_PASS }}" >> /home/ubuntu/sef-admin-panel-server/.env.develop
-          echo "VERIFY_CLIENT_URL=https://sef-admin-panel-development.vercel.app/reset-password" >> /home/ubuntu/sef-admin-panel-server/.env.develop
-
       - name: SSH to EC2 and run Docker Compose
         uses: appleboy/ssh-action@v0.1.7
         with:
@@ -169,7 +151,28 @@ jobs:
           key: ${{ secrets.EC2_SSH_PRIVATE_KEY }}
           port: 22
           script: |
-            cd /home/ubuntu/sef-admin-panel-server  # Change to your target path
+            # Ensure the target directory exists
+            mkdir -p /home/ubuntu/sef-admin-panel-server
+
+            # Create the .env.develop file
+            echo "SERVER_PORT=8000" >> /home/ubuntu/sef-admin-panel-server/.env.develop
+            echo "NODE_ENV=develop" >> /home/ubuntu/sef-admin-panel-server/.env.develop
+            echo "DB_TYPE=postgres" >> /home/ubuntu/sef-admin-panel-server/.env.develop
+            echo "DB_USER=${{ secrets.DB_USER }}" >> /home/ubuntu/sef-admin-panel-server/.env.develop
+            echo "DB_PASSWORD=${{ secrets.DB_PASSWORD }}" >> /home/ubuntu/sef-admin-panel-server/.env.develop
+            echo "DB_HOST=${{ secrets.DB_HOST }}" >> /home/ubuntu/sef-admin-panel-server/.env.develop
+            echo "DB_PORT=${{ secrets.DB_PORT }}" >> /home/ubuntu/sef-admin-panel-server/.env.develop
+            echo "DB_NAME=${{ secrets.DB_NAME }}" >> /home/ubuntu/sef-admin-panel-server/.env.develop
+            echo "DB_SSL_PROFILE=require" >> /home/ubuntu/sef-admin-panel-server/.env.develop
+            echo "JWT_SECRET=${{ secrets.JWT_SECRET }}" >> /home/ubuntu/sef-admin-panel-server/.env.develop
+            echo "AUTH_HEADER_PREFIX=Bearer" >> /home/ubuntu/sef-admin-panel-server/.env.develop
+            echo "SMTP_HOST=smtp.gmail.com" >> /home/ubuntu/sef-admin-panel-server/.env.develop
+            echo "SMTP_USER=${{ secrets.SMTP_USER }}" >> /home/ubuntu/sef-admin-panel-server/.env.develop
+            echo "SMTP_PASS=${{ secrets.SMTP_PASS }}" >> /home/ubuntu/sef-admin-panel-server/.env.develop
+            echo "VERIFY_CLIENT_URL=https://sef-admin-panel-development.vercel.app/reset-password" >> /home/ubuntu/sef-admin-panel-server/.env.develop
+
+            # Run Docker Compose commands
+            cd /home/ubuntu/sef-admin-panel-server
             docker-compose down  # Optional: Stop existing containers
             docker-compose pull  # Pull the latest image
             docker-compose up -d  # Start the containers in detached mode
