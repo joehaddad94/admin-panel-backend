@@ -131,9 +131,9 @@ jobs:
       - name: SSH to EC2 and deploy
         uses: appleboy/scp-action@v0.1.0
         with:
-          host: ${{ secrets.EC2_HOST }}
-          username: ${{ secrets.EC2_USERNAME }}
-          key: ${{ secrets.EC2_SSH_KEY }}
+          host: ${{ secrets.EC2_IP }}
+          username: ubuntu
+          key: ${{ secrets.EC2_SSH_PRIVATE_KEY }}
           port: 22
           source: 'compose.yaml'
           target: '/home/ubuntu/sef-admin-panel-server'
