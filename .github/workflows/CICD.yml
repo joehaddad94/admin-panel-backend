@@ -155,7 +155,7 @@ jobs:
           # Install Composer
           if ! command -v composer &> /dev/null; then
             echo "Composer not found. Installing..."
-            curl -sS https://getcomposer.org/installer | php -- --install-dir=/usr/local/bin --filename=composer
+            sudo curl -sS https://getcomposer.org/installer | php -- --install-dir=/usr/local/bin --filename=composer
             echo "Composer installed successfully."
           else
             echo "Composer is already installed."
