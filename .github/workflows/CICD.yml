@@ -137,7 +137,7 @@ jobs:
         with:
           host: ${{ secrets.EC2_IP }}
           username: ubuntu
-          key: ${{ secrets.EC2_SSH_PRIVATE_KEY }}
+          key: ${{ secrets.GIT_SSH_KEY }}
           port: 22
           source: 'compose.yaml'
           target: '/home/ubuntu/sef-admin-panel-server'
