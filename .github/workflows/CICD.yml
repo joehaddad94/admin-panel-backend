@@ -139,7 +139,7 @@ jobs:
           username: ubuntu
           key: ${{ secrets.EC2_SSH_PRIVATE_KEY }}
           port: 22
-          source: 'compose.yaml, Dockerfile'
+          source: 'compose.yaml, Dockerfile, package.json'
           target: '/home/ubuntu/sef-admin-panel-server'
           debug: true
 
