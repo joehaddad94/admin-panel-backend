@@ -285,7 +285,7 @@ jobs:
 
             # Run Docker Compose commands
             cd /home/ubuntu/sef-admin-panel-server
-            make rebuild-run
+            make rebuild
 
   # deploy:
   #   # needs: build-and-push
