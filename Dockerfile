@@ -4,7 +4,7 @@ FROM node:${NODE_VERSION}-alpine AS base
 
 WORKDIR /usr/src/app
 
-RUN apk add --no-cache python3 make g++
+RUN apk add --no-cache python3 make g++ postgresql-client
 
 COPY package*.json ./
 RUN npm install
