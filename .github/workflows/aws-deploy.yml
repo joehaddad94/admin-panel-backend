@@ -12,60 +12,59 @@ jobs:
   deploy:
     runs-on: ubuntu-latest
 
-    steps:
-      - name: Create SSH Key
-        run: |
-          echo "${{ secrets.SSH_PRIVATE_KEY }}" > private_key.pem
-          chmod 600 private_key.pem
+  #   steps:
+  #     - name: Create SSH Key
+  #       run: |
+  #         echo "${{ secrets.SSH_PRIVATE_KEY }}" > private_key.pem
+  #         chmod 600 private_key.pem
 
-      - name: Ensure Node.js is installed on EC2
-        run: |
-          ssh -o StrictHostKeyChecking=no -i private_key.pem ubuntu@${{ secrets.EC2_IP }} '
-          if ! command -v node &> /dev/null; then
-            curl -fsSL https://deb.nodesource.com/setup_20.x | sudo -E bash -;
-            sudo apt-get install -y nodejs;
-          fi
-          '
+  #     - name: Ensure Node.js is installed on EC2
+  #       run: |
+  #         ssh -o StrictHostKeyChecking=no -i private_key.pem ubuntu@${{ secrets.EC2_IP }} '
+  #         if ! command -v node &> /dev/null; then
+  #           curl -fsSL https://deb.nodesource.com/setup_20.x | sudo -E bash -;
+  #           sudo apt-get install -y nodejs;
+  #         fi
+  #         '
 
-      - name: Add GitHub SSH Key to Authorized Keys on EC2
-        run: |
-          ssh -o StrictHostKeyChecking=no -i private_key.pem ubuntu@${{ secrets.EC2_IP }} '
-          echo "${{ secrets.GIT_SSH_KEY }}" >> ~/.ssh/authorized_keys
-          chmod 600 ~/.ssh/authorized_keys
-          '
+  #     - name: Add GitHub SSH Key to Authorized Keys on EC2
+  #       run: |
+  #         ssh -o StrictHostKeyChecking=no -i private_key.pem ubuntu@${{ secrets.EC2_IP }} '
+  #         echo "${{ secrets.GIT_SSH_KEY }}" >> ~/.ssh/authorized_keys
+  #         chmod 600 ~/.ssh/authorized_keys
+  #         '
 
-      - name: Check if the repository exists on EC2 and clone or pull
-        run: |
-          ssh -o StrictHostKeyChecking=no -i private_key.pem ubuntu@${{ secrets.EC2_IP }} '
-          ssh-keyscan -H github.com >> ~/.ssh/known_hosts
-          if [ ! -d /home/ubuntu/sef-admin-panel-server ]; then
-            git clone git@github.com:sefact0ry/sef-admin-panel-server.git /home/ubuntu/sef-admin-panel-server;
-          else
-            cd /home/ubuntu/sef-admin-panel-server && git pull origin development;
-          fi
-          '
+  #     - name: Check if the repository exists on EC2 and clone or pull
+  #       run: |
+  #         ssh -o StrictHostKeyChecking=no -i private_key.pem ubuntu@${{ secrets.EC2_IP }} '
+  #         ssh-keyscan -H github.com >> ~/.ssh/known_hosts
+  #         if [ ! -d /home/ubuntu/sef-admin-panel-server ]; then
+  #           git clone git@github.com:sefact0ry/sef-admin-panel-server.git /home/ubuntu/sef-admin-panel-server;
+  #         else
+  #           cd /home/ubuntu/sef-admin-panel-server && git pull origin development;
+  #         fi
+  #         '
 
-      - name: Install dependencies on EC2
-        run: |
-          ssh -o StrictHostKeyChecking=no -i private_key.pem ubuntu@${{ secrets.EC2_IP }} '
-          cd /home/ubuntu/sef-admin-panel-server &&
-          npm install
-          '
+  #     - name: Install dependencies on EC2
+  #       run: |
+  #         ssh -o StrictHostKeyChecking=no -i private_key.pem ubuntu@${{ secrets.EC2_IP }} '
+  #         cd /home/ubuntu/sef-admin-panel-server &&
+  #         npm install
+  #         '
 
-      - name: Build project on EC2
-        run: |
-          ssh -o StrictHostKeyChecking=no -i private_key.pem ubuntu@${{ secrets.EC_IP }} '
-          cd /home/ubuntu/sef-admin-panel-server &&
-          npm run build
-          '
+  #     - name: Build project on EC2
+  #       run: |
+  #         ssh -o StrictHostKeyChecking=no -i private_key.pem ubuntu@${{ secrets.EC_IP }} '
+  #         cd /home/ubuntu/sef-admin-panel-server &&
+  #         npm run build
+  #         '
 
-      - name: Redeploy to EC2
-        run: |
-          ssh -o StrictHostKeyChecking=no -i private_key.pem ubuntu@${{ secrets.EC2_IP }} '
-          cd /home/ubuntu/sef-admin-panel-server &&
-          npm run redeploy:dev
-          '
-
+  #     - name: Redeploy to EC2
+  #       run: |
+  #         ssh -o StrictHostKeyChecking=no -i private_key.pem ubuntu@${{ secrets.EC2_IP }} '
+  #         cd /home/ubuntu/sef-admin-panel-server &&
+  #         npm run redeploy:dev
+  #         '
 # name: Deploy Application
 
 # on:
