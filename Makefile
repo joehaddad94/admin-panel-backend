@@ -11,8 +11,6 @@ build:
 	docker-compose -f $(DOCKER_COMPOSE_FILE) build
 	@echo "Showing build logs..."
 	docker-compose -f $(DOCKER_COMPOSE_FILE) logs
-	@echo "Checking if the image was built..."
-	@docker images | grep $(IMAGE_NAME)
 	
 run:
 	@echo "Running the Docker container in $(ENV) environment using docker-compose..."
@@ -26,7 +24,8 @@ endif
 
 stop:
 	@echo "Stopping the Docker container using docker-compose..."
-	/usr/local/bin/docker-compose -f $(DOCKER_COMPOSE_FILE) down
+# /usr/local/bin/docker-compose -f $(DOCKER_COMPOSE_FILE) down
+	docker-compose -f $(DOCKER_COMPOSE_FILE) down
 
 clean:
 	@echo "Cleaning up the container using docker-compose..."
