@@ -11,7 +11,7 @@ async function bootstrap() {
     app.enableCors({
       origin: [
         'https://sef-admin-panel-development.vercel.app',
-        'https://sef-admin-panel.vercel.app/',
+        'https://sef-admin-panel.vercel.app',
         'http://localhost:3000',
       ],
       methods: 'GET,HEAD,PUT,PATCH,POST,DELETE,OPTIONS',
