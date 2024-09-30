@@ -7,6 +7,7 @@ import { ApiTags } from '@nestjs/swagger';
 export class UserController {
   constructor(private readonly mediator: UserMediator) {}
 
+
   @Get()
   getUsers() {
     return this.mediator.findUsers();

@@ -1,3 +1,4 @@
+/* eslint-disable camelcase */
 import {
   BaseEntity,
   Entity,
@@ -16,13 +17,13 @@ export class ApplicationInfo extends BaseEntity {
   @PrimaryGeneratedColumn()
   id: number;
 
-  @Column({ type: 'int' })
+  @Column({ type: 'int', nullable: true })
   application_new_id: number;
 
-  @Column({ type: 'int' })
+  @Column({ type: 'int', nullable: true })
   info_id: number;
 
-  @Column({ type: 'int' })
+  @Column({ type: 'double precision', nullable: true })
   application_new_order: number;
 
   @ManyToOne(() => Application, (application) => application.applicationInfo, {

@@ -10,4 +10,8 @@ export type GlobalEntities =
   | 'applicationInfo'
   | 'applicationProgram'
   | 'applicationUser'
-  | 'informationUser';
+  | 'informationUser'
+  | 'cycleProgram'
+  | 'applicationCycle'
+  | 'decisionDateCycle'
+  | 'thresholdCycle';

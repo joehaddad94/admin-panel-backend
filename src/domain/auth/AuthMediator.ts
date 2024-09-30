@@ -1,146 +1,125 @@
 import { Injectable } from '@nestjs/common';
 import { AuthService } from './auth.service';
-import { ManualCreateDto } from './dto/manual.create.dto';
+import { JwtService } from '@nestjs/jwt';
 import { LoginDto } from './dto/login.dto';
-import { MailService } from '../mail';
-import { InviteDto } from './dto/invite.dto';
-import { VerifyDto } from './dto/verify.dto';
 import { catcher } from '../../core/helpers/operation';
-import {
-  throwBadRequest,
-  throwForbidden,
-} from '../../core/settings/base/errors/errors';
+import { throwBadRequest } from '../../core/settings/base/errors/errors';
+import { MailService } from '../mail/mail.service';
+import { ChangePasswordDto } from './dto/change-password.dto';
+import { VerifyTokenDto } from './dto/verifyToken.dto';
 
 @Injectable()
 export class AuthMediator {
   constructor(
     private readonly service: AuthService,
     private readonly mailService: MailService,
+    private readonly jwtService: JwtService,
   ) {}
-
-  invite = async (data: InviteDto) => {
-    return catcher(async () => {
-      const { email, role, name } = data;
-
-      const verifyEmail = this.service.verifyEmail(email);
-
-      throwBadRequest({
-        message: 'Email is not valid',
-        errorCheck: !verifyEmail,
-      });
-
-      const found = await this.service.findOne({
-        email,
-      });
-
-      throwBadRequest({
-        message: 'Email already in use',
-        errorCheck: !!found,
-      });
-
-      const { link, key } = await this.service.generateLink(email);
-
-      const user = this.service.create({
-        name,
-        email,
-        role,
-        isActive: false,
-        verificationKey: key,
-      });
-
-      await user.save();
-
-      await this.mailService.sendRegistractionMail(user);
-
-      return { link };
-    });
-  };
-
-  verify = async (data: VerifyDto) => {
-    return catcher(async () => {
-      const { key, password } = data;
-
-      const user = await this.service.findOne({
-        verificationKey: key,
-      });
-
-      throwForbidden({
-        action: 'Verification',
-        errorCheck: !user,
-      });
-
-      user.isActive = true;
-      user.verificationKey = null;
-
-      const hashedPassword = await this.service.hashPassword(password);
-
-      user.password = hashedPassword;
-
-      await user.save();
-
-      const token = await this.service.generateToken(user);
-
-      return { token, user };
-    });
-  };
 
   login = async (data: LoginDto) => {
     return catcher(async () => {
       const { email, password } = data;
 
-      const user = await this.service.findOne(
-        {
-          email,
-        },
-        [],
-        {
-          id: true,
-          name: true,
-          email: true,
-          password: true,
-          role: true,
-          isActive: true,
-        },
-      );
-
+      const emailValid = this.service.verifyEmail(email);
       throwBadRequest({
-        message: 'User not found',
-        errorCheck: !user,
+        message: 'Invalid email format',
+        errorCheck: !emailValid,
       });
 
-      const isPasswordCorrect = await this.service.comparePassword(
+      const admin = await this.service.findOne({ email });
+
+      throwBadRequest({
+        message: 'Admin not found',
+        errorCheck: !admin,
+      });
+
+      const passwordIsValid = await this.service.comparePassword(
         password,
-        user.password,
+        admin.password,
       );
 
-      throwBadRequest({
-        message: 'Password is incorrect',
-        errorCheck: !isPasswordCorrect,
-      });
+      if (!passwordIsValid) {
+        const accountLocked = await this.service.decrementLoginAttempts(admin);
+        throwBadRequest({
+          message: accountLocked
+            ? 'Account locked due to multiple failed login attempts'
+            : 'Invalid Credentials',
+          errorCheck: true,
+        });
+      }
 
-      const token = await this.service.generateToken(user);
+      await this.service.resetLoginAttempts(admin);
 
-      return { token, user };
+      const token = await this.service.generateToken(admin);
+
+      return {
+        name: admin.name,
+        email: admin.email,
+        token,
+      };
     });
   };
 
-  manualCreate = async (data: ManualCreateDto) => {
+  changePassword = async (data: ChangePasswordDto) => {
+    const { reset_token, newPassword } = data;
     return catcher(async () => {
-      const { email, role, name, password } = data;
+      const admin = await this.service.findOneByResetToken(reset_token);
 
-      const hashedPassword = await this.service.hashPassword(password);
+      if (!admin) {
+        throwBadRequest({
+          message: 'Invalid or Expired Token',
+          errorCheck: true,
+        });
+      }
 
-      const user = this.service.create({
-        name,
-        email,
-        role,
-        password: hashedPassword,
-        isActive: true,
-      });
+      const currentDate = new Date();
+      if (admin.reset_token_expiry < currentDate) {
+        throwBadRequest({
+          message: 'Token Expired',
+          errorCheck: true,
+        });
+      }
 
-      await user.save();
-
-      return user;
+      await this.service.updatePassword(admin, newPassword);
+      return { message: 'Password changed successfully.' };
     });
+  };
+
+  forgotPassword = async (data: ChangePasswordDto) => {
+    const { email } = data;
+    return catcher(async () => {
+      const admin = await this.service.findOne({ email });
+
+      if (!admin) {
+        throwBadRequest({
+          message: 'Email not found',
+          errorCheck: true,
+        });
+      }
+
+      const { key } = await this.service.generateResetToken(email);
+
+      admin.reset_token = key;
+      admin.reset_token_expiry = new Date(Date.now() + 3600000); // 1 hour expiry
+      await admin.save();
+
+      const templateName = 'reset-password.hbs';
+      await this.mailService.sendInvitationEmail(admin, templateName);
+
+      return { message: 'Reset password email sent' };
+    });
+  };
+
+  verifyToken = async (data: VerifyTokenDto) => {
+    const { token } = data;
+
+    throwBadRequest({
+      message: 'Invalid token',
+      errorCheck: !token,
+    });
+
+    const payload = await this.service.verifyToken(token);
+
+    return payload;
   };
 }

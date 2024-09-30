@@ -1,3 +1,4 @@
+/* eslint-disable camelcase */
 import { Injectable } from '@nestjs/common';
 import * as bcrypt from 'bcrypt';
 import * as crypto from 'crypto';
@@ -36,26 +37,75 @@ export class AuthService extends BaseService<AuthRepository, Admin> {
     return formatCheck;
   };
 
-  generateLink = async (email: string) => {
-    const verificationKey = crypto
+  generateResetToken = async (email: string) => {
+    const resetToken = crypto
       .randomBytes(32)
       .toString('base64')
       .replace(/\+/g, '-')
       .replace(/\//g, '_')
       .replace(/=/g, '');
 
-    const link = `${process.env.VERIFY_CLIENT_URL}?key=${verificationKey}&email=${email}`;
+    const link = `${process.env.VERIFY_CLIENT_URL}?key=${resetToken}&email=${email}`;
 
-    return { link, key: verificationKey };
+    return { link, key: resetToken };
   };
 
   generateToken = async (user: Admin) => {
-    const payload = { sub: user.id, role: user.role };
+    const payload = { sub: user.id };
 
-    const token = this.jwtService.sign(payload, {
-      secret: process.env.JWT_SECRET,
-    });
+    const token = this.jwtService.sign(payload);
 
     return token;
   };
+
+  generateLink = async (email: string) => {
+    const reset_token = crypto
+      .randomBytes(32)
+      .toString('base64')
+      .replace(/\+/g, '-')
+      .replace(/\//g, '_')
+      .replace(/=/g, '');
+
+    const link = `${process.env.VERIFY_CLIENT_URL}?key=${reset_token}&email=${email}`;
+
+    return { link, reset_token };
+  };
+
+  async findOneByResetToken(reset_token: string): Promise<Admin | null> {
+    return this.authRepository.findOne({ where: { reset_token } });
+  }
+
+  async updatePassword(admin: Admin, newPassword: string): Promise<void> {
+    admin.password = await this.hashPassword(newPassword);
+    admin.reset_token = null;
+    admin.reset_token_expiry = null;
+    await this.authRepository.save(admin);
+  }
+
+  async verifyToken(token: string) {
+    const payload = await this.jwtService.decode(token);
+
+    const updated = await this.authRepository.findOne({
+      where: { id: payload.sub },
+    });
+
+    return updated;
+  }
+
+  async decrementLoginAttempts(admin: Admin): Promise<boolean> {
+    if (admin.login_attempts > 1) {
+      admin.login_attempts -= 1;
+    } else {
+      admin.is_active = false;
+      await admin.save();
+      return true;
+    }
+    await admin.save();
+    return false;
+  }
+
+  async resetLoginAttempts(admin: Admin) {
+    admin.login_attempts = 5;
+    await admin.save();
+  }
 }

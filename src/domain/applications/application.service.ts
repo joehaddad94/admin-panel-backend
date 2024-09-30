@@ -3,13 +3,43 @@ import { Injectable } from '@nestjs/common';
 import { ApplicationRepository } from './application.repository';
 import { BaseService } from '../../core/settings/base/service/base.service';
 import { Application } from '../../core/data/database/entities/application.entity';
+import { CycleService } from '../cycles/cycle.service';
+import { GlobalEntities } from 'src/core/data/types';
 
 @Injectable()
 export class ApplicationService extends BaseService<
   ApplicationRepository,
   Application
 > {
-  constructor(private readonly applicationRepository: ApplicationRepository) {
+  constructor(
+    private readonly applicationRepository: ApplicationRepository,
+    private readonly cycleService: CycleService,
+  ) {
     super(applicationRepository);
+  }
+
+  async getRelevantCycleId(programId: number): Promise<any | null> {
+    const currentDate = new Date();
+
+    const options: GlobalEntities[] = ['cycleProgram'];
+
+    const whereConditions: any = {
+      cycleProgram: {
+        program_id: programId,
+      },
+    };
+
+    const cycles = await this.cycleService.findMany(whereConditions, options);
+
+    const sortedCycles = cycles.sort(
+      (a, b) =>
+        new Date(a.from_date).getTime() - new Date(b.from_date).getTime(),
+    );
+
+    const relevantCycle = sortedCycles.find(
+      (cycle) => new Date(cycle.from_date) > currentDate,
+    );
+
+    return relevantCycle ? relevantCycle : null;
   }
 }

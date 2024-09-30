@@ -18,6 +18,12 @@ import { ServeStaticModule } from '@nestjs/serve-static';
 import { join } from 'path';
 import { QuestionModule } from './domain/questions/question.module';
 import { ProgramModule } from './domain/programs/program.module';
+import { MailModule } from './domain/mail/mail.module';
+import { AdminModule } from './domain/admins';
+import { CycleModule } from './domain/cycles/cycle.module';
+import { DecisionDateModule } from './domain/decisionDates/decision-date.module';
+import { ThresholdModule } from './domain/thresholds/threshold.module';
+import { HealthCheckModule } from './domain/healthCheck/health.module';
 
 @Module({
   imports: [
@@ -35,6 +41,7 @@ import { ProgramModule } from './domain/programs/program.module';
       rootPath: join(__dirname, 'public'),
     }),
     AuthModule,
+    AdminModule,
     StudentModule,
     QuizModule,
     QuestionModule,
@@ -44,6 +51,11 @@ import { ProgramModule } from './domain/programs/program.module';
     ReportModule,
     DataMigrationModule,
     ProgramModule,
+    MailModule,
+    CycleModule,
+    DecisionDateModule,
+    ThresholdModule,
+    HealthCheckModule,
   ],
   controllers: [AppController],
   providers: [AppService],

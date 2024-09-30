@@ -3,6 +3,7 @@ import { MailerModule } from '@nestjs-modules/mailer';
 import { join } from 'path';
 import { HandlebarsAdapter } from '@nestjs-modules/mailer/dist/adapters/handlebars.adapter';
 import { MailService } from './mail.service';
+import { UserModule } from '../users/user.module';
 
 @Module({
   imports: [
@@ -10,14 +11,14 @@ import { MailService } from './mail.service';
       useFactory: async () => ({
         transport: {
           host: process.env.SMTP_HOST,
-          secure: false,
+          secure: true,
           auth: {
             user: process.env.SMTP_USER,
             pass: process.env.SMTP_PASS,
           },
         },
         defaults: {
-          from: '"SEF Dashboard" <noreply@example.com>',
+          from: '"SEF Admin Panel" <noreply@example.com>',
         },
         template: {
           dir: join(__dirname, 'templates'),
@@ -28,6 +29,7 @@ import { MailService } from './mail.service';
         },
       }),
     }),
+    UserModule,
   ],
   controllers: [],
   providers: [MailService],

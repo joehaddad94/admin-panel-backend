@@ -1,3 +1,4 @@
+/* eslint-disable camelcase */
 import {
   Entity,
   Column,
@@ -14,10 +15,10 @@ export class InformationUser extends BaseEntity {
   @PrimaryGeneratedColumn()
   id: number;
 
-  @Column()
+  @Column({ type: 'int', nullable: true })
   info_id: number;
 
-  @Column()
+  @Column({ type: 'int', nullable: true })
   user_id: number;
 
   @ManyToOne(() => Information, (information) => information.informationUser)

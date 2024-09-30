@@ -16,7 +16,7 @@ export const dataSourceOptions: DataSourceOptions = {
       ? { rejectUnauthorized: false }
       : undefined,
   entities: ['dist/core/data/database/**/*.entity{.ts,.js}'],
-  // migrations: ['./migrations/*{.ts,.js}'],
+  migrations: ['dist/core/config/db/migrations/*{.ts,.js}'],
 };
 
 export default new DataSource(dataSourceOptions);

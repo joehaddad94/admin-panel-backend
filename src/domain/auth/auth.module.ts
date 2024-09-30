@@ -1,17 +1,24 @@
 import { Module } from '@nestjs/common';
-import { AuthMediator } from './AuthMediator';
-import { TypeOrmModule } from '@nestjs/typeorm';
-import { JwtService } from '@nestjs/jwt';
-import { MailModule } from '../mail';
-import { AuthController } from './auth.controller';
-import { AuthRepository } from './auth.repository';
 import { AuthService } from './auth.service';
+import { JwtStrategy } from './jwt.strategy';
+import { AuthController } from './auth.controller';
+import { TypeOrmModule } from '@nestjs/typeorm';
+import { AuthMediator } from './AuthMediator';
 import { Admin } from '../../core/data/database';
+import { AuthRepository } from './auth.repository';
+import { MailService } from '../mail/mail.service';
+import { UserModule } from '../users/user.module';
 
 @Module({
-  imports: [MailModule, TypeOrmModule.forFeature([Admin])],
+  imports: [TypeOrmModule.forFeature([Admin]), UserModule],
   controllers: [AuthController],
-  providers: [AuthMediator, AuthService, AuthRepository, JwtService],
-  exports: [],
+  providers: [
+    AuthMediator,
+    AuthService,
+    AuthRepository,
+    JwtStrategy,
+    MailService,
+  ],
+  exports: [AuthService],
 })
 export class AuthModule {}
