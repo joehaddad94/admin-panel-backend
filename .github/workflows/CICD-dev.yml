@@ -24,6 +24,5 @@ jobs:
           key: ${{ secrets.EC2_SSH_PRIVATE_KEY }}
           port: 22
           script: |
-            source ~/.bashrc
             cd /home/ubuntu/sef-admin-panel-server
-            npm run redeploy:dev
+            /usr/bin/npm run redeploy:dev
