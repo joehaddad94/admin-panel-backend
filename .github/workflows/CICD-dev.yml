@@ -11,24 +11,26 @@ on:
 jobs:
   redeploy:
     runs-on: ubuntu-latest
+#     steps:
+#       - name: Checkout code
+#         uses: actions/checkout@v3
 
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v3
+#       - name: redeploy
+#         uses: appleboy/ssh-action@v0.1.7
+#         with:
+#           host: ${{ secrets.EC2_IP }}
+#           username: ubuntu
+#           key: ${{ secrets.EC2_SSH_PRIVATE_KEY }}
+#           port: 22
+#           script: |
+#             echo "Updating package list..."
+#             sudo apt-get update
 
-      - name: redeploy
-        uses: appleboy/ssh-action@v0.1.7
-        with:
-          host: ${{ secrets.EC2_IP }}
-          username: ubuntu
-          key: ${{ secrets.EC2_SSH_PRIVATE_KEY }}
-          port: 22
-          script: |
-            echo "Updating package list..."
-            sudo apt-get update
+#             echo "Installing npm..."
+#             sudo apt-get install -y npm
 
-            echo "Installing npm..."
-            sudo apt-get install -y npm
+#             cd /home/ubuntu/sef-admin-panel-server
+#             /usr/bin/npm run redeploy:dev
 
-            cd /home/ubuntu/sef-admin-panel-server
-            /usr/bin/npm run redeploy:dev
+#!/bin/bash
+
