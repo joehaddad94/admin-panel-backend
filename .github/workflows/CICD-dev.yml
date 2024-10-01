@@ -21,6 +21,15 @@ jobs:
         with:
           node-version: '20.14.0'
 
+      - name: Install npm
+        run: |
+          sudo apt-get update
+          sudo apt-get install npm
+
+      - name: Check npm version
+        run: |
+          npm --version
+
       - name: redeploy
         uses: appleboy/ssh-action@v0.1.7
         with:
