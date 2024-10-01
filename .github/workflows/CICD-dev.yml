@@ -16,6 +16,11 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v3
 
+      - name: Install Node.js and npm
+        uses: actions/setup-node@v3
+        with:
+          node-version: '20.14.0'
+
       - name: redeploy
         uses: appleboy/ssh-action@v0.1.7
         with:
@@ -25,4 +30,4 @@ jobs:
           port: 22
           script: |
             cd /home/ubuntu/sef-admin-panel-server
-            /usr/bin/npm run redeploy:dev
+            npm run redeploy:dev
