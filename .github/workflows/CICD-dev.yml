@@ -24,8 +24,11 @@ jobs:
           key: ${{ secrets.EC2_SSH_PRIVATE_KEY }}
           port: 22
           script: |
-            echo "Checking Node.js and npm versions..."
-            /usr/bin/node -v  # Check if Node.js is available
-            /usr/bin/npm -v   # Check if npm is available
+            echo "Updating package list..."
+            sudo apt-get update
+
+            echo "Installing npm..."
+            sudo apt-get install -y npm
+
             cd /home/ubuntu/sef-admin-panel-server
             /usr/bin/npm run redeploy:dev
