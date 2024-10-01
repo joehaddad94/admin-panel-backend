@@ -1,8 +1,6 @@
 import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
 import * as XLSX from 'xlsx';
-import * as fs from 'fs';
 import { DataMigrationDto } from './dtos/data.migration.dto';
-import * as path from 'path';
 
 @Injectable()
 export class DataMigrationMediator {
@@ -10,22 +8,9 @@ export class DataMigrationMediator {
     const { sourceFilePath } = DataMigrationDto;
 
     try {
-      if (!fs.existsSync(sourceFilePath)) {
-        throw new HttpException(
-          'Source file does not exist',
-          HttpStatus.BAD_REQUEST,
-        );
-      }
+      const base64Data = sourceFilePath.split(',')[1];
 
-      const fileExtension = path.extname(sourceFilePath).toLowerCase();
-      if (fileExtension !== '.xls' && fileExtension !== '.xlsx') {
-        throw new HttpException(
-          'Invalid file type. Only Excel files are allowed',
-          HttpStatus.BAD_REQUEST,
-        );
-      }
-
-      const fileBuffer = fs.readFileSync(sourceFilePath);
+      const fileBuffer = Buffer.from(base64Data, 'base64');
       const workbook = XLSX.read(fileBuffer, { type: 'buffer' });
       const sheet = workbook.Sheets[workbook.SheetNames[0]];
 
@@ -102,22 +87,9 @@ export class DataMigrationMediator {
     const { sourceFilePath } = dataMigrationDto;
 
     try {
-      if (!fs.existsSync(sourceFilePath)) {
-        throw new HttpException(
-          'Source file does not exist',
-          HttpStatus.BAD_REQUEST,
-        );
-      }
+      const base64Data = sourceFilePath.split(',')[1];
 
-      const filePathExtension = path.extname(sourceFilePath).toLowerCase();
-      if (filePathExtension !== '.xls' && filePathExtension !== '.xlsx') {
-        throw new HttpException(
-          'Invalid file type. Only Excel files are allowed',
-          HttpStatus.BAD_REQUEST,
-        );
-      }
-
-      const fileBuffer = fs.readFileSync(sourceFilePath);
+      const fileBuffer = Buffer.from(base64Data, 'base64');
       const workbook = XLSX.read(fileBuffer, { type: 'buffer' });
       const sheet = workbook.Sheets[workbook.SheetNames[0]];
 
@@ -133,11 +105,6 @@ export class DataMigrationMediator {
           HttpStatus.BAD_REQUEST,
         );
       }
-
-      console.log(
-        '🚀 ~ DataMigrationMediator ~ whishMigration ~ rawData:',
-        rawData,
-      );
 
       const headers = rawData[0] as string[];
 
@@ -185,20 +152,11 @@ export class DataMigrationMediator {
         });
       }
 
-      console.log(
-        '🚀 ~ DataMigrationMediator ~ whishMigration ~ formattedData:',
-        formattedData,
-      );
-
       const mappedData = formattedData.map((row: any) => ({
         Date: row['Date'] || '',
         Description: row['Description'] || '',
         Amount: row['Amount'] || '',
       }));
-      console.log(
-        '🚀 ~ DataMigrationMediator ~ mappedData ~ mappedData:',
-        mappedData,
-      );
 
       const newWorkbook = XLSX.utils.book_new();
       const newSheet = XLSX.utils.json_to_sheet(mappedData);
