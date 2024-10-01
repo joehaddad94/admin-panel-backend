@@ -1,0 +1,25 @@
+name: Deploy Application
+
+on:
+  push:
+    branches:
+      - development
+  pull_request:
+    branches:
+      - development
+
+jobs:
+  redeploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: redeploy
+        uses: appleboy/ssh-action@v0.1.7
+        with:
+          host: ${{ secrets.EC2_IP }}
+          username: ubuntu
+          key: ${{ secrets.EC2_SSH_PRIVATE_KEY }}
+          port: 22
+          script: |
+            cd /home/ubuntu/sef-admin-panel-server
+            npm run redeploy:dev
