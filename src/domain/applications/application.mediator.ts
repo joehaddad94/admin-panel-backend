@@ -15,7 +15,6 @@ import { convertToCamelCase } from 'src/core/helpers/camelCase';
 import { validateThresholdEntity } from 'src/core/helpers/validateThresholds';
 import { Status } from 'src/core/data/types/applications/applications.types';
 import { format } from 'date-fns';
-import { Application } from 'src/core/data/database/entities/application.entity';
 
 @Injectable()
 export class ApplicationMediator {
@@ -165,6 +164,151 @@ export class ApplicationMediator {
     });
   };
 
+  findApplicationsByLatestCycle = async (
+    filtersDto: FiltersDto,
+    page = 1,
+    pageSize = 100,
+  ) => {
+    return catcher(async () => {
+      const { programId, page: dtoPage, pageSize: dtoPageSize } = filtersDto;
+
+      const relevantCycle = await this.applicationsService.getRelevantCycleId(
+        programId,
+      );
+
+      let relevantCycleId = relevantCycle.id;
+
+      const currentPage = dtoPage ?? page;
+      const currentPageSize = dtoPageSize ?? pageSize;
+
+      const options: GlobalEntities[] = [
+        'applicationInfo',
+        'applicationProgram',
+        'applicationUser',
+        'applicationCycle',
+      ];
+
+      const whereConditions: any = {};
+
+      if (programId) {
+        if (whereConditions.applicationProgram === undefined) {
+          whereConditions.applicationProgram = {};
+        }
+        whereConditions.applicationProgram.programId = programId;
+      }
+
+      if (relevantCycleId) {
+        if (whereConditions.applicationCycle === undefined) {
+          whereConditions.applicationCycle = {};
+        }
+        whereConditions.applicationCycle.cycleId = relevantCycleId;
+      }
+
+      const [applications, total] = await this.applicationsService.findAndCount(
+        whereConditions,
+        options,
+        undefined,
+        (currentPage - 1) * currentPageSize,
+        currentPageSize,
+      );
+
+      throwNotFound({
+        entity: 'applications',
+        errorCheck: !applications,
+      });
+
+      const mappedApplications = applications.map((app) => ({
+        id: app.id,
+        sefId: app.applicationUser[0].user.sef_id,
+        username: app.applicationUser[0].user.username,
+        email: app.applicationUser[0].user.email,
+        firstName: app.applicationInfo[0].info.first_name,
+        middleName: app.applicationInfo[0].info.middle_name,
+        lastName: app.applicationInfo[0].info.last_name,
+        motherMaidenFirst: app.applicationInfo[0].info.mother_maiden_first,
+        motherMaidenLast: app.applicationInfo[0].info.mother_maiden_last,
+        gender: app.applicationInfo[0].info.gender,
+        dob: app.applicationInfo[0].info.dob,
+        mobile: app.applicationInfo[0].info.mobile,
+        countryOrigin: app.applicationInfo[0].info.country_origin,
+        countryResidence: app.applicationInfo[0].info.country_residence,
+        residencyStatus: app.applicationInfo[0].info.residency_status,
+        district: app.applicationInfo[0].info.district,
+        governate: app.applicationInfo[0].info.governate,
+        maritalStatus: app.applicationInfo[0].info.marital_status,
+        typeOfDisability: app.applicationInfo[0].info.type_of_disability,
+        disability: app.applicationInfo[0].info.disability,
+        employmentSituation: app.applicationInfo[0].info.employment_situation,
+        whichSocial: app.applicationInfo[0].info.which_social,
+        termsConditions: app.applicationInfo[0].info.terms_conditions,
+        degreeType: app.applicationInfo[0].info.degree_type,
+        status: app.applicationInfo[0].info.status,
+        institution: app.applicationInfo[0].info.institution,
+        fieldOfStudy: app.applicationInfo[0].info.field_of_study,
+        majorTitle: app.applicationInfo[0].info.major_title,
+        infoCreatedAt: app.applicationInfo[0].info.created_at,
+        programName: app.applicationProgram[0].program.program_name,
+        program: app.applicationProgram[0].program.abbreviation,
+        passedScreening: app.passed_screening,
+        applicationDate: new Date(app.created_at).toLocaleDateString('en-GB', {
+          day: '2-digit',
+          month: '2-digit',
+          year: 'numeric',
+        }),
+        elligible:
+          app.is_eligible === true
+            ? 'Yes'
+            : app.is_eligible === false
+            ? 'No'
+            : '-',
+        passedScreeningDate: app.passed_screening_date
+          ? new Date(app.passed_screening_date).toLocaleDateString('en-GB', {
+              day: '2-digit',
+              month: '2-digit',
+              year: 'numeric',
+            })
+          : null,
+        examScore: app.exam_score,
+        passedExam: app.passed_exam,
+        passedExamDate: app.passed_exam_date
+          ? new Date(app.passed_exam_date).toLocaleDateString('en-GB', {
+              day: '2-digit',
+              month: '2-digit',
+              year: 'numeric',
+            })
+          : null,
+        techInterviewScore: app.tech_interview_score,
+        softInterviewScore: app.soft_interview_score,
+        passedInterviewDate: app.passed_interview_date
+          ? new Date(app.passed_interview_date).toLocaleDateString('en-GB', {
+              day: '2-digit',
+              month: '2-digit',
+              year: 'numeric',
+            })
+          : null,
+        passedInterview: app.passed_interview,
+        applicationStatus: app.status,
+        remarks: app.remarks,
+        extras: app.extras,
+      }));
+
+      mappedApplications.sort(
+        (a, b) =>
+          new Date(a.applicationDate).getTime() -
+          new Date(b.applicationDate).getTime(),
+      );
+
+      return {
+        applications: mappedApplications,
+        total,
+        page: currentPage,
+        pageSize: currentPageSize,
+        relevantCycleName: relevantCycle.name,
+        relevantCycleId: relevantCycle.id,
+      };
+    });
+  };
+
   editApplications = async (data: EditApplicationsDto) => {
     return catcher(async () => {
       const {
@@ -260,9 +404,6 @@ export class ApplicationMediator {
         passedInterviewDate: updatedData.passed_interview_date
           ? formatDate(updatedData.passed_interview_date)
           : null,
-        passedScreeningDate: updatedData.passed_screening_date
-          ? formatDate(updatedData.passed_screening_date)
-          : null,
       });
 
       delete updatedPayload.status;
@@ -312,6 +453,7 @@ export class ApplicationMediator {
           !application.passed_screening
         ) {
           application.passed_screening = true;
+          application.passed_screening_date = new Date();
           await this.applicationsService.update(
             { id: application.id },
             {
@@ -338,10 +480,13 @@ export class ApplicationMediator {
         );
       }
 
+      const camelCaseApplications = convertToCamelCase(applicationsToEmail);
+
       return {
         message: 'Emails sent successfully.',
         foundEmails: mailerResponse?.foundEmails || [],
         notFoundEmails: mailerResponse?.notFoundEmails || [],
+        applications: camelCaseApplications,
       };
     });
   };
@@ -412,13 +557,19 @@ export class ApplicationMediator {
                 passed_exam_date,
               },
             );
-            return { id: application.id, score, passed_exam, passed_exam_date };
+            return {
+              id: application.id,
+              examScore: score,
+              passed_exam,
+              passed_exam_date,
+            };
           }
           return null;
         }),
       );
 
-      const updatedData = updateResults.filter((result) => result !== null);
+      let updatedData = updateResults.filter((result) => result !== null);
+      updatedData = convertToCamelCase(updatedData);
 
       return { message: 'Exam scores imported successfully.', updatedData };
     } catch (error) {

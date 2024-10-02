@@ -23,6 +23,12 @@ export class ApplicationController {
     return this.mediator.findApplications(filtersDto);
   }
 
+  @Post('get-by-last-cycle')
+  @UsePipes(new ValidationPipe({ whitelist: true }))
+  getApplicationsByLatestCycle(@Body() filtersDto: FiltersDto) {
+    return this.mediator.findApplicationsByLatestCycle(filtersDto);
+  }
+
   @Post('edit-application')
   @UsePipes(new ValidationPipe({ whitelist: true }))
   editApplications(@Body() data: EditApplicationsDto) {
