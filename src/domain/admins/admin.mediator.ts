@@ -8,18 +8,19 @@ import { throwBadRequest } from '../../core/settings/base/errors/errors';
 import { catcher } from '../../core/helpers/operation';
 import { format } from 'date-fns';
 import { convertToCamelCase } from '../../core/helpers/camelCase';
+import { In } from 'typeorm';
 
 @Injectable()
 export class AdminMediator {
   constructor(
-    private readonly service: AdminService,
+    private readonly adminService: AdminService,
     private readonly mailService: MailService,
   ) {}
 
   manualCreate = async (data: ManualCreateDto) => {
     const { name, email } = data;
 
-    const existingAdmin = await this.service.findOne({ email });
+    const existingAdmin = await this.adminService.findOne({ email });
 
     if (existingAdmin) {
       throwBadRequest({
@@ -28,10 +29,10 @@ export class AdminMediator {
       });
     }
 
-    const password = this.service.generateRandomPassword();
-    const hashedPassword = await this.service.hashPassword(password);
+    const password = this.adminService.generateRandomPassword();
+    const hashedPassword = await this.adminService.hashPassword(password);
 
-    const admin = this.service.create({
+    const admin = this.adminService.create({
       name,
       email,
       password: hashedPassword,
@@ -52,7 +53,7 @@ export class AdminMediator {
       const { email } = data;
       const templateName = 'invitation.hbs';
 
-      const existingAdmin = await this.service.findOne({
+      const existingAdmin = await this.adminService.findOne({
         email,
       });
 
@@ -63,7 +64,7 @@ export class AdminMediator {
         });
       }
 
-      const { link, reset_token } = await this.service.generateLink(email);
+      const { link, reset_token } = await this.adminService.generateLink(email);
 
       existingAdmin.reset_token = reset_token;
       existingAdmin.reset_token_expiry = new Date(Date.now() + 3600000); // 1 hour expiry
@@ -76,7 +77,7 @@ export class AdminMediator {
 
   getAdmins = async () => {
     return catcher(async () => {
-      const admins = await this.service.findMany({});
+      const admins = await this.adminService.findMany({});
       const adminsData = admins.map(
         ({
           password,
@@ -95,20 +96,27 @@ export class AdminMediator {
     });
   };
 
-  deleteAdmin = async (email: string) => {
+  deleteAdmin = async (ids: string | string[]) => {
     return catcher(async () => {
-      const admin = await this.service.findOne({ email });
+      const idArray = Array.isArray(ids) ? ids : [ids];
 
-      if (!admin) {
+      const admins = await this.adminService.findMany({ id: In(idArray) });
+
+      if (admins.length === 0) {
         throwBadRequest({
-          message: 'Admin with the provided email does not exist.',
+          message: 'No admins with the provided ID(s) exist.',
           errorCheck: true,
         });
       }
 
-      await this.service.delete({ email });
+      const adminIdsToDelete = admins.map((admin) => admin.id);
 
-      return { message: 'Admin successfully deleted.' };
+      await this.adminService.delete({ id: In(adminIdsToDelete) });
+
+      return {
+        message: `Admin(s) successfully deleted.`,
+        deletedIds: adminIdsToDelete,
+      };
     });
   };
 }

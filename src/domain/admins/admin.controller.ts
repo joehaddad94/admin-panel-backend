@@ -49,12 +49,9 @@ export class AdminController {
     status: 400,
     description: 'Bad Request',
   })
-  @Delete('delete-admin/:email')
+  @Delete('delete-admin')
   @UsePipes(new ValidationPipe({ whitelist: true }))
-  async deleteAdmin(@Param('email') email: string) {
-    return catcher(async () => {
-      await this.mediator.deleteAdmin(email);
-      return;
-    });
+  async deleteAdmin(@Body() data: string | string[]) {
+    return this.mediator.deleteAdmin(data);
   }
 }
