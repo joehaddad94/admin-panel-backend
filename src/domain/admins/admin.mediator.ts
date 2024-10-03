@@ -4,7 +4,10 @@ import { AdminService } from './admin.service';
 import { JwtService } from '@nestjs/jwt';
 import { MailService } from '../mail/mail.service';
 import { InviteDto, ManualCreateDto } from '../admins';
-import { throwBadRequest } from '../../core/settings/base/errors/errors';
+import {
+  throwBadRequest,
+  throwNotFound,
+} from '../../core/settings/base/errors/errors';
 import { catcher } from '../../core/helpers/operation';
 import { format } from 'date-fns';
 import { convertToCamelCase } from '../../core/helpers/camelCase';
@@ -32,7 +35,7 @@ export class AdminMediator {
     const password = this.adminService.generateRandomPassword();
     const hashedPassword = await this.adminService.hashPassword(password);
 
-    const admin = this.adminService.create({
+    const newAdmin = this.adminService.create({
       name,
       email,
       password: hashedPassword,
@@ -42,10 +45,19 @@ export class AdminMediator {
       login_attempts: 5,
     });
 
-    await admin.save();
+    await newAdmin.save();
 
-    const { password: omitted, ...adminData } = admin;
-    return adminData;
+    const { password: omitted, created_at, ...adminData } = newAdmin;
+
+    const convertedAdminData = convertToCamelCase({
+      ...adminData,
+      created_at: new Date(created_at).toLocaleDateString('en-GB', {
+        day: '2-digit',
+        month: '2-digit',
+        year: 'numeric',
+      }),
+    });
+    return convertedAdminData;
   };
 
   invite = async (data: InviteDto) => {
@@ -75,10 +87,25 @@ export class AdminMediator {
     });
   };
 
-  getAdmins = async () => {
+  getAdmins = async (page = 1, pageSize = 100) => {
     return catcher(async () => {
-      const admins = await this.adminService.findMany({});
-      const adminsData = admins.map(
+      const skip = (page - 1) * pageSize;
+      const take = pageSize;
+
+      const [found, count] = await this.adminService.findAndCount(
+        {},
+        undefined,
+        undefined,
+        skip,
+        take,
+      );
+
+      throwNotFound({
+        entity: 'admins',
+        errorCheck: !found || found.length === 0,
+      });
+
+      const adminsData = found.map(
         ({
           password,
           reset_token,
@@ -92,7 +119,13 @@ export class AdminMediator {
           is_active: is_active ? 'Yes' : 'No',
         }),
       );
-      return convertToCamelCase(adminsData);
+
+      return {
+        admins: convertToCamelCase(adminsData),
+        count,
+        page,
+        pageSize,
+      };
     });
   };
 

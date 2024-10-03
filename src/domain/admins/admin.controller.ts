@@ -13,9 +13,11 @@ import { AdminResponse } from 'src/core/config/documentation';
 import { ManualCreateDto } from '../admins';
 import { catcher } from 'src/core/helpers/operation';
 import { AdminMediator } from './admin.mediator';
+import { GetAdmin } from 'src/core/settings/decorators/admin.decorator';
+import { Admin } from 'src/core/data/database';
 
 @ApiTags('admins')
-@Controller()
+@Controller('admins')
 export class AdminController {
   constructor(private readonly mediator: AdminMediator) {}
 
@@ -26,19 +28,20 @@ export class AdminController {
   @UsePipes(new ValidationPipe({ whitelist: true }))
   async createAdmin(@Body() data: ManualCreateDto) {
     return catcher(async () => {
-      const admin = await this.mediator.manualCreate(data);
+      const newAdmin = await this.mediator.manualCreate(data);
       await this.mediator.invite(data);
-      return admin;
+      return newAdmin;
     });
   }
 
   @ApiResponse({
     type: AdminResponse,
   })
-  @Get('get-all-admins')
+  @Post()
   @UsePipes(new ValidationPipe({ whitelist: true }))
-  async getAdmins() {
-    return this.mediator.getAdmins();
+  async getAdmins(@Body() body: { page?: number; pageSize?: number }) {
+    const { page = 1, pageSize = 100 } = body;
+    return this.mediator.getAdmins(page, pageSize);
   }
 
   @ApiResponse({
