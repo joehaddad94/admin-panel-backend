@@ -92,7 +92,7 @@ export class AdminMediator {
       const skip = (page - 1) * pageSize;
       const take = pageSize;
 
-      const [found, count] = await this.adminService.findAndCount(
+      const [found, total] = await this.adminService.findAndCount(
         {},
         undefined,
         undefined,
@@ -122,7 +122,7 @@ export class AdminMediator {
 
       return {
         admins: convertToCamelCase(adminsData),
-        count,
+        total,
         page,
         pageSize,
       };
