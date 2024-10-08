@@ -11,6 +11,7 @@ import {
 import { catcher } from '../../core/helpers/operation';
 import { format } from 'date-fns';
 import { convertToCamelCase } from '../../core/helpers/camelCase';
+import { Like, ILike } from 'typeorm';
 import { In } from 'typeorm';
 
 @Injectable()
@@ -87,13 +88,20 @@ export class AdminMediator {
     });
   };
 
-  getAdmins = async (page = 1, pageSize = 100) => {
+  getAdmins = async (page = 1, pageSize = 100, search = '') => {
     return catcher(async () => {
       const skip = (page - 1) * pageSize;
       const take = pageSize;
 
+      const searchFilter = search
+        ? {
+            name: ILike(`%${search}%`),
+            email: ILike(`%${search}%`),
+          }
+        : {};
+
       const [found, total] = await this.adminService.findAndCount(
-        {},
+        searchFilter,
         undefined,
         undefined,
         skip,
