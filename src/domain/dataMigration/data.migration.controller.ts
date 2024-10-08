@@ -30,11 +30,13 @@ export class DataMigrationController {
       switch (category) {
         case 'blom_bank':
           fileBuffer = await this.mediator.blomBankMigration(dataMigrationDto);
-          filename = 'blom_bank_migration.xlsx';
+          // filename = 'blom_bank_migration.xlsx';
+          filename = 'blom_bank_migration.csv';
           break;
         case 'whish':
           fileBuffer = await this.mediator.whishMigration(dataMigrationDto);
-          filename = 'whish_migration.xlsx';
+          // filename = 'whish_migration.xlsx';
+          filename = 'whish_migration.csv';
           break;
         default:
           throw new HttpException(
@@ -45,10 +47,11 @@ export class DataMigrationController {
 
       // Set headers for the file download
       res.setHeader('Content-Disposition', `attachment; filename=${filename}`);
-      res.setHeader(
-        'Content-Type',
-        'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
-      );
+
+      // Set Content-Type for CSV
+      res.setHeader('Content-Type', 'text/csv');
+
+      console.log(res.getHeaders());
 
       // Send the file buffer as the response
       res.status(HttpStatus.OK).send(fileBuffer);
