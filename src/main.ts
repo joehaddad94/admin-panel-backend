@@ -16,6 +16,7 @@ async function bootstrap() {
       ],
       methods: 'GET,HEAD,PUT,PATCH,POST,DELETE,OPTIONS',
       credentials: true,
+      exposedHeaders: ['Content-Disposition'],
     });
 
     const port = process.env.SERVER_PORT || 3000;

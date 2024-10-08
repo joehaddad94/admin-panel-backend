@@ -55,25 +55,36 @@ export class DataMigrationMediator {
 
         formattedData.push({
           'Business Date': businessDate || '',
-          Narrative: row[narrativeIndex] || '',
           Amount: row[amountIndex] || '',
+          Payee: '',
+          Narrative: row[narrativeIndex] || '',
+          Reference: '',
+          'Cheque Number': '',
         });
       }
 
       const mappedData = formattedData.map((row: any) => ({
         Date: row['Business Date'] || '',
-        Description: row['Narrative'] || '',
         Amount: row['Amount'] || '',
+        Payee: '',
+        Description: row['Narrative'] || '',
+        Reference: row['Reference'] || '',
+        'Cheque Number': row['Cheque Number'] || '',
       }));
 
-      const newWorkbook = XLSX.utils.book_new();
-      const newSheet = XLSX.utils.json_to_sheet(mappedData);
-      XLSX.utils.book_append_sheet(newWorkbook, newSheet, 'Xero Data');
-
-      const buffer = XLSX.write(newWorkbook, {
-        type: 'buffer',
-        bookType: 'xlsx',
+      const newSheet = XLSX.utils.json_to_sheet(mappedData, {
+        header: [
+          'Date',
+          'Amount',
+          'Payee',
+          'Description',
+          'Reference',
+          'Cheque Number',
+        ],
       });
+
+      const csvData = XLSX.utils.sheet_to_csv(newSheet);
+      const buffer = Buffer.from(csvData, 'utf-8');
       return buffer;
     } catch (error) {
       throw new HttpException(
@@ -147,25 +158,36 @@ export class DataMigrationMediator {
 
         formattedData.push({
           Date: date || '',
-          Description: row[detailsIndex] || '',
           Amount: amount || '',
+          Payee: '',
+          Description: row[detailsIndex] || '',
+          Reference: '',
+          'Cheque Number': '',
         });
       }
 
       const mappedData = formattedData.map((row: any) => ({
         Date: row['Date'] || '',
-        Description: row['Description'] || '',
         Amount: row['Amount'] || '',
+        Payee: row['Payee'] || '',
+        Description: row['Description'] || '',
+        Reference: row['Reference'] || '',
+        'Cheque Number': row['Cheque Number'] || '',
       }));
 
-      const newWorkbook = XLSX.utils.book_new();
-      const newSheet = XLSX.utils.json_to_sheet(mappedData);
-      XLSX.utils.book_append_sheet(newWorkbook, newSheet, 'Xero Data');
-
-      const buffer = XLSX.write(newWorkbook, {
-        type: 'buffer',
-        bookType: 'xlsx',
+      const newSheet = XLSX.utils.json_to_sheet(mappedData, {
+        header: [
+          'Date',
+          'Amount',
+          'Payee',
+          'Description',
+          'Reference',
+          'Cheque Number',
+        ],
       });
+
+      const csvData = XLSX.utils.sheet_to_csv(newSheet);
+      const buffer = Buffer.from(csvData, 'utf-8');
       return buffer;
     } catch (error) {
       throw new HttpException(
