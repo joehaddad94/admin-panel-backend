@@ -108,10 +108,14 @@ export class AdminMediator {
         take,
       );
 
-      throwNotFound({
-        entity: 'admins',
-        errorCheck: !found || found.length === 0,
-      });
+      if (!found || found.length === 0) {
+        return {
+          admins: [],
+          total: 0,
+          page,
+          pageSize,
+        };
+      }
 
       const adminsData = found.map(
         ({
