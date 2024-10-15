@@ -40,10 +40,16 @@ export class AdminController {
   @Post()
   @UsePipes(new ValidationPipe({ whitelist: true }))
   async getAdmins(
-    @Body() body: { page?: number; pageSize?: number; search?: string },
+    @Body()
+    body: {
+      page?: number;
+      pageSize?: number;
+      search?: string;
+      filters?: [];
+    },
   ) {
-    const { page = 1, pageSize = 100, search = '' } = body;
-    return this.mediator.getAdmins(page, pageSize, search);
+    const { page = 1, pageSize = 100, search = '', filters = [] } = body;
+    return this.mediator.getAdmins(page, pageSize, search, filters);
   }
 
   @ApiResponse({

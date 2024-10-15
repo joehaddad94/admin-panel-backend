@@ -88,17 +88,24 @@ export class AdminMediator {
     });
   };
 
-  getAdmins = async (page = 1, pageSize = 100, search = '') => {
+  getAdmins = async (page = 1, pageSize = 100, search = '', filters = []) => {
     return catcher(async () => {
       const skip = (page - 1) * pageSize;
       const take = pageSize;
 
-      const searchFilter = search
-        ? {
-            name: ILike(`%${search}%`),
-            email: ILike(`%${search}%`),
-          }
-        : {};
+      const searchFilter = {
+        ...(search ? { name: ILike(`%${search}%`) } : {}),
+        ...(filters.length > 0
+          ? filters.reduce((acc, filter) => {
+              if (filter.columnField === 'name') {
+                acc.name = ILike(`%${filter.value}%`);
+              } else if (filter.columnField === 'email') {
+                acc.email = ILike(`%${filter.value}%`);
+              }
+              return acc;
+            }, {})
+          : {}),
+      };
 
       const [found, total] = await this.adminService.findAndCount(
         searchFilter,
