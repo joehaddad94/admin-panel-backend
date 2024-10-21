@@ -13,6 +13,7 @@ import { format } from 'date-fns';
 import { convertToCamelCase } from '../../core/helpers/camelCase';
 import { Like, ILike } from 'typeorm';
 import { In } from 'typeorm';
+import { formatDate } from 'src/core/helpers/formatDate';
 
 @Injectable()
 export class AdminMediator {
@@ -48,17 +49,13 @@ export class AdminMediator {
 
     await newAdmin.save();
 
-    const { password: omitted, created_at, ...adminData } = newAdmin;
+    const { password: omitted, updated_at, ...adminData } = newAdmin;
 
-    const convertedAdminData = convertToCamelCase({
-      ...adminData,
-      created_at: new Date(created_at).toLocaleDateString('en-GB', {
-        day: '2-digit',
-        month: '2-digit',
-        year: 'numeric',
-      }),
-    });
-    return convertedAdminData;
+    const convertedAdminData = convertToCamelCase(adminData);
+    return {
+      adminData: convertedAdminData,
+      message: 'Admin added succesfully.',
+    };
   };
 
   invite = async (data: InviteDto) => {
@@ -88,27 +85,28 @@ export class AdminMediator {
     });
   };
 
-  getAdmins = async (page = 1, pageSize = 100, search = '', filters = []) => {
+  // getAdmins = async (page = 1, pageSize = 10000000, search = '', filters = []) => {
+  getAdmins = async (page = 1, pageSize = 10000000, search = '') => {
     return catcher(async () => {
       const skip = (page - 1) * pageSize;
       const take = pageSize;
 
-      const searchFilter = {
-        ...(search ? { name: ILike(`%${search}%`) } : {}),
-        ...(filters.length > 0
-          ? filters.reduce((acc, filter) => {
-              if (filter.columnField === 'name') {
-                acc.name = ILike(`%${filter.value}%`);
-              } else if (filter.columnField === 'email') {
-                acc.email = ILike(`%${filter.value}%`);
-              }
-              return acc;
-            }, {})
-          : {}),
-      };
+      // const searchFilter = {
+      //   ...(search ? { name: ILike(`%${search}%`) } : {}),
+      //   ...(filters.length > 0
+      //     ? filters.reduce((acc, filter) => {
+      //         if (filter.columnField === 'name') {
+      //           acc.name = ILike(`%${filter.value}%`);
+      //         } else if (filter.columnField === 'email') {
+      //           acc.email = ILike(`%${filter.value}%`);
+      //         }
+      //         return acc;
+      //       }, {})
+      //     : {}),
+      // };
 
       const [found, total] = await this.adminService.findAndCount(
-        searchFilter,
+        {},
         undefined,
         undefined,
         skip,

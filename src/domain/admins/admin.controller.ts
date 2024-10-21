@@ -44,12 +44,10 @@ export class AdminController {
     body: {
       page?: number;
       pageSize?: number;
-      search?: string;
-      filters?: [];
     },
   ) {
-    const { page = 1, pageSize = 100, search = '', filters = [] } = body;
-    return this.mediator.getAdmins(page, pageSize, search, filters);
+    const { page = 1, pageSize = 10000000 } = body;
+    return this.mediator.getAdmins(page, pageSize);
   }
 
   @ApiResponse({
