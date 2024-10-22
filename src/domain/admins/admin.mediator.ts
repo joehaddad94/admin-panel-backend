@@ -1,19 +1,14 @@
 /* eslint-disable camelcase */
 import { Injectable } from '@nestjs/common';
 import { AdminService } from './admin.service';
-import { JwtService } from '@nestjs/jwt';
 import { MailService } from '../mail/mail.service';
 import { InviteDto, ManualCreateDto } from '../admins';
-import {
-  throwBadRequest,
-  throwNotFound,
-} from '../../core/settings/base/errors/errors';
+import { throwBadRequest } from '../../core/settings/base/errors/errors';
 import { catcher } from '../../core/helpers/operation';
 import { format } from 'date-fns';
 import { convertToCamelCase } from '../../core/helpers/camelCase';
 import { Like, ILike } from 'typeorm';
 import { In } from 'typeorm';
-import { formatDate } from 'src/core/helpers/formatDate';
 
 @Injectable()
 export class AdminMediator {

@@ -27,7 +27,7 @@ export class ApplicationMediator {
   findApplications = async (
     filtersDto: FiltersDto,
     page = 1,
-    pageSize = 100,
+    pageSize = 10000000,
   ) => {
     return catcher(async () => {
       const {
@@ -107,11 +107,12 @@ export class ApplicationMediator {
         programName: app.applicationProgram[0].program.program_name,
         program: app.applicationProgram[0].program.abbreviation,
         passedScreening: app.passed_screening,
-        applicationDate: new Date(app.created_at).toLocaleDateString('en-GB', {
-          day: '2-digit',
-          month: '2-digit',
-          year: 'numeric',
-        }),
+        // applicationDate: new Date(app.created_at).toLocaleDateString('en-GB', {
+        //   day: '2-digit',
+        //   month: '2-digit',
+        //   year: 'numeric',
+        // }),
+        applicationDate: new Date(app.created_at),
         elligible:
           app.is_eligible === true
             ? 'Yes'
