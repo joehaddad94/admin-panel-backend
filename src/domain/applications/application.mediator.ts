@@ -108,7 +108,7 @@ export class ApplicationMediator {
         program: app.applicationProgram[0].program.abbreviation,
         passedScreening: app.passed_screening,
         applicationDate: new Date(app.created_at),
-        elligible:
+        eligible:
           app.is_eligible === true
             ? 'Yes'
             : app.is_eligible === false
@@ -229,7 +229,7 @@ export class ApplicationMediator {
         program: app.applicationProgram[0].program.abbreviation,
         passedScreening: app.passed_screening,
         applicationDate: new Date(app.created_at),
-        elligible:
+        eligible:
           app.is_eligible === true
             ? 'Yes'
             : app.is_eligible === false
