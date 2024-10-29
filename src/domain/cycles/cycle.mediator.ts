@@ -2,12 +2,15 @@
 import { Injectable } from '@nestjs/common';
 import { CycleService } from './cycle.service';
 import { catcher } from 'src/core/helpers/operation';
-import { throwNotFound } from 'src/core/settings/base/errors/errors';
+import {
+  throwBadRequest,
+  throwNotFound,
+} from 'src/core/settings/base/errors/errors';
 import { CreateEditCycleDto } from './dtos/create.cycle.dto';
 import { CycleProgram } from '../../core/data/database/relations/cycle-program.entity';
 import { Cycles } from '../../core/data/database/entities/cycle.entity';
 import { convertToCamelCase } from '../../core/helpers/camelCase';
-import { Admin } from 'typeorm';
+import { Admin, In } from 'typeorm';
 import { GlobalEntities } from '../../core/data/types';
 import { ProgramService } from '../programs/program.service';
 import { format } from 'date-fns';
@@ -19,7 +22,7 @@ export class CycleMediator {
     private readonly programService: ProgramService,
   ) {}
 
-  findCycles = async (programId?: number, page = 1, pageSize = 100) => {
+  findCycles = async (programId?: number, page = 1, pageSize = 10000000) => {
     return catcher(async () => {
       const skip = (page - 1) * pageSize;
       const take = pageSize;
@@ -34,7 +37,7 @@ export class CycleMediator {
         where = { cycleProgram: { program: { id: programId } } };
       }
 
-      const [found, count] = await this.cycleService.findAndCount(
+      const [found, total] = await this.cycleService.findAndCount(
         where,
         cyclesOptions,
         undefined,
@@ -47,9 +50,15 @@ export class CycleMediator {
         errorCheck: !found,
       });
 
-      const cycles = convertToCamelCase(found);
+      let flattenedCycles = found.map((cycle) => ({
+        ...cycle,
+        programName: cycle.cycleProgram?.program?.program_name,
+        abbreviation: cycle.cycleProgram?.program?.abbreviation,
+      }));
 
-      return { cycles, count, page, pageSize };
+      flattenedCycles = convertToCamelCase(flattenedCycles);
+
+      return { cycles: flattenedCycles, total, page, pageSize };
     });
   };
 
@@ -128,6 +137,30 @@ export class CycleMediator {
         cycle: {
           ...camelCaseCreatedCycle,
         },
+      };
+    });
+  };
+
+  deleteCycle = async (ids: string | string[]) => {
+    return catcher(async () => {
+      const idArray = Array.isArray(ids) ? ids : [ids];
+
+      const cycles = await this.cycleService.findMany({ id: In(idArray) });
+
+      if (cycles.length === 0) {
+        throwBadRequest({
+          message: 'No cycles with the provided ID(s) exist.',
+          errorCheck: true,
+        });
+      }
+
+      const cyclesIdsToDelete = cycles.map((cycle) => cycle.id);
+
+      await this.cycleService.delete({ id: In(cyclesIdsToDelete) });
+
+      return {
+        message: 'Cycle(s) successfully deleted',
+        deletedIds: cyclesIdsToDelete,
       };
     });
   };
