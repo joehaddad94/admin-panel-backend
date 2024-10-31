@@ -131,11 +131,18 @@ export class CycleMediator {
         cycle.cycleProgram.program = savedCycle.cycleProgram.program;
       }
 
-      const camelCaseCreatedCycle = convertToCamelCase(cycle);
+      let flattenedCycle = {
+        ...cycle,
+        programName: cycle.cycleProgram?.program?.program_name,
+        abbreviation: cycle.cycleProgram?.program?.abbreviation,
+      };
+
+      flattenedCycle = convertToCamelCase(flattenedCycle);
+
       return {
         message: successMessage,
         cycle: {
-          ...camelCaseCreatedCycle,
+          ...flattenedCycle,
         },
       };
     });
@@ -145,7 +152,16 @@ export class CycleMediator {
     return catcher(async () => {
       const idArray = Array.isArray(ids) ? ids : [ids];
 
-      const cycles = await this.cycleService.findMany({ id: In(idArray) });
+      const cyclesOptions: GlobalEntities[] = [
+        'cycleProgram',
+        'decisionDateCycle',
+        'thresholdCycle',
+      ];
+
+      const cycles = await this.cycleService.findMany(
+        { id: In(idArray) },
+        cyclesOptions,
+      );
 
       if (cycles.length === 0) {
         throwBadRequest({
