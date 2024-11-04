@@ -11,278 +11,277 @@ on:
 jobs:
   install-ec2-instance-requirements:
     runs-on: ubuntu-latest
+#     steps:
+#       - name: Checkout code
+#         uses: actions/checkout@v3
 
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v3
+#       - name: SSH to EC2 and install Docker and Docker Compose (Alpine)
+#         uses: appleboy/ssh-action@v0.1.7
+#         with:
+#           host: ${{ secrets.EC2_IP }}
+#           username: ubuntu
+#           key: ${{ secrets.EC2_SSH_PRIVATE_KEY }}
+#           port: 22
+#           script: |
+#             # Update package list (for Ubuntu/Debian-based systems)
+#             sudo apt-get update
 
-      - name: SSH to EC2 and install Docker and Docker Compose (Alpine)
-        uses: appleboy/ssh-action@v0.1.7
-        with:
-          host: ${{ secrets.EC2_IP }}
-          username: ubuntu
-          key: ${{ secrets.EC2_SSH_PRIVATE_KEY }}
-          port: 22
-          script: |
-            # Update package list (for Ubuntu/Debian-based systems)
-            sudo apt-get update
+#             # Check if Docker is installed
+#             if ! command -v docker &> /dev/null
+#             then
+#               echo "Docker not found. Installing Docker..."
+#               sudo apt-get install -y docker.io
+#               sudo systemctl start docker
+#               sudo systemctl enable docker
+#             else
+#               echo "Docker is already installed. Skipping installation."
+#             fi
 
-            # Check if Docker is installed
-            if ! command -v docker &> /dev/null
-            then
-              echo "Docker not found. Installing Docker..."
-              sudo apt-get install -y docker.io
-              sudo systemctl start docker
-              sudo systemctl enable docker
-            else
-              echo "Docker is already installed. Skipping installation."
-            fi
+#             # Verify Docker installation
+#             docker --version
 
-            # Verify Docker installation
-            docker --version
+#             # Check if Docker Compose is installed
+#             if ! command -v docker-compose &> /dev/null
+#             then
+#               echo "Docker Compose not found. Installing Docker Compose..."
+#               sudo curl -L "https://github.com/docker/compose/releases/download/v2.20.2/docker-compose-$(uname -s)-$(uname -m)" -o /usr/local/bin/docker-compose
+#               sudo chmod +x /usr/local/bin/docker-compose
+#             else
+#               echo "Docker Compose is already installed. Skipping installation."
+#             fi
 
-            # Check if Docker Compose is installed
-            if ! command -v docker-compose &> /dev/null
-            then
-              echo "Docker Compose not found. Installing Docker Compose..."
-              sudo curl -L "https://github.com/docker/compose/releases/download/v2.20.2/docker-compose-$(uname -s)-$(uname -m)" -o /usr/local/bin/docker-compose
-              sudo chmod +x /usr/local/bin/docker-compose
-            else
-              echo "Docker Compose is already installed. Skipping installation."
-            fi
+#             # Verify Docker Compose installation
+#             docker-compose --version
 
-            # Verify Docker Compose installation
-            docker-compose --version
+#             # Optional: Add current user to the docker group (avoid using sudo for Docker commands)
+#             sudo usermod -aG docker $USER
 
-            # Optional: Add current user to the docker group (avoid using sudo for Docker commands)
-            sudo usermod -aG docker $USER
+#             # Refresh group membership
+#             newgrp docker
 
-            # Refresh group membership
-            newgrp docker
+#             sudo apt-get install make -y
 
-            sudo apt-get install make -y
+#   build-test:
+#     runs-on: ubuntu-latest
+#     needs: install-ec2-instance-requirements
+#     steps:
+#       - name: Checkout code
+#         uses: actions/checkout@v3
 
-  build-test:
-    runs-on: ubuntu-latest
-    needs: install-ec2-instance-requirements
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v3
+#       - name: Set up Docker Buildx
+#         uses: docker/setup-buildx-action@v2
 
-      - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v2
+#       - name: Cache Docker layers
+#         uses: actions/cache@v3
+#         with:
+#           path: /tmp/.buildx-cache
+#           key: ${{ runner.os }}-build-${{ github.sha }}
+#           restore-keys: |
+#             ${{ runner.os }}-build-
 
-      - name: Cache Docker layers
-        uses: actions/cache@v3
-        with:
-          path: /tmp/.buildx-cache
-          key: ${{ runner.os }}-build-${{ github.sha }}
-          restore-keys: |
-            ${{ runner.os }}-build-
+#       - name: Install Make and Docker Compose
+#         run: |
+#           sudo apt-get update
+#           sudo apt-get install -y make
+#           # Check if Docker Compose is installed
+#             if ! command -v docker-compose &> /dev/null
+#             then
+#               echo "Docker Compose not found. Installing Docker Compose..."
+#               sudo curl -L "https://github.com/docker/compose/releases/download/v2.20.2/docker-compose-$(uname -s)-$(uname -m)" -o /usr/local/bin/docker-compose
+#               sudo chmod +x /usr/local/bin/docker-compose
+#             else
+#               echo "Docker Compose is already installed. Skipping installation."
+#             fi
 
-      - name: Install Make and Docker Compose
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y make
-          # Check if Docker Compose is installed
-            if ! command -v docker-compose &> /dev/null
-            then
-              echo "Docker Compose not found. Installing Docker Compose..."
-              sudo curl -L "https://github.com/docker/compose/releases/download/v2.20.2/docker-compose-$(uname -s)-$(uname -m)" -o /usr/local/bin/docker-compose
-              sudo chmod +x /usr/local/bin/docker-compose
-            else
-              echo "Docker Compose is already installed. Skipping installation."
-            fi
+#             # Verify Docker Compose installation
+#             docker-compose --version
 
-            # Verify Docker Compose installation
-            docker-compose --version
+#             # Optional: Add current user to the docker group (avoid using sudo for Docker commands)
+#             sudo usermod -aG docker $USER
 
-            # Optional: Add current user to the docker group (avoid using sudo for Docker commands)
-            sudo usermod -aG docker $USER
+#             # Refresh group membership
+#             newgrp docker
 
-            # Refresh group membership
-            newgrp docker
+#       - name: Create .env.develop file
+#         run: |
+#           echo "SERVER_PORT=8000" >> .env.develop
+#           echo "NODE_ENV=develop" >> .env.develop
+#           echo "DB_TYPE=postgres" >> .env.develop
+#           echo "DB_USER=${{ secrets.DB_USER }}" >> .env.develop
+#           echo "DB_PASSWORD=${{ secrets.DB_PASSWORD }}" >> .env.develop
+#           echo "DB_HOST=${{ secrets.DB_HOST }}" >> .env.develop
+#           echo "DB_PORT=${{ secrets.DB_PORT }}" >> .env.develop
+#           echo "DB_NAME=${{ secrets.DB_NAME }}" >> .env.develop
+#           echo "DB_SSL_PROFILE=require" >> .env.develop
+#           echo "JWT_SECRET=${{ secrets.JWT_SECRET }}" >> .env.develop
+#           echo "AUTH_HEADER_PREFIX=Bearer" >> .env.develop
+#           echo "SMTP_HOST=smtp.gmail.com" >> .env.develop
+#           echo "SMTP_USER=${{ secrets.SMTP_USER }}" >> .env.develop
+#           echo "SMTP_PASS=${{ secrets.SMTP_PASS }}" >> .env.develop
+#           echo "VERIFY_CLIENT_URL=https://sef-admin-panel-development.vercel.app/reset-password" >> .env.develop
 
-      - name: Create .env.develop file
-        run: |
-          echo "SERVER_PORT=8000" >> .env.develop
-          echo "NODE_ENV=develop" >> .env.develop
-          echo "DB_TYPE=postgres" >> .env.develop
-          echo "DB_USER=${{ secrets.DB_USER }}" >> .env.develop
-          echo "DB_PASSWORD=${{ secrets.DB_PASSWORD }}" >> .env.develop
-          echo "DB_HOST=${{ secrets.DB_HOST }}" >> .env.develop
-          echo "DB_PORT=${{ secrets.DB_PORT }}" >> .env.develop
-          echo "DB_NAME=${{ secrets.DB_NAME }}" >> .env.develop
-          echo "DB_SSL_PROFILE=require" >> .env.develop
-          echo "JWT_SECRET=${{ secrets.JWT_SECRET }}" >> .env.develop
-          echo "AUTH_HEADER_PREFIX=Bearer" >> .env.develop
-          echo "SMTP_HOST=smtp.gmail.com" >> .env.develop
-          echo "SMTP_USER=${{ secrets.SMTP_USER }}" >> .env.develop
-          echo "SMTP_PASS=${{ secrets.SMTP_PASS }}" >> .env.develop
-          echo "VERIFY_CLIENT_URL=https://sef-admin-panel-development.vercel.app/reset-password" >> .env.develop
+#       - name: Build using Makefile
+#         run: make rebuild
 
-      - name: Build using Makefile
-        run: make rebuild
+#       - name: Run tests inside Docker container
+#         run: make test-clean
 
-      - name: Run tests inside Docker container
-        run: make test-clean
+#   build-and-push:
+#     needs: build-test
+#     runs-on: ubuntu-latest
 
-  build-and-push:
-    needs: build-test
-    runs-on: ubuntu-latest
+#     steps:
+#       - name: Checkout code
+#         uses: actions/checkout@v3
 
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v3
+#       - name: Set up Docker Buildx
+#         uses: docker/setup-buildx-action@v2
 
-      - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v2
+#       - name: Cache Docker layers
+#         uses: actions/cache@v3
+#         with:
+#           path: /tmp/.buildx-cache
+#           key: ${{ runner.os }}-build-${{ github.sha }}
+#           restore-keys: |
+#             ${{ runner.os }}-build-
 
-      - name: Cache Docker layers
-        uses: actions/cache@v3
-        with:
-          path: /tmp/.buildx-cache
-          key: ${{ runner.os }}-build-${{ github.sha }}
-          restore-keys: |
-            ${{ runner.os }}-build-
+#       - name: Install Make and Docker Compose
+#         run: |
+#           sudo apt-get update
+#           sudo apt-get install -y make
+#           # Check if Docker Compose is installed
+#             if ! command -v docker-compose &> /dev/null
+#             then
+#               echo "Docker Compose not found. Installing Docker Compose..."
+#               sudo curl -L "https://github.com/docker/compose/releases/download/v2.20.2/docker-compose-$(uname -s)-$(uname -m)" -o /usr/local/bin/docker-compose
+#               sudo chmod +x /usr/local/bin/docker-compose
+#             else
+#               echo "Docker Compose is already installed. Skipping installation."
+#             fi
 
-      - name: Install Make and Docker Compose
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y make
-          # Check if Docker Compose is installed
-            if ! command -v docker-compose &> /dev/null
-            then
-              echo "Docker Compose not found. Installing Docker Compose..."
-              sudo curl -L "https://github.com/docker/compose/releases/download/v2.20.2/docker-compose-$(uname -s)-$(uname -m)" -o /usr/local/bin/docker-compose
-              sudo chmod +x /usr/local/bin/docker-compose
-            else
-              echo "Docker Compose is already installed. Skipping installation."
-            fi
+#             # Verify Docker Compose installation
+#             docker-compose --version
 
-            # Verify Docker Compose installation
-            docker-compose --version
+#             # Optional: Add current user to the docker group (avoid using sudo for Docker commands)
+#             sudo usermod -aG docker $USER
 
-            # Optional: Add current user to the docker group (avoid using sudo for Docker commands)
-            sudo usermod -aG docker $USER
+#             # Refresh group membership
+#             newgrp docker
 
-            # Refresh group membership
-            newgrp docker
+#       - name: Create .env.develop file
+#         run: |
+#           echo "SERVER_PORT=8000" >> .env.develop
+#           echo "NODE_ENV=develop" >> .env.develop
+#           echo "DB_TYPE=postgres" >> .env.develop
+#           echo "DB_USER=${{ secrets.DB_USER }}" >> .env.develop
+#           echo "DB_PASSWORD=${{ secrets.DB_PASSWORD }}" >> .env.develop
+#           echo "DB_HOST=${{ secrets.DB_HOST }}" >> .env.develop
+#           echo "DB_PORT=${{ secrets.DB_PORT }}" >> .env.develop
+#           echo "DB_NAME=${{ secrets.DB_NAME }}" >> .env.develop
+#           echo "DB_SSL_PROFILE=require" >> .env.develop
+#           echo "JWT_SECRET=${{ secrets.JWT_SECRET }}" >> .env.develop
+#           echo "AUTH_HEADER_PREFIX=Bearer" >> .env.develop
+#           echo "SMTP_HOST=smtp.gmail.com" >> .env.develop
+#           echo "SMTP_USER=${{ secrets.SMTP_USER }}" >> .env.develop
+#           echo "SMTP_PASS=${{ secrets.SMTP_PASS }}" >> .env.develop
+#           echo "VERIFY_CLIENT_URL=https://sef-admin-panel-development.vercel.app/reset-password" >> .env.develop
 
-      - name: Create .env.develop file
-        run: |
-          echo "SERVER_PORT=8000" >> .env.develop
-          echo "NODE_ENV=develop" >> .env.develop
-          echo "DB_TYPE=postgres" >> .env.develop
-          echo "DB_USER=${{ secrets.DB_USER }}" >> .env.develop
-          echo "DB_PASSWORD=${{ secrets.DB_PASSWORD }}" >> .env.develop
-          echo "DB_HOST=${{ secrets.DB_HOST }}" >> .env.develop
-          echo "DB_PORT=${{ secrets.DB_PORT }}" >> .env.develop
-          echo "DB_NAME=${{ secrets.DB_NAME }}" >> .env.develop
-          echo "DB_SSL_PROFILE=require" >> .env.develop
-          echo "JWT_SECRET=${{ secrets.JWT_SECRET }}" >> .env.develop
-          echo "AUTH_HEADER_PREFIX=Bearer" >> .env.develop
-          echo "SMTP_HOST=smtp.gmail.com" >> .env.develop
-          echo "SMTP_USER=${{ secrets.SMTP_USER }}" >> .env.develop
-          echo "SMTP_PASS=${{ secrets.SMTP_PASS }}" >> .env.develop
-          echo "VERIFY_CLIENT_URL=https://sef-admin-panel-development.vercel.app/reset-password" >> .env.develop
+#       - name: Set up AWS credentials
+#         uses: aws-actions/configure-aws-credentials@v1
+#         with:
+#           aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+#           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+#           aws-region: ${{ secrets.AWS_REGION }}
 
-      - name: Set up AWS credentials
-        uses: aws-actions/configure-aws-credentials@v1
-        with:
-          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
-          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          aws-region: ${{ secrets.AWS_REGION }}
+#       - name: Log in to Amazon ECR
+#         uses: aws-actions/amazon-ecr-login@v1
 
-      - name: Log in to Amazon ECR
-        uses: aws-actions/amazon-ecr-login@v1
+#       - name: Build and push Docker image using Makefile
+#         run: make build-and-push
+#         env:
+#           AWS_ACCOUNT_ID: ${{ secrets.AWS_ACCOUNT_ID }}
+#           AWS_REGION: ${{ secrets.AWS_REGION }}
+#           ECR_REPOSITORY: ${{ secrets.ECR_REPOSITORY }}
 
-      - name: Build and push Docker image using Makefile
-        run: make build-and-push
-        env:
-          AWS_ACCOUNT_ID: ${{ secrets.AWS_ACCOUNT_ID }}
-          AWS_REGION: ${{ secrets.AWS_REGION }}
-          ECR_REPOSITORY: ${{ secrets.ECR_REPOSITORY }}
+#   deploy:
+#     runs-on: ubuntu-latest
+#     needs: build-and-push
+#     steps:
+#       - name: Checkout code
+#         uses: actions/checkout@v2
 
-  deploy:
-    runs-on: ubuntu-latest
-    needs: build-and-push
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v2
+#       - name: Install Make and Docker Compose
+#         run: |
+#           sudo apt-get update
+#           sudo apt-get install -y make
+#           # Check if Docker Compose is installed
+#             if ! command -v docker-compose &> /dev/null
+#             then
+#               echo "Docker Compose not found. Installing Docker Compose..."
+#               sudo curl -L "https://github.com/docker/compose/releases/download/v2.20.2/docker-compose-$(uname -s)-$(uname -m)" -o /usr/local/bin/docker-compose
+#               sudo chmod +x /usr/local/bin/docker-compose
+#             else
+#               echo "Docker Compose is already installed. Skipping installation."
+#             fi
 
-      - name: Install Make and Docker Compose
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y make
-          # Check if Docker Compose is installed
-            if ! command -v docker-compose &> /dev/null
-            then
-              echo "Docker Compose not found. Installing Docker Compose..."
-              sudo curl -L "https://github.com/docker/compose/releases/download/v2.20.2/docker-compose-$(uname -s)-$(uname -m)" -o /usr/local/bin/docker-compose
-              sudo chmod +x /usr/local/bin/docker-compose
-            else
-              echo "Docker Compose is already installed. Skipping installation."
-            fi
+#             # Verify Docker Compose installation
+#             docker-compose --version
 
-            # Verify Docker Compose installation
-            docker-compose --version
+#             # Optional: Add current user to the docker group (avoid using sudo for Docker commands)
+#             sudo usermod -aG docker $USER
 
-            # Optional: Add current user to the docker group (avoid using sudo for Docker commands)
-            sudo usermod -aG docker $USER
+#             # Refresh group membership
+#             newgrp docker
 
-            # Refresh group membership
-            newgrp docker
+#       - name: Set up AWS credentials
+#         uses: aws-actions/configure-aws-credentials@v1
+#         with:
+#           aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+#           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+#           aws-region: ${{ secrets.AWS_REGION }}
 
-      - name: Set up AWS credentials
-        uses: aws-actions/configure-aws-credentials@v1
-        with:
-          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
-          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          aws-region: ${{ secrets.AWS_REGION }}
+#       - name: Log in to Amazon ECR
+#         uses: aws-actions/amazon-ecr-login@v1
 
-      - name: Log in to Amazon ECR
-        uses: aws-actions/amazon-ecr-login@v1
+#       - name: SSH to EC2 and deploy
+#         uses: appleboy/scp-action@v0.1.7
+#         with:
+#           host: ${{ secrets.EC2_IP }}
+#           username: ubuntu
+#           key: ${{ secrets.EC2_SSH_PRIVATE_KEY }}
+#           port: 22
+#           source: 'compose.yaml, Dockerfile, package.json, Makefile'
+#           target: '/home/ubuntu/sef-admin-panel-server'
+#           debug: true
 
-      - name: SSH to EC2 and deploy
-        uses: appleboy/scp-action@v0.1.7
-        with:
-          host: ${{ secrets.EC2_IP }}
-          username: ubuntu
-          key: ${{ secrets.EC2_SSH_PRIVATE_KEY }}
-          port: 22
-          source: 'compose.yaml, Dockerfile, package.json, Makefile'
-          target: '/home/ubuntu/sef-admin-panel-server'
-          debug: true
+#       - name: SSH to EC2 and run Docker Compose
+#         uses: appleboy/ssh-action@v0.1.7
+#         with:
+#           host: ${{ secrets.EC2_IP }}
+#           username: ubuntu
+#           key: ${{ secrets.EC2_SSH_PRIVATE_KEY }}
+#           port: 22
+#           script: |
+#             # Ensure the target directory exists
+#             mkdir -p /home/ubuntu/sef-admin-panel-server
 
-      - name: SSH to EC2 and run Docker Compose
-        uses: appleboy/ssh-action@v0.1.7
-        with:
-          host: ${{ secrets.EC2_IP }}
-          username: ubuntu
-          key: ${{ secrets.EC2_SSH_PRIVATE_KEY }}
-          port: 22
-          script: |
-            # Ensure the target directory exists
-            mkdir -p /home/ubuntu/sef-admin-panel-server
+#             # Create the .env.develop file
+#             echo "SERVER_PORT=8000" >> /home/ubuntu/sef-admin-panel-server/.env.develop
+#             echo "NODE_ENV=develop" >> /home/ubuntu/sef-admin-panel-server/.env.develop
+#             echo "DB_TYPE=postgres" >> /home/ubuntu/sef-admin-panel-server/.env.develop
+#             echo "DB_USER=${{ secrets.DB_USER }}" >> /home/ubuntu/sef-admin-panel-server/.env.develop
+#             echo "DB_PASSWORD=${{ secrets.DB_PASSWORD }}" >> /home/ubuntu/sef-admin-panel-server/.env.develop
+#             echo "DB_HOST=${{ secrets.DB_HOST }}" >> /home/ubuntu/sef-admin-panel-server/.env.develop
+#             echo "DB_PORT=${{ secrets.DB_PORT }}" >> /home/ubuntu/sef-admin-panel-server/.env.develop
+#             echo "DB_NAME=${{ secrets.DB_NAME }}" >> /home/ubuntu/sef-admin-panel-server/.env.develop
+#             echo "DB_SSL_PROFILE=require" >> /home/ubuntu/sef-admin-panel-server/.env.develop
+#             echo "JWT_SECRET=${{ secrets.JWT_SECRET }}" >> /home/ubuntu/sef-admin-panel-server/.env.develop
+#             echo "AUTH_HEADER_PREFIX=Bearer" >> /home/ubuntu/sef-admin-panel-server/.env.develop
+#             echo "SMTP_HOST=smtp.gmail.com" >> /home/ubuntu/sef-admin-panel-server/.env.develop
+#             echo "SMTP_USER=${{ secrets.SMTP_USER }}" >> /home/ubuntu/sef-admin-panel-server/.env.develop
+#             echo "SMTP_PASS=${{ secrets.SMTP_PASS }}" >> /home/ubuntu/sef-admin-panel-server/.env.develop
+#             echo "VERIFY_CLIENT_URL=https://sef-admin-panel-development.vercel.app/reset-password" >> /home/ubuntu/sef-admin-panel-server/.env.develop
 
-            # Create the .env.develop file
-            echo "SERVER_PORT=8000" >> /home/ubuntu/sef-admin-panel-server/.env.develop
-            echo "NODE_ENV=develop" >> /home/ubuntu/sef-admin-panel-server/.env.develop
-            echo "DB_TYPE=postgres" >> /home/ubuntu/sef-admin-panel-server/.env.develop
-            echo "DB_USER=${{ secrets.DB_USER }}" >> /home/ubuntu/sef-admin-panel-server/.env.develop
-            echo "DB_PASSWORD=${{ secrets.DB_PASSWORD }}" >> /home/ubuntu/sef-admin-panel-server/.env.develop
-            echo "DB_HOST=${{ secrets.DB_HOST }}" >> /home/ubuntu/sef-admin-panel-server/.env.develop
-            echo "DB_PORT=${{ secrets.DB_PORT }}" >> /home/ubuntu/sef-admin-panel-server/.env.develop
-            echo "DB_NAME=${{ secrets.DB_NAME }}" >> /home/ubuntu/sef-admin-panel-server/.env.develop
-            echo "DB_SSL_PROFILE=require" >> /home/ubuntu/sef-admin-panel-server/.env.develop
-            echo "JWT_SECRET=${{ secrets.JWT_SECRET }}" >> /home/ubuntu/sef-admin-panel-server/.env.develop
-            echo "AUTH_HEADER_PREFIX=Bearer" >> /home/ubuntu/sef-admin-panel-server/.env.develop
-            echo "SMTP_HOST=smtp.gmail.com" >> /home/ubuntu/sef-admin-panel-server/.env.develop
-            echo "SMTP_USER=${{ secrets.SMTP_USER }}" >> /home/ubuntu/sef-admin-panel-server/.env.develop
-            echo "SMTP_PASS=${{ secrets.SMTP_PASS }}" >> /home/ubuntu/sef-admin-panel-server/.env.develop
-            echo "VERIFY_CLIENT_URL=https://sef-admin-panel-development.vercel.app/reset-password" >> /home/ubuntu/sef-admin-panel-server/.env.develop
-
-            # Run Docker Compose commands
-            cd /home/ubuntu/sef-admin-panel-server
-            make rebuild
+#             # Run Docker Compose commands
+#             cd /home/ubuntu/sef-admin-panel-server
+#             make rebuild

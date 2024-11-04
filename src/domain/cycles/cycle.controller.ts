@@ -1,6 +1,7 @@
 import {
   Body,
   Controller,
+  Delete,
   Get,
   Param,
   Post,
@@ -19,11 +20,13 @@ export class CycleController {
   constructor(private readonly mediator: CycleMediator) {}
 
   @Get()
+  @UsePipes(new ValidationPipe({ whitelist: true }))
   getAllCycles() {
     return this.mediator.findCycles();
   }
 
   @Get(':id')
+  @UsePipes(new ValidationPipe({ whitelist: true }))
   getCycles(@Param('id') programId: number) {
     return this.mediator.findCycles(programId);
   }
@@ -35,5 +38,11 @@ export class CycleController {
     @Body() data: CreateEditCycleDto,
   ) {
     return this.mediator.createEditCycle(admin, data);
+  }
+
+  @Delete('delete-cycle')
+  @UsePipes(new ValidationPipe({ whitelist: true }))
+  async deleteCycle(@Body() data: string | string[]) {
+    return this.mediator.deleteCycle(data);
   }
 }

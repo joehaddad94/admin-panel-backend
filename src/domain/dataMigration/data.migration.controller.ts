@@ -17,22 +17,27 @@ export class DataMigrationController {
   constructor(private readonly mediator: DataMigrationMediator) {}
 
   @Post('data-migration')
-  dataMigration(
+  async dataMigration(
     @Body() dataMigrationDto: DataMigrationDto,
     @Res() res: Response,
   ) {
     const { category } = dataMigrationDto;
 
     try {
-      let targetFilePath;
+      let fileBuffer: Buffer;
+      let filename = '';
+
       switch (category) {
         case 'blom_bank':
-          targetFilePath = this.mediator.blomBankMigration(dataMigrationDto);
+          fileBuffer = await this.mediator.blomBankMigration(dataMigrationDto);
+          // filename = 'blom_bank_migration.xlsx';
+          filename = 'blom_bank_migration.csv';
           break;
         case 'whish':
-          targetFilePath = this.mediator.whishMigration(dataMigrationDto);
+          fileBuffer = await this.mediator.whishMigration(dataMigrationDto);
+          // filename = 'whish_migration.xlsx';
+          filename = 'whish_migration.csv';
           break;
-
         default:
           throw new HttpException(
             'Unsupported Category',
@@ -40,10 +45,16 @@ export class DataMigrationController {
           );
       }
 
-      res.status(HttpStatus.OK).json({
-        message: 'Data Migration Successfull',
-        targetFilePath,
-      });
+      // Set headers for the file download
+      res.setHeader('Content-Disposition', `attachment; filename=${filename}`);
+
+      // Set Content-Type for CSV
+      res.setHeader('Content-Type', 'text/csv');
+
+      console.log(res.getHeaders());
+
+      // Send the file buffer as the response
+      res.status(HttpStatus.OK).send(fileBuffer);
     } catch (error) {
       res.status(HttpStatus.INTERNAL_SERVER_ERROR).json({
         message: 'Data migration Failed',

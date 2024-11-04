@@ -1,25 +1,26 @@
 /* eslint-disable camelcase */
 import { Injectable } from '@nestjs/common';
 import { AdminService } from './admin.service';
-import { JwtService } from '@nestjs/jwt';
 import { MailService } from '../mail/mail.service';
 import { InviteDto, ManualCreateDto } from '../admins';
 import { throwBadRequest } from '../../core/settings/base/errors/errors';
 import { catcher } from '../../core/helpers/operation';
 import { format } from 'date-fns';
 import { convertToCamelCase } from '../../core/helpers/camelCase';
+import { Like, ILike } from 'typeorm';
+import { In } from 'typeorm';
 
 @Injectable()
 export class AdminMediator {
   constructor(
-    private readonly service: AdminService,
+    private readonly adminService: AdminService,
     private readonly mailService: MailService,
   ) {}
 
   manualCreate = async (data: ManualCreateDto) => {
     const { name, email } = data;
 
-    const existingAdmin = await this.service.findOne({ email });
+    const existingAdmin = await this.adminService.findOne({ email });
 
     if (existingAdmin) {
       throwBadRequest({
@@ -28,10 +29,10 @@ export class AdminMediator {
       });
     }
 
-    const password = this.service.generateRandomPassword();
-    const hashedPassword = await this.service.hashPassword(password);
+    const password = this.adminService.generateRandomPassword();
+    const hashedPassword = await this.adminService.hashPassword(password);
 
-    const admin = this.service.create({
+    const newAdmin = this.adminService.create({
       name,
       email,
       password: hashedPassword,
@@ -41,10 +42,15 @@ export class AdminMediator {
       login_attempts: 5,
     });
 
-    await admin.save();
+    await newAdmin.save();
 
-    const { password: omitted, ...adminData } = admin;
-    return adminData;
+    const { password: omitted, updated_at, ...adminData } = newAdmin;
+
+    const convertedAdminData = convertToCamelCase(adminData);
+    return {
+      adminData: convertedAdminData,
+      message: 'Admin added succesfully.',
+    };
   };
 
   invite = async (data: InviteDto) => {
@@ -52,7 +58,7 @@ export class AdminMediator {
       const { email } = data;
       const templateName = 'invitation.hbs';
 
-      const existingAdmin = await this.service.findOne({
+      const existingAdmin = await this.adminService.findOne({
         email,
       });
 
@@ -63,7 +69,7 @@ export class AdminMediator {
         });
       }
 
-      const { link, reset_token } = await this.service.generateLink(email);
+      const { link, reset_token } = await this.adminService.generateLink(email);
 
       existingAdmin.reset_token = reset_token;
       existingAdmin.reset_token_expiry = new Date(Date.now() + 3600000); // 1 hour expiry
@@ -74,10 +80,44 @@ export class AdminMediator {
     });
   };
 
-  getAdmins = async () => {
+  // getAdmins = async (page = 1, pageSize = 10000000, search = '', filters = []) => {
+  getAdmins = async (page = 1, pageSize = 10000000, search = '') => {
     return catcher(async () => {
-      const admins = await this.service.findMany({});
-      const adminsData = admins.map(
+      const skip = (page - 1) * pageSize;
+      const take = pageSize;
+
+      // const searchFilter = {
+      //   ...(search ? { name: ILike(`%${search}%`) } : {}),
+      //   ...(filters.length > 0
+      //     ? filters.reduce((acc, filter) => {
+      //         if (filter.columnField === 'name') {
+      //           acc.name = ILike(`%${filter.value}%`);
+      //         } else if (filter.columnField === 'email') {
+      //           acc.email = ILike(`%${filter.value}%`);
+      //         }
+      //         return acc;
+      //       }, {})
+      //     : {}),
+      // };
+
+      const [found, total] = await this.adminService.findAndCount(
+        {},
+        undefined,
+        undefined,
+        skip,
+        take,
+      );
+
+      if (!found || found.length === 0) {
+        return {
+          admins: [],
+          total: 0,
+          page,
+          pageSize,
+        };
+      }
+
+      const adminsData = found.map(
         ({
           password,
           reset_token,
@@ -91,7 +131,37 @@ export class AdminMediator {
           is_active: is_active ? 'Yes' : 'No',
         }),
       );
-      return convertToCamelCase(adminsData);
+
+      return {
+        admins: convertToCamelCase(adminsData),
+        total,
+        page,
+        pageSize,
+      };
+    });
+  };
+
+  deleteAdmin = async (ids: string | string[]) => {
+    return catcher(async () => {
+      const idArray = Array.isArray(ids) ? ids : [ids];
+
+      const admins = await this.adminService.findMany({ id: In(idArray) });
+
+      if (admins.length === 0) {
+        throwBadRequest({
+          message: 'No admins with the provided ID(s) exist.',
+          errorCheck: true,
+        });
+      }
+
+      const adminIdsToDelete = admins.map((admin) => admin.id);
+
+      await this.adminService.delete({ id: In(adminIdsToDelete) });
+
+      return {
+        message: `Admin(s) successfully deleted.`,
+        deletedIds: adminIdsToDelete,
+      };
     });
   };
 }

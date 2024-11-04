@@ -27,7 +27,7 @@ export class ApplicationMediator {
   findApplications = async (
     filtersDto: FiltersDto,
     page = 1,
-    pageSize = 100,
+    pageSize = 10000000,
   ) => {
     return catcher(async () => {
       const {
@@ -107,42 +107,20 @@ export class ApplicationMediator {
         programName: app.applicationProgram[0].program.program_name,
         program: app.applicationProgram[0].program.abbreviation,
         passedScreening: app.passed_screening,
-        applicationDate: new Date(app.created_at).toLocaleDateString('en-GB', {
-          day: '2-digit',
-          month: '2-digit',
-          year: 'numeric',
-        }),
-        elligible:
+        applicationDate: new Date(app.created_at),
+        eligible:
           app.is_eligible === true
             ? 'Yes'
             : app.is_eligible === false
             ? 'No'
             : '-',
-        passedScreeningDate: app.passed_screening_date
-          ? new Date(app.passed_screening_date).toLocaleDateString('en-GB', {
-              day: '2-digit',
-              month: '2-digit',
-              year: 'numeric',
-            })
-          : null,
+        passedScreeningDate: new Date(app.passed_screening_date),
         examScore: app.exam_score,
         passedExam: app.passed_exam,
-        passedExamDate: app.passed_exam_date
-          ? new Date(app.passed_exam_date).toLocaleDateString('en-GB', {
-              day: '2-digit',
-              month: '2-digit',
-              year: 'numeric',
-            })
-          : null,
+        passedExamDate: new Date(app.passed_exam_date),
         techInterviewScore: app.tech_interview_score,
         softInterviewScore: app.soft_interview_score,
-        passedInterviewDate: app.passed_interview_date
-          ? new Date(app.passed_interview_date).toLocaleDateString('en-GB', {
-              day: '2-digit',
-              month: '2-digit',
-              year: 'numeric',
-            })
-          : null,
+        passedInterviewDate: new Date(app.passed_interview_date),
         passedInterview: app.passed_interview,
         applicationStatus: app.status,
         remarks: app.remarks,
@@ -167,7 +145,7 @@ export class ApplicationMediator {
   findApplicationsByLatestCycle = async (
     filtersDto: FiltersDto,
     page = 1,
-    pageSize = 100,
+    pageSize = 10000000,
   ) => {
     return catcher(async () => {
       const { programId, page: dtoPage, pageSize: dtoPageSize } = filtersDto;
@@ -250,42 +228,20 @@ export class ApplicationMediator {
         programName: app.applicationProgram[0].program.program_name,
         program: app.applicationProgram[0].program.abbreviation,
         passedScreening: app.passed_screening,
-        applicationDate: new Date(app.created_at).toLocaleDateString('en-GB', {
-          day: '2-digit',
-          month: '2-digit',
-          year: 'numeric',
-        }),
-        elligible:
+        applicationDate: new Date(app.created_at),
+        eligible:
           app.is_eligible === true
             ? 'Yes'
             : app.is_eligible === false
             ? 'No'
             : '-',
-        passedScreeningDate: app.passed_screening_date
-          ? new Date(app.passed_screening_date).toLocaleDateString('en-GB', {
-              day: '2-digit',
-              month: '2-digit',
-              year: 'numeric',
-            })
-          : null,
+        passedScreeningDate: new Date(app.passed_screening_date),
         examScore: app.exam_score,
         passedExam: app.passed_exam,
-        passedExamDate: app.passed_exam_date
-          ? new Date(app.passed_exam_date).toLocaleDateString('en-GB', {
-              day: '2-digit',
-              month: '2-digit',
-              year: 'numeric',
-            })
-          : null,
+        passedExamDate: new Date(app.passed_exam_date),
         techInterviewScore: app.tech_interview_score,
         softInterviewScore: app.soft_interview_score,
-        passedInterviewDate: app.passed_interview_date
-          ? new Date(app.passed_interview_date).toLocaleDateString('en-GB', {
-              day: '2-digit',
-              month: '2-digit',
-              year: 'numeric',
-            })
-          : null,
+        passedInterviewDate: new Date(app.passed_interview_date),
         passedInterview: app.passed_interview,
         applicationStatus: app.status,
         remarks: app.remarks,

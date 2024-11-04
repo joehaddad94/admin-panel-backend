@@ -32,4 +32,10 @@ export class Admin extends BaseEntity {
 
   @Column()
   login_attempts: number;
+
+  @Column()
+  created_by_id: number;
+
+  @Column()
+  updated_by_id: number;
 }
