@@ -436,14 +436,19 @@ export class ApplicationMediator {
         }
       }
 
-      const emailsToSend = applicationsToEmail.map(
+      const formattedApplications = applicationsToEmail.map((application) => ({
+        ...application,
+        passed_screening: application.passed_screening ? 'Yes' : 'No',
+      }));
+
+      const emailsToSend = formattedApplications.map(
         (app) => app.applicationUser[0].user.email,
       );
 
       let mailerResponse: any;
       if (emailsToSend.length > 0) {
         const subject = 'SE Factory Screening Process';
-        const templateName = 'FSW/fsw-shortlisted.hbs';
+        const templateName = 'FSW/shortlisted.hbs';
         mailerResponse = this.mailService.sendEmails(
           emailsToSend,
           templateName,
@@ -451,7 +456,7 @@ export class ApplicationMediator {
         );
       }
 
-      const camelCaseApplications = convertToCamelCase(applicationsToEmail);
+      const camelCaseApplications = convertToCamelCase(formattedApplications);
 
       return {
         message: 'Emails sent successfully.',
