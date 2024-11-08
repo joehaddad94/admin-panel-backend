@@ -35,6 +35,7 @@ export class MailService {
       throw new Error(`Failed to send email to ${email}: ${error.message}`);
     }
   };
+
   sendEmails = async (
     emails: string[],
     template: string,

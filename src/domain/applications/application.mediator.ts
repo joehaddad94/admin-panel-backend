@@ -227,7 +227,12 @@ export class ApplicationMediator {
         infoCreatedAt: app.applicationInfo[0].info.created_at,
         programName: app.applicationProgram[0].program.program_name,
         program: app.applicationProgram[0].program.abbreviation,
-        passedScreening: app.passed_screening,
+        passedScreening:
+          app.passed_screening === true
+            ? 'Yes'
+            : app.passed_screening === false
+            ? 'No'
+            : '-',
         applicationDate: new Date(app.created_at),
         eligible:
           app.is_eligible === true
@@ -237,12 +242,22 @@ export class ApplicationMediator {
             : '-',
         passedScreeningDate: new Date(app.passed_screening_date),
         examScore: app.exam_score,
-        passedExam: app.passed_exam,
+        passedExam:
+          app.passed_exam === true
+            ? 'Yes'
+            : app.passed_exam === false
+            ? 'No'
+            : '-',
         passedExamDate: new Date(app.passed_exam_date),
         techInterviewScore: app.tech_interview_score,
         softInterviewScore: app.soft_interview_score,
         passedInterviewDate: new Date(app.passed_interview_date),
-        passedInterview: app.passed_interview,
+        passedInterview:
+          app.passed_interview === true
+            ? 'Yes'
+            : app.passed_exam === false
+            ? 'No'
+            : '-',
         applicationStatus: app.status,
         remarks: app.remarks,
         extras: app.extras,
@@ -421,14 +436,19 @@ export class ApplicationMediator {
         }
       }
 
-      const emailsToSend = applicationsToEmail.map(
+      const formattedApplications = applicationsToEmail.map((application) => ({
+        ...application,
+        passed_screening: application.passed_screening ? 'Yes' : 'No',
+      }));
+
+      const emailsToSend = formattedApplications.map(
         (app) => app.applicationUser[0].user.email,
       );
 
       let mailerResponse: any;
       if (emailsToSend.length > 0) {
         const subject = 'SE Factory Screening Process';
-        const templateName = 'invitation.hbs';
+        const templateName = 'FSW/shortlisted.hbs';
         mailerResponse = this.mailService.sendEmails(
           emailsToSend,
           templateName,
@@ -436,7 +456,7 @@ export class ApplicationMediator {
         );
       }
 
-      const camelCaseApplications = convertToCamelCase(applicationsToEmail);
+      const camelCaseApplications = convertToCamelCase(formattedApplications);
 
       return {
         message: 'Emails sent successfully.',
