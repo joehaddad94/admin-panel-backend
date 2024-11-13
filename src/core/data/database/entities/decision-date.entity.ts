@@ -40,6 +40,15 @@ export class DecisionDates extends BaseEntity {
   @Column({ type: 'varchar', length: 255, nullable: true })
   interview_meet_link: string;
 
+  @Column({ type: 'varchar', length: 255, nullable: true })
+  info_session_recorded_link: string;
+
+  @Column({ type: 'varchar', length: 255, nullable: true })
+  exam_registration_form: string;
+
+  @Column({ type: 'varchar', length: 255, nullable: true })
+  exam_link: string;
+
   @OneToOne(
     () => DecisionDateCycle,
     (decisionDateCycle) => decisionDateCycle.cycle,
