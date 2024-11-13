@@ -409,9 +409,33 @@ export class ApplicationMediator {
         ['decisionDateCycle'],
       );
 
-      if (currentCycle.decisionDateCycle.decisionDate.exam_date === null) {
-        throwError('Exam Date should be provided.', HttpStatus.BAD_REQUEST);
-      }
+      const requiredFields = [
+        {
+          field: currentCycle.decisionDateCycle.decisionDate.exam_date,
+          message: 'Exam Date and time should be provided.',
+        },
+        {
+          field: currentCycle.decisionDateCycle.decisionDate.exam_link,
+          message: 'Exam Link should be provided.',
+        },
+        {
+          field:
+            currentCycle.decisionDateCycle.decisionDate.exam_registration_form,
+          message: 'Exam Registration Form should be provided.',
+        },
+        {
+          field:
+            currentCycle.decisionDateCycle.decisionDate
+              .info_session_recorded_link,
+          message: 'Info Session Recorded Link should be provided.',
+        },
+      ];
+
+      requiredFields.forEach(({ field, message }) => {
+        if (field === null) {
+          throwError(message, HttpStatus.BAD_REQUEST);
+        }
+      });
 
       const uniqueEmails: string[] = [...new Set(emails)];
 
@@ -458,6 +482,15 @@ export class ApplicationMediator {
       );
 
       let mailerResponse: any;
+      const templateVariables = {
+        examDate: currentCycle.decisionDateCycle.decisionDate.exam_date,
+        examLink: currentCycle.decisionDateCycle.decisionDate.exam_link,
+        examRgistrationForm:
+          currentCycle.decisionDateCycle.decisionDate.exam_registration_form,
+        infoSessionRecordedLink:
+          currentCycle.decisionDateCycle.decisionDate
+            .info_session_recorded_link,
+      };
       if (emailsToSend.length > 0) {
         const subject = 'SE Factory Screening Process';
         const templateName = 'FSW/shortlisted.hbs';
@@ -465,6 +498,7 @@ export class ApplicationMediator {
           emailsToSend,
           templateName,
           subject,
+          templateVariables,
         );
       }
 
