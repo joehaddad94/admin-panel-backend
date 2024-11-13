@@ -454,30 +454,36 @@ export class ApplicationMediator {
 
       for (const application of applicationsByCycle) {
         const email: string = application.applicationUser[0].user.email;
-        if (
-          uniqueEmails.includes(email) &&
-          application.is_eligible &&
-          !application.passed_screening
-        ) {
-          application.passed_screening = true;
-          application.passed_screening_date = new Date();
-          await this.applicationsService.update(
-            { id: application.id },
-            {
-              passed_screening: true,
-              passed_screening_date: new Date(),
-            },
-          );
-          applicationsToEmail.push(application);
+        if (uniqueEmails.includes(email) && application.is_eligible) {
+          if (!application.passed_screening) {
+            application.passed_screening = true;
+            application.passed_screening_date = new Date();
+            await this.applicationsService.update(
+              { id: application.id },
+              {
+                passed_screening: true,
+                passed_screening_date: new Date(),
+              },
+            );
+            applicationsToEmail.push({
+              ...application,
+              passed_screening: 'Yes',
+            });
+          } else if (!application.screening_email_sent) {
+            applicationsToEmail.push({
+              ...application,
+              passed_screening: 'Yes',
+            });
+          }
         }
       }
 
-      const formattedApplications = applicationsToEmail.map((application) => ({
-        ...application,
-        passed_screening: application.passed_screening ? 'Yes' : 'No',
-      }));
+      // const formattedApplications = applicationsToEmail.map((application) => ({
+      //   ...application,
+      //   passed_screening: application.passed_screening ? 'Yes' : 'No',
+      // }));
 
-      const emailsToSend = formattedApplications.map(
+      const emailsToSend = applicationsToEmail.map(
         (app) => app.applicationUser[0].user.email,
       );
 
@@ -494,7 +500,7 @@ export class ApplicationMediator {
       if (emailsToSend.length > 0) {
         const subject = 'SE Factory Screening Process';
         const templateName = 'FSW/shortlisted.hbs';
-        mailerResponse = this.mailService.sendEmails(
+        mailerResponse = await this.mailService.sendEmails(
           emailsToSend,
           templateName,
           subject,
@@ -502,7 +508,7 @@ export class ApplicationMediator {
         );
       }
 
-      const camelCaseApplications = convertToCamelCase(formattedApplications);
+      const camelCaseApplications = convertToCamelCase(applicationsToEmail);
 
       return {
         message: 'Emails sent successfully.',
