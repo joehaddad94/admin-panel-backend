@@ -15,6 +15,7 @@ import { convertToCamelCase } from 'src/core/helpers/camelCase';
 import { validateThresholdEntity } from 'src/core/helpers/validateThresholds';
 import { Status } from 'src/core/data/types/applications/applications.types';
 import { format } from 'date-fns';
+import { formatExamDate } from 'src/core/helpers/formatDate';
 
 @Injectable()
 export class ApplicationMediator {
@@ -478,18 +479,16 @@ export class ApplicationMediator {
         }
       }
 
-      // const formattedApplications = applicationsToEmail.map((application) => ({
-      //   ...application,
-      //   passed_screening: application.passed_screening ? 'Yes' : 'No',
-      // }));
-
       const emailsToSend = applicationsToEmail.map(
         (app) => app.applicationUser[0].user.email,
       );
 
       let mailerResponse: any;
+      let examDate = formatExamDate(
+        currentCycle.decisionDateCycle.decisionDate.exam_date,
+      );
       const templateVariables = {
-        examDate: currentCycle.decisionDateCycle.decisionDate.exam_date,
+        examDate: examDate,
         examLink: currentCycle.decisionDateCycle.decisionDate.exam_link,
         examRgistrationForm:
           currentCycle.decisionDateCycle.decisionDate.exam_registration_form,
@@ -497,6 +496,7 @@ export class ApplicationMediator {
           currentCycle.decisionDateCycle.decisionDate
             .info_session_recorded_link,
       };
+
       if (emailsToSend.length > 0) {
         const subject = 'SE Factory Screening Process';
         const templateName = 'FSW/shortlisted.hbs';

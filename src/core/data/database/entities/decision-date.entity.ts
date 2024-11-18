@@ -13,7 +13,7 @@ export class DecisionDates extends BaseEntity {
   @PrimaryGeneratedColumn()
   id: number;
 
-  @Column({ type: 'date', nullable: true })
+  @Column({ type: 'timestamp without time zone', nullable: true })
   exam_date: Date;
 
   @Column({
