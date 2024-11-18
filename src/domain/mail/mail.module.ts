@@ -6,67 +6,13 @@ import { MailService } from './mail.service';
 import { UserModule } from '../users/user.module';
 import { MailController } from './mail.controller';
 
-// @Module({
-//   imports: [
-//     MailerModule.forRootAsync({
-//       useFactory: async () => ({
-//         transport: {
-//           host: process.env.SMTP_HOST,
-//           secure: true,
-//           auth: {
-//             user: process.env.SMTP_USER,
-//             pass: process.env.SMTP_PASS,
-//           },
-//         },
-//         defaults: {
-//           from: '"SEF Admin Panel" <noreply@example.com>',
-//         },
-//         template: {
-//           dir: join(__dirname, 'templates'),
-//           adapter: new HandlebarsAdapter(),
-//           options: {
-//             strict: false,
-//           },
-//         },
-//       }),
-//     }),
-//     UserModule,
-//   ],
-//   controllers: [],
-//   providers: [MailService],
-//   exports: [MailService],
-// })
-// export class MailModule {}
-
 @Module({
   imports: [
     MailerModule.forRootAsync({
       useFactory: async () => {
-        // Log the SMTP user and pass for debugging
         console.log('SMTP User:', process.env.SMTP_USER);
         console.log('SMTP Pass:', process.env.SMTP_PASS);
 
-        // return {
-        //   transport: {
-        //     host: process.env.SMTP_HOST,
-        //     port: 465,
-        //     secure: true,
-        //     auth: {
-        //       user: process.env.SMTP_USER,
-        //       pass: process.env.SMTP_PASS,
-        //     },
-        //   },
-        //   defaults: {
-        //     from: '"SEF Admin Panel" <noreply@example.com>',
-        //   },
-        //   template: {
-        //     dir: join(__dirname, 'templates'),
-        //     adapter: new HandlebarsAdapter(),
-        //     options: {
-        //       strict: false,
-        //     },
-        //   },
-        // };
         return {
           transport: {
             service: 'gmail',

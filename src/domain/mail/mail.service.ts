@@ -76,17 +76,14 @@ export class MailService {
 
     return { results, foundEmails, notFoundEmails };
   };
-  async sendTestEmail(email: string, template: string) {
+  async sendTestEmail(email: string) {
     try {
       const result = await this.mailerService.sendMail({
         from: '"SEF Admin Panel" <noreply@example.com>',
         to: email,
         subject: 'Test Email from SEF Admin Panel',
-        template,
-        context: {
-          name: 'Test User',
-          link: 'https://example.com/test',
-        },
+        text: 'This is a test email message.',
+        html: '<p>This is a test email message.</p>',
       });
 
       this.logger.log(`Test email sent to ${email}: ${result.messageId}`);

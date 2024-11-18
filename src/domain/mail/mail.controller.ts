@@ -8,11 +8,16 @@ export class MailController {
   constructor(private readonly mailService: MailService) {}
 
   @Post('send-test-email')
-  async sendTestEmail(@Body() body: { email: string; template: string }) {
-    const { email, template } = body;
+  async sendTestEmail(@Body() body: { email: string }) {
+    const { email } = body;
+
+    if (!email) {
+      this.logger.error('Email is missing in the request body.');
+      return { error: 'Email is required.' };
+    }
 
     try {
-      const result = await this.mailService.sendTestEmail(email, template);
+      const result = await this.mailService.sendTestEmail(email);
       return { message: `Email sent successfully: ${result}` };
     } catch (error) {
       this.logger.error(`Error sending email: ${error.message}`);
