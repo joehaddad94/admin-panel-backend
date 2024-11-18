@@ -76,4 +76,26 @@ export class MailService {
 
     return { results, foundEmails, notFoundEmails };
   };
+  async sendTestEmail(email: string, template: string) {
+    try {
+      const result = await this.mailerService.sendMail({
+        from: '"SEF Admin Panel" <noreply@example.com>',
+        to: email,
+        subject: 'Test Email from SEF Admin Panel',
+        template,
+        context: {
+          name: 'Test User',
+          link: 'https://example.com/test',
+        },
+      });
+
+      this.logger.log(`Test email sent to ${email}: ${result.messageId}`);
+      return 'okay';
+    } catch (error) {
+      this.logger.error(`Failed to send test email to ${email}`, error.stack);
+      throw new Error(
+        `Failed to send test email to ${email}: ${error.message}`,
+      );
+    }
+  }
 }
