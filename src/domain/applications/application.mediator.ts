@@ -300,6 +300,7 @@ export class ApplicationMediator {
         examScore,
         techInterviewScore,
         softInterviewScore,
+        remarks,
         status,
         cycleId,
       } = data;
@@ -345,6 +346,7 @@ export class ApplicationMediator {
           softInterviewScore !== 0
             ? softInterviewScore
             : Number(application.soft_interview_score),
+        remarks: remarks !== '' ? remarks : application.remarks,
         status: status,
         updated_at: new Date(),
       };
