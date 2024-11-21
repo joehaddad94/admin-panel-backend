@@ -304,6 +304,19 @@ export class ApplicationMediator {
         cycleId,
       } = data;
 
+      const application = await this.applicationsService.findOne({ id });
+      throwNotFound({ entity: 'application', errorCheck: !application });
+
+      const { is_eligible, passed_screening, screening_email_sent } =
+        application;
+
+      if (!is_eligible || !passed_screening || !screening_email_sent) {
+        throwError(
+          'Application cannot be edited. Ensure it meets the eligibility and screening criteria.',
+          HttpStatus.BAD_REQUEST,
+        );
+      }
+
       const options: GlobalEntities[] = ['thresholdCycle'];
       const cycle = await this.cyclesService.findOne({ id: cycleId }, options);
 
@@ -320,9 +333,6 @@ export class ApplicationMediator {
       } else {
         validateThresholdEntity(thresholdCycle.threshold);
       }
-
-      const application = await this.applicationsService.findOne({ id });
-      throwNotFound({ entity: 'application', errorCheck: !application });
 
       const updatedData: any = {
         exam_score:
@@ -506,6 +516,24 @@ export class ApplicationMediator {
           subject,
           templateVariables,
         );
+      }
+
+      const sentEmailSet = new Set(
+        mailerResponse?.foundEmails.map((e) => e.email) || [],
+      );
+      const notFoundEmailSet = new Set(mailerResponse?.notFoundEmails || []);
+
+      for (const application of applicationsToEmail) {
+        const email = application.applicationUser[0].user.email;
+        if (sentEmailSet.has(email)) {
+          await this.applicationsService.update(
+            { id: application.id },
+            { screening_email_sent: true },
+          );
+          application.screening_email_sent = 'Yes';
+        } else if (notFoundEmailSet.has(email)) {
+          application.screening_email_sent = 'No';
+        }
       }
 
       const camelCaseApplications = convertToCamelCase(applicationsToEmail);
