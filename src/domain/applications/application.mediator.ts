@@ -16,6 +16,10 @@ import { validateThresholdEntity } from 'src/core/helpers/validateThresholds';
 import { Status } from 'src/core/data/types/applications/applications.types';
 import { format } from 'date-fns';
 import { formatExamDate } from 'src/core/helpers/formatDate';
+import {
+  calculatePassedExam,
+  calculatePassedInterview,
+} from 'src/core/helpers/calculatePassingGrades';
 
 @Injectable()
 export class ApplicationMediator {
@@ -352,44 +356,32 @@ export class ApplicationMediator {
       };
 
       const { threshold } = thresholdCycle;
-      if (threshold.exam_passing_grade && updatedData.exam_score >= 0) {
-        updatedData.passed_exam =
-          updatedData.exam_score >= threshold.exam_passing_grade;
-        updatedData.passed_exam_date = new Date();
-      }
 
-      const finalTechInterviewScore = updatedData.tech_interview_score;
-      const finalSoftInterviewScore = updatedData.soft_interview_score;
-
-      if (
-        threshold.weight_tech &&
-        threshold.weight_soft &&
-        finalTechInterviewScore >= 0 &&
-        finalSoftInterviewScore >= 0
-      ) {
-        const interviewGrade =
-          threshold.weight_tech * finalTechInterviewScore +
-          threshold.weight_soft * finalSoftInterviewScore;
-
-        if (interviewGrade >= threshold.primary_passing_grade) {
-          updatedData.passed_interview = true;
-          updatedData.status = Status.ACCEPTED;
-        } else if (interviewGrade >= threshold.secondary_passing_grade) {
-          updatedData.passed_interview = true;
-          updatedData.status = Status.WAITING_LIST;
-        } else {
-          updatedData.passed_interview = false;
-          updatedData.status = Status.REJECTED;
-        }
-        updatedData.passed_interview_date = new Date();
-      }
-
-      const response = await this.applicationsService.update(
-        { id },
-        updatedData,
+      const { passedExam, passedExamDate } = calculatePassedExam(
+        updatedData.exam_score,
+        threshold.exam_passing_grade,
       );
 
-      const formatDate = (date: Date) => format(date, 'dd/MM/yyyy');
+      updatedData.passed_exam = passedExam;
+      updatedData.passed_exam_date = passedExamDate;
+
+      const { passedInterview, interviewStatus, passedInterviewDate } =
+        calculatePassedInterview(
+          updatedData.tech_interview_score,
+          updatedData.soft_interview_score,
+          {
+            weightTech: threshold.weight_tech,
+            weightSoft: threshold.weight_soft,
+            primaryPassingGrade: threshold.primary_passing_grade,
+            secondaryPassingGrade: threshold.secondary_passing_grade,
+          },
+        );
+
+      updatedData.passed_interview = passedInterview;
+      updatedData.status = interviewStatus;
+      updatedData.passed_interview_date = passedInterviewDate;
+
+      await this.applicationsService.update({ id }, updatedData);
 
       const updatedPayload = convertToCamelCase({
         ...updatedData,
