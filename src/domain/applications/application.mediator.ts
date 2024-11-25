@@ -584,6 +584,7 @@ export class ApplicationMediator {
           {
             id: app.id,
             passed_screening: app.passed_screening,
+            screening_email_sent: app.screening_email_sent,
           },
         ]),
       );
@@ -591,7 +592,11 @@ export class ApplicationMediator {
       const updateResults = await Promise.all(
         examScores.map(async ({ email, score }) => {
           const application = applicationsMap.get(email);
-          if (application && application.passed_screening) {
+          if (
+            application &&
+            application.passed_screening &&
+            application.screening_email_sent
+          ) {
             let passed_exam = false;
             const passed_exam_date = new Date();
 
@@ -610,7 +615,12 @@ export class ApplicationMediator {
             return {
               id: application.id,
               examScore: score,
-              passed_exam,
+              passedExam:
+                passed_exam === true
+                  ? 'Yes'
+                  : passed_exam === false
+                  ? 'No'
+                  : '-',
               passed_exam_date,
             };
           }

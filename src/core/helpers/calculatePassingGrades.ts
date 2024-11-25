@@ -52,8 +52,18 @@ export const calculatePassedInterview = (
     interviewStatus = Status.ACCEPTED;
   } else if (interviewGrade >= secondaryPassingGrade) {
     interviewStatus = Status.WAITING_LIST;
-  } else {
+  } else if (interviewGrade <= secondaryPassingGrade) {
     interviewStatus = Status.REJECTED;
+  } else {
+    interviewStatus = Status.PENDING;
+  }
+
+  if (interviewStatus === Status.PENDING) {
+    return {
+      passedInterview: null,
+      interviewStatus,
+      passedInterviewDate: null,
+    };
   }
 
   const passedInterview = interviewStatus !== Status.REJECTED;
