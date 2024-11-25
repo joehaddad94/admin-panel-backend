@@ -394,12 +394,12 @@ export class ApplicationMediator {
       const updatedPayload = convertToCamelCase({
         ...updatedData,
         applicationStatus: updatedData.status,
-        passedExamDate: updatedData.passed_exam_date
-          ? formatDate(updatedData.passed_exam_date)
-          : null,
-        passedInterviewDate: updatedData.passed_interview_date
-          ? formatDate(updatedData.passed_interview_date)
-          : null,
+        passedExam:
+          updatedData.passed_exam === true
+            ? 'Yes'
+            : updatedData.passed_exam === false
+            ? 'No'
+            : '-',
       });
 
       delete updatedPayload.status;
