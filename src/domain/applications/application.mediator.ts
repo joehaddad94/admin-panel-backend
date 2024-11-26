@@ -129,6 +129,12 @@ export class ApplicationMediator {
         examScore: app.exam_score,
         passedExam: app.passed_exam,
         passedExamDate: new Date(app.passed_exam_date),
+        passedExamEmailSent:
+          app.passed_exam_email_sent === true
+            ? 'Yes'
+            : app.passed_exam_email_sent === false
+            ? 'No'
+            : '-',
         techInterviewScore: app.tech_interview_score,
         softInterviewScore: app.soft_interview_score,
         passedInterviewDate: new Date(app.passed_interview_date),
@@ -266,6 +272,12 @@ export class ApplicationMediator {
             ? 'No'
             : '-',
         passedExamDate: new Date(app.passed_exam_date),
+        passedExamEmailSent:
+          app.passed_exam_email_sent === true
+            ? 'Yes'
+            : app.passed_exam_email_sent === false
+            ? 'No'
+            : '-',
         techInterviewScore: app.tech_interview_score,
         softInterviewScore: app.soft_interview_score,
         passedInterviewDate: new Date(app.passed_interview_date),
