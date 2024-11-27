@@ -653,11 +653,10 @@ export class ApplicationMediator {
     }
   };
 
-  sendInterviewDateEmails = async (data: SendingEmailsDto) => {
+  sendPassedExamEmails = async (data: SendingEmailsDto) => {
     const { cycleId, emails } = data;
 
     const cyclesWhereConditions = cycleId ? { id: cycleId } : {};
-
     const currentCycle = await this.cyclesService.findOne(
       cyclesWhereConditions,
       ['decisionDateCycle'],
@@ -688,30 +687,81 @@ export class ApplicationMediator {
       ['applicationUser'],
     );
 
-    const emailsToSend = applicationsByCycle
-      .filter((application) => {
-        const email: string = application.applicationUser[0]?.user?.email;
-        return uniqueEmails.includes(email) && application.passed_exam;
-      })
-      .map((application) => application.applicationUser[0].user.email);
+    const emailsToSend = applicationsByCycle.map((application) => {
+      const email: string = application.applicationUser[0]?.user?.email;
+      return {
+        email,
+        passedExam: application.passed_exam,
+        applicationId: application.id,
+      };
+    });
 
-    let mailerResponse: any = { foundEmails: [], notFoundEmails: [] };
-    if (emailsToSend.length > 0) {
-      const subject = 'SE Factory Screening Process';
-      const templateName = 'interview-mail.hbs';
-      const templateVariables = { interviewMeetLink };
-      mailerResponse = await this.mailService.sendEmails(
-        emailsToSend,
-        templateName,
-        subject,
-        templateVariables,
-      );
-    }
+    const passedExamEmails = emailsToSend.filter(
+      (emailObj) =>
+        uniqueEmails.includes(emailObj.email) && emailObj.passedExam,
+    );
+    const failedExamEmails = emailsToSend.filter(
+      (emailObj) =>
+        uniqueEmails.includes(emailObj.email) && !emailObj.passedExam,
+    );
+
+    const passedTemplateName = 'FSW/passedExam.hbs';
+    const failedTemplateName = 'FSW/failedExam.hbs';
+    const passedSubject = 'SE Factory Notification';
+    const failedSubject = 'SE Factory Notification';
+
+    const templateVariables = {
+      interviewMeetLink:
+        currentCycle.decisionDateCycle.decisionDate.interview_meet_link,
+    };
+
+    const passedMailerResponse = await this.mailService.sendEmails(
+      passedExamEmails.map((e) => e.email),
+      passedTemplateName,
+      passedSubject,
+      templateVariables,
+    );
+
+    const failedMailerResponse = await this.mailService.sendEmails(
+      failedExamEmails.map((e) => e.email),
+      failedTemplateName,
+      failedSubject,
+    );
+
+    const affectedApplications = await Promise.all(
+      applicationsByCycle.map(async (application) => {
+        const email = application.applicationUser[0]?.user?.email;
+        const emailSent =
+          passedMailerResponse.foundEmails.some((e) => e.email === email) ||
+          failedMailerResponse.foundEmails.some((e) => e.email === email);
+
+        await this.applicationsService.update(
+          { id: application.id },
+          { passed_exam_email_sent: emailSent },
+        );
+
+        return {
+          id: application.id,
+          email,
+          passed_exam: application.passed_exam,
+          passed_exam_email_sent: emailSent,
+        };
+      }),
+    );
+
+    const camelCaseApplications = convertToCamelCase(affectedApplications);
 
     return {
       message: 'Emails sent successfully.',
-      foundEmails: mailerResponse.foundEmails,
-      notFoundEmails: mailerResponse.notFoundEmails,
+      passedExamEmails: {
+        sent: passedMailerResponse.foundEmails,
+        notSent: passedMailerResponse.notFoundEmails,
+      },
+      failedExamEmails: {
+        sent: failedMailerResponse.foundEmails,
+        notSent: failedMailerResponse.notFoundEmails,
+      },
+      applcations: camelCaseApplications,
     };
   };
 

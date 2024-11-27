@@ -76,6 +76,7 @@ export class MailService {
 
     return { results, foundEmails, notFoundEmails };
   };
+
   async sendTestEmail(email: string) {
     try {
       const result = await this.mailerService.sendMail({
