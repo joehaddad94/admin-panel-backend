@@ -2,7 +2,7 @@
   <head>
     <meta charset='UTF-8' />
     <meta name='viewport' content='width=device-width, initial-scale=1.0' />
-    <title>Document</title>
+    <title>Stage 3 - Screening & Technical Review</title>
   </head>
   <body style='display: flex; flex-direction: column'>
     <table
@@ -119,7 +119,9 @@
                                   color: rgb(40, 238, 167);
                                   margin-right: 10px;
                                 '
-                              >&gt;</span>
+                              >
+                                &gt;
+                              </span>
                               Dear Applicant,
                             </h1>
                             <p
@@ -130,10 +132,8 @@
                                 margin: 24px 0;
                               '
                             >
-                              This is an email to inform you that you were
-                              shortlisted for the next steps in the application
-                              process for the Full-Stack Web Development
-                              bootcamp.
+                              Welcome to Stage (3) - Screening & Technical
+                              Review.
                             </p>
                             <p
                               style='
@@ -143,28 +143,12 @@
                                 margin: 0;
                               '
                             >
-                              Here are the stages you will need to follow to
-                              make it into the Bootcamp:
+                              You passed the exam, and now it's time to meet
+                              with the SEF team to review your technical skills
+                              and get to know you a little better. All we need
+                              from you is to go over what you've already studied
+                              for the exam and join us for a 20-minute call.
                             </p>
-                            <ul
-                              style='
-                                color: #a5a6a9;
-                                font-size: 14px;
-                                line-height: 24px;
-                                margin: 16px 0;
-                                padding-left: 20px;
-                              '
-                            >
-                              <li>
-                                Stage 1: Application Shortlisting (you are here
-                                now!)
-                              </li>
-                              <li>Stage 2: Technical Exam</li>
-                              <li>
-                                Stage 3: Technical and Soft Skills Interview
-                              </li>
-                              <li>Decisions out</li>
-                            </ul>
                             <h2
                               style='
                                 color: #fff;
@@ -172,81 +156,47 @@
                                 margin-top: 20px;
                               '
                             >
-                              So, welcome to Stage (2)! - Technical Evaluation
+                              To book your meeting, here's what you need to do:
                             </h2>
-                            <p
-                              style='
-                                color: #a5a6a9;
-                                font-size: 14px;
-                                line-height: 24px;
-                                margin: 0;
-                              '
-                            >
-                              The day of the exam:
-                              {{examDate}}<br />Link to exam:
-                              <a
-                                href='{{examLink}}'
-                                style='
-                                  color: rgb(40, 238, 167);
-                                  text-decoration: none;
-                                '
-                              >{{examLink}}</a>
-                            </p>
-                            <h3
-                              style='
-                                color: #fff;
-                                font-size: 16px;
-                                margin-top: 20px;
-                              '
-                            >
-                              How to prepare?
-                            </h3>
-                            <p
-                              style='
-                                color: #a5a6a9;
-                                font-size: 14px;
-                                line-height: 24px;
-                                margin: 0;
-                              '
-                            >
-                              1) The info session: Please find here a link to a
-                              general info session (covers all bootcamps) that
-                              will explain everything you need to know in
-                              regards to our program and the exam:
-                              <a
-                                href='{{infoSessionRecordedLink}}'
-                                style='
-                                  color: rgb(40, 238, 167);
-                                  text-decoration: none;
-                                '
-                              >View Info Session</a>
-                            </p>
-                            <p
-                              style='
-                                color: #a5a6a9;
-                                font-size: 14px;
-                                line-height: 24px;
-                                margin: 16px 0;
-                              '
-                            >
-                              2) The exam: It will be an online exam that will
-                              be covering the following subjects:
-                            </p>
                             <ul
                               style='
                                 color: #a5a6a9;
                                 font-size: 14px;
                                 line-height: 24px;
-                                margin: 0;
+                                margin: 16px 0;
                                 padding-left: 20px;
                               '
                             >
-                              <li>Python: Basics, Functions, Recursion</li>
-                              <li>Algorithms: Sorting and Searching</li>
-                              <li>Object-Oriented Programming (OOP)</li>
                               <li>
-                                Web Technologies: HTML, CSS, JavaScript, PHP,
-                                and MySQL
+                                Pick a time for your session via this
+                                <a
+                                  href='{{interviewMeetLink}}'
+                                  style='
+                                    color: rgb(40, 238, 167);
+                                    text-decoration: none;
+                                  '
+                                >LINK</a>
+                                on Calendly.
+                              </li>
+                              <li>
+                                Choose any of the available slots/times on the
+                                right.
+                              </li>
+                              <li>
+                                Make sure to write your full name correctly when
+                                booking the interview.
+                              </li>
+                              <li>Add your email.</li>
+                              <li>
+                                VERY IMPORTANT: Make sure to invite Taha and
+                                Jane by adding
+                                <em>taha@sefactory.io</em>,
+                                <em>jane@sefactory.io</em>
+                                as guests.
+                              </li>
+                              <li>
+                                On the day of the meeting,
+                                <strong>join with Google Meet</strong>.
                               </li>
                             </ul>
                             <p
@@ -257,34 +207,8 @@
                                 margin: 16px 0;
                               '
                             >
-                              Also, please make sure to register for the exam
-                              here:
-                              <a
-                                href='{{examRegistrationForm}}'
-                                style='
-                                  color: rgb(40, 238, 167);
-                                  text-decoration: none;
-                                '
-                              >Register Here</a>
-                            </p>
-                            <p
-                              style='
-                                color: #a5a6a9;
-                                font-size: 14px;
-                                line-height: 24px;
-                                margin: 16px 0;
-                              '
-                            >
-                              You can check this PDF file as a resource to
-                              study:
-                              <a
-                                href='https://sef-documents.s3.eu-west-3.amazonaws.com/FSE+Entrance+Exam+-+Student+Kit+v0.1.pdf'
-                                download='FSE Entrance Exam - Student Kit.pdf'
-                                style='
-                                  color: rgb(40, 238, 167);
-                                  text-decoration: none;
-                                '
-                              >Download PDF Resource</a>
+                              If all the slots are booked, kindly let us know,
+                              and we will open new availabilities for next week.
                             </p>
                             <br />
                             <p
@@ -295,7 +219,7 @@
                                 margin: 0;
                               '
                             >
-                              Good luck, and welcome aboard!
+                              Best of luck!
                             </p>
                             <p
                               style='
@@ -305,9 +229,7 @@
                                 margin-top: 12px;
                               '
                             >
-                              <em>Best regards,
-                                <br />
-                                SE Factory Team</em>
+                              <em>SEF Team</em>
                             </p>
                           </td>
                         </tr>

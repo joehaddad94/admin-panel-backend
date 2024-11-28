@@ -17,6 +17,18 @@ export class CreateEditDecisionDateDto {
   interviewMeetLink?: string;
 
   @ApiProperty()
+  @IsOptional()
+  examLink?: string;
+
+  @ApiProperty()
+  @IsOptional()
+  examRegistrationForm?: string;
+
+  @ApiProperty()
+  @IsOptional()
+  infoSessionRecordedLink?: string;
+
+  @ApiProperty()
   @IsNotEmpty({ message: 'cycleId must be provided' })
   cycleId: number;
 

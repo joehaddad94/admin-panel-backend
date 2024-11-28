@@ -9,9 +9,15 @@ import { ThresholdRepository } from './threshold.repository';
 import { ThresholdController } from './threshold.controller';
 import { ThresholdMediator } from './threshold.mediator';
 import { ThresholdService } from './threshold.service';
+import { ApplicationService } from '../applications/application.service';
+import { ApplicationModule } from '../applications/application.module';
 
 @Module({
-  imports: [TypeOrmModule.forFeature([Threshold]), AuthModule],
+  imports: [
+    TypeOrmModule.forFeature([Threshold]),
+    AuthModule,
+    ApplicationModule,
+  ],
   controllers: [ThresholdController],
   providers: [
     JwtStrategy,
