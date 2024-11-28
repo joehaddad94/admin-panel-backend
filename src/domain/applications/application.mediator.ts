@@ -14,12 +14,12 @@ import { EditApplicationsDto } from './dtos/edit.applications.dto';
 import { convertToCamelCase } from 'src/core/helpers/camelCase';
 import { validateThresholdEntity } from 'src/core/helpers/validateThresholds';
 import { Status } from 'src/core/data/types/applications/applications.types';
-import { format } from 'date-fns';
 import { formatExamDate } from 'src/core/helpers/formatDate';
 import {
   calculatePassedExam,
   calculatePassedInterview,
 } from 'src/core/helpers/calculatePassingGrades';
+import { In } from 'typeorm';
 
 @Injectable()
 export class ApplicationMediator {
@@ -454,7 +454,9 @@ export class ApplicationMediator {
         }
       });
 
-      const uniqueEmails: string[] = [...new Set(emails)];
+      const uniqueEmails: string[] = [
+        ...new Set(emails.map((entry) => entry.emails)),
+      ];
 
       const applicationsWhereConditions = cycleId
         ? {
@@ -464,13 +466,13 @@ export class ApplicationMediator {
 
       const applicationsByCycle = await this.applicationsService.findMany(
         applicationsWhereConditions,
-        ['applicationInfo'],
+        ['applicationInfo', 'applicationUser'],
       );
 
       const applicationsToEmail = [];
 
       for (const application of applicationsByCycle) {
-        const email: string = application.applicationUser[0].user.email;
+        const email: string = application.applicationUser[0]?.user?.email;
         if (uniqueEmails.includes(email) && application.is_eligible) {
           if (!application.passed_screening) {
             application.passed_screening = true;
@@ -496,17 +498,17 @@ export class ApplicationMediator {
       }
 
       const emailsToSend = applicationsToEmail.map(
-        (app) => app.applicationUser[0].user.email,
+        (app) => app.applicationUser[0]?.user?.email,
       );
 
       let mailerResponse: any;
-      let examDate = formatExamDate(
+      const examDate = formatExamDate(
         currentCycle.decisionDateCycle.decisionDate.exam_date,
       );
       const templateVariables = {
         examDate: examDate,
         examLink: currentCycle.decisionDateCycle.decisionDate.exam_link,
-        examRgistrationForm:
+        examRegistrationForm:
           currentCycle.decisionDateCycle.decisionDate.exam_registration_form,
         infoSessionRecordedLink:
           currentCycle.decisionDateCycle.decisionDate
@@ -530,7 +532,7 @@ export class ApplicationMediator {
       const notFoundEmailSet = new Set(mailerResponse?.notFoundEmails || []);
 
       for (const application of applicationsToEmail) {
-        const email = application.applicationUser[0].user.email;
+        const email = application.applicationUser[0]?.user?.email;
         if (sentEmailSet.has(email)) {
           await this.applicationsService.update(
             { id: application.id },
@@ -656,6 +658,9 @@ export class ApplicationMediator {
   sendPassedExamEmails = async (data: SendingEmailsDto) => {
     const { cycleId, emails } = data;
 
+    const applicationIds = emails.map((entry) => entry.ids);
+    const uniqueEmails = emails.map((entry) => entry.emails);
+
     const cyclesWhereConditions = cycleId ? { id: cycleId } : {};
     const currentCycle = await this.cyclesService.findOne(
       cyclesWhereConditions,
@@ -676,18 +681,12 @@ export class ApplicationMediator {
       );
     }
 
-    const uniqueEmails: string[] = [...new Set(emails)];
-
-    const applicationsWhereConditions = cycleId
-      ? { applicationCycle: { cycleId } }
-      : {};
-
-    const applicationsByCycle = await this.applicationsService.findMany(
-      applicationsWhereConditions,
+    const applicationsByIds = await this.applicationsService.findMany(
+      { id: In(applicationIds) },
       ['applicationUser'],
     );
 
-    const emailsToSend = applicationsByCycle.map((application) => {
+    const emailsToSend = applicationsByIds.map((application) => {
       const email: string = application.applicationUser[0]?.user?.email;
       return {
         email,
@@ -700,6 +699,7 @@ export class ApplicationMediator {
       (emailObj) =>
         uniqueEmails.includes(emailObj.email) && emailObj.passedExam,
     );
+
     const failedExamEmails = emailsToSend.filter(
       (emailObj) =>
         uniqueEmails.includes(emailObj.email) && !emailObj.passedExam,
@@ -709,31 +709,37 @@ export class ApplicationMediator {
     const failedTemplateName = 'FSW/failedExam.hbs';
     const passedSubject = 'SE Factory Notification';
     const failedSubject = 'SE Factory Notification';
+    let passedMailerResponse;
+    let failedMailerResponse;
 
     const templateVariables = {
-      interviewMeetLink:
-        currentCycle.decisionDateCycle.decisionDate.interview_meet_link,
+      interviewMeetLink,
     };
 
-    const passedMailerResponse = await this.mailService.sendEmails(
-      passedExamEmails.map((e) => e.email),
-      passedTemplateName,
-      passedSubject,
-      templateVariables,
-    );
+    if (passedExamEmails.length > 0) {
+      passedMailerResponse = await this.mailService.sendEmails(
+        passedExamEmails.map((e) => e.email),
+        passedTemplateName,
+        passedSubject,
+        templateVariables,
+      );
+    }
 
-    const failedMailerResponse = await this.mailService.sendEmails(
-      failedExamEmails.map((e) => e.email),
-      failedTemplateName,
-      failedSubject,
-    );
+    if (failedExamEmails.length > 0) {
+      failedMailerResponse = await this.mailService.sendEmails(
+        failedExamEmails.map((e) => e.email),
+        failedTemplateName,
+        failedSubject,
+        templateVariables,
+      );
+    }
 
     const affectedApplications = await Promise.all(
-      applicationsByCycle.map(async (application) => {
+      applicationsByIds.map(async (application) => {
         const email = application.applicationUser[0]?.user?.email;
         const emailSent =
-          passedMailerResponse.foundEmails.some((e) => e.email === email) ||
-          failedMailerResponse.foundEmails.some((e) => e.email === email);
+          passedMailerResponse?.foundEmails.some((e) => e.email === email) ||
+          failedMailerResponse?.foundEmails.some((e) => e.email === email);
 
         await this.applicationsService.update(
           { id: application.id },
@@ -743,8 +749,7 @@ export class ApplicationMediator {
         return {
           id: application.id,
           email,
-          passed_exam: application.passed_exam,
-          passed_exam_email_sent: emailSent,
+          passed_exam_email_sent: emailSent === true ? 'Yes' : 'No',
         };
       }),
     );
@@ -754,14 +759,14 @@ export class ApplicationMediator {
     return {
       message: 'Emails sent successfully.',
       passedExamEmails: {
-        sent: passedMailerResponse.foundEmails,
-        notSent: passedMailerResponse.notFoundEmails,
+        sent: passedMailerResponse?.foundEmails || [],
+        notSent: passedMailerResponse?.notFoundEmails || [],
       },
       failedExamEmails: {
-        sent: failedMailerResponse.foundEmails,
-        notSent: failedMailerResponse.notFoundEmails,
+        sent: failedMailerResponse?.foundEmails || [],
+        notSent: failedMailerResponse?.notFoundEmails || [],
       },
-      applcations: camelCaseApplications,
+      applications: camelCaseApplications,
     };
   };
 
@@ -779,7 +784,9 @@ export class ApplicationMediator {
       throwError('Cycle not found.', HttpStatus.BAD_REQUEST);
     }
 
-    const uniqueEmails: string[] = [...new Set(emails)];
+    const uniqueEmails: string[] = [
+      ...new Set(emails.map((entry) => entry.emails)),
+    ];
 
     const applicationWhereConditions = cycleId
       ? { applicationCycle: { cycleId } }
@@ -825,6 +832,7 @@ export class ApplicationMediator {
         };
       })
       .filter((item) => item !== null);
+
     let mailerResponse: any = { foundEmails: [], notFoundEmails: [] };
 
     if (emailsToSend.length > 0) {
