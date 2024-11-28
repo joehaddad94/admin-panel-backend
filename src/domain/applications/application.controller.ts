@@ -47,10 +47,10 @@ export class ApplicationController {
     return this.mediator.importExamScores(data);
   }
 
-  @Post('send-interview-date-emails')
+  @Post('send-passed-exam-emails')
   @UsePipes(new ValidationPipe({ whitelist: true }))
   sendInterviewDateEmails(@Body() data: SendingEmailsDto) {
-    return this.mediator.sendInterviewDateEmails(data);
+    return this.mediator.sendPassedExamEmails(data);
   }
 
   @Post('send-status-emails')

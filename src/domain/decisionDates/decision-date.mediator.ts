@@ -13,10 +13,22 @@ export class DecisionDateMediator {
 
   createEditDates = async (data: CreateEditDecisionDateDto) => {
     return catcher(async () => {
-      const { examDate, cycleId, decisionDateId, interviewMeetLink } = data;
+      const {
+        examDate,
+        cycleId,
+        decisionDateId,
+        interviewMeetLink,
+        examLink,
+        examRegistrationForm,
+        infoSessionRecordedLink,
+      } = data;
 
       let decisionDate: DecisionDates;
       let successMessage: string;
+
+      const updateField = (field: string, value: any) => {
+        return value !== undefined && value.trim() !== '' ? value : field;
+      };
 
       if (decisionDateId) {
         decisionDate = await this.decisionDateService.findOne({
@@ -26,18 +38,22 @@ export class DecisionDateMediator {
           throw new Error(`Decision date with ID ${decisionDateId} not found`);
         }
 
-        if (examDate !== undefined) {
-          decisionDate.exam_date = examDate
-            ? new Date(examDate)
-            : decisionDate.exam_date;
-        }
-
-        if (interviewMeetLink !== undefined) {
-          decisionDate.interview_meet_link =
-            interviewMeetLink.trim() !== ''
-              ? interviewMeetLink
-              : decisionDate.interview_meet_link;
-        }
+        decisionDate.exam_date = examDate
+          ? new Date(examDate)
+          : decisionDate.exam_date;
+        decisionDate.interview_meet_link = updateField(
+          decisionDate.interview_meet_link,
+          interviewMeetLink,
+        );
+        decisionDate.exam_link = updateField(decisionDate.exam_link, examLink);
+        decisionDate.exam_registration_form = updateField(
+          decisionDate.exam_registration_form,
+          examRegistrationForm,
+        );
+        decisionDate.info_session_recorded_link = updateField(
+          decisionDate.info_session_recorded_link,
+          infoSessionRecordedLink,
+        );
 
         decisionDate.updated_at = new Date();
 
@@ -51,6 +67,15 @@ export class DecisionDateMediator {
           interview_meet_link:
             interviewMeetLink && interviewMeetLink.trim() !== ''
               ? interviewMeetLink
+              : null,
+          exam_link: examLink && examLink.trim() !== '' ? examLink : null,
+          exam_registration_form:
+            examRegistrationForm && examRegistrationForm.trim() !== ''
+              ? examRegistrationForm
+              : null,
+          info_session_recorded_link:
+            infoSessionRecordedLink && infoSessionRecordedLink.trim() !== ''
+              ? infoSessionRecordedLink
               : null,
           created_at: new Date(),
           updated_at: new Date(),

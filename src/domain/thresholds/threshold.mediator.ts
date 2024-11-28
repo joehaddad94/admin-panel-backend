@@ -5,10 +5,14 @@ import { catcher } from 'src/core/helpers/operation';
 import { Threshold } from 'src/core/data/database/entities/threshold.entity';
 import { ThresholdCycle } from 'src/core/data/database/relations/cycle-threshold.entity';
 import { convertToCamelCase } from 'src/core/helpers/camelCase';
+import { ApplicationService } from '../applications/application.service';
 
 @Injectable()
 export class ThresholdMediator {
-  constructor(private readonly thresholdService: ThresholdService) {}
+  constructor(
+    private readonly thresholdService: ThresholdService,
+    private readonly applicationService: ApplicationService,
+  ) {}
 
   createEditThresholds = async (data: CreateEditThresholdsDto) => {
     return catcher(async () => {
@@ -48,6 +52,17 @@ export class ThresholdMediator {
         Object.assign(threshold, updates);
 
         threshold = (await this.thresholdService.save(threshold)) as Threshold;
+
+        //   const applicationsWhereConditions = cycleId
+        //   ? {
+        //       applicationCycle: { cycleId },
+        //     }
+        //   : {};
+
+        // const applicationsByCycle = await this.applicationService.findMany(
+        //   applicationsWhereConditions,
+        //   ['applicationInfo'],
+        // );
 
         successMessage = 'Threshold updated successfully';
       } else {

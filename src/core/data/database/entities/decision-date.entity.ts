@@ -13,7 +13,7 @@ export class DecisionDates extends BaseEntity {
   @PrimaryGeneratedColumn()
   id: number;
 
-  @Column({ type: 'date', nullable: true })
+  @Column({ type: 'timestamp without time zone', nullable: true })
   exam_date: Date;
 
   @Column({
@@ -39,6 +39,15 @@ export class DecisionDates extends BaseEntity {
 
   @Column({ type: 'varchar', length: 255, nullable: true })
   interview_meet_link: string;
+
+  @Column({ type: 'varchar', length: 255, nullable: true })
+  info_session_recorded_link: string;
+
+  @Column({ type: 'varchar', length: 255, nullable: true })
+  exam_registration_form: string;
+
+  @Column({ type: 'varchar', length: 255, nullable: true })
+  exam_link: string;
 
   @OneToOne(
     () => DecisionDateCycle,

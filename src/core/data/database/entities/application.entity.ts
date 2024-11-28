@@ -76,6 +76,12 @@ export class Application extends BaseEntity {
   })
   status: string;
 
+  @Column({ type: 'boolean', nullable: true })
+  screening_email_sent: boolean;
+
+  @Column({ type: 'boolean', nullable: true })
+  passed_exam_email_sent: boolean;
+
   @OneToMany(
     () => ApplicationInfo,
     (applicationInfo) => applicationInfo.application,
