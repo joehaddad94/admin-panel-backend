@@ -15,7 +15,7 @@ export const sendBulkEmails = async (
 
     try {
       const result = await mailerService.sendMail({
-        from: '"SEF Admin Panel" <noreply@example.com>',
+        from: '"SE Factory" <noreply@example.com>',
         to: email,
         subject,
         template,
