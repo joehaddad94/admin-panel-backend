@@ -517,7 +517,7 @@ export class ApplicationMediator {
 
       if (emailsToSend.length > 0) {
         const subject = 'SE Factory Screening Process';
-        const templateName = 'FSW/shortlisted.hbs';
+        const templateName = 'FSE/shortlisted.hbs';
         mailerResponse = await this.mailService.sendEmails(
           emailsToSend,
           templateName,
@@ -705,8 +705,8 @@ export class ApplicationMediator {
         uniqueEmails.includes(emailObj.email) && !emailObj.passedExam,
     );
 
-    const passedTemplateName = 'FSW/passedExam.hbs';
-    const failedTemplateName = 'FSW/failedExam.hbs';
+    const passedTemplateName = 'FSE/passedExam.hbs';
+    const failedTemplateName = 'FSE/failedExam.hbs';
     const passedSubject = 'SE Factory | Welcome to Stage 3';
     const failedSubject = 'SE Factory | Full Stack Engineer';
     let passedMailerResponse;
