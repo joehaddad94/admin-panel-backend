@@ -415,6 +415,150 @@ export class ApplicationMediator {
     });
   };
 
+  // sendPostScreeningEmails = async (data: SendingEmailsDto) => {
+  //   return catcher(async () => {
+  //     const { cycleId, emails } = data;
+
+  //     const cyclesWhereConditions = cycleId ? { id: cycleId } : {};
+
+  //     const currentCycle = await this.cyclesService.findOne(
+  //       cyclesWhereConditions,
+  //       ['decisionDateCycle'],
+  //     );
+
+  //     const requiredFields = [
+  //       {
+  //         field: currentCycle.decisionDateCycle.decisionDate.exam_date,
+  //         message: 'Exam Date and time should be provided.',
+  //       },
+  //       {
+  //         field: currentCycle.decisionDateCycle.decisionDate.exam_link,
+  //         message: 'Exam Link should be provided.',
+  //       },
+  //       {
+  //         field:
+  //           currentCycle.decisionDateCycle.decisionDate.exam_registration_form,
+  //         message: 'Exam Registration Form should be provided.',
+  //       },
+  //       {
+  //         field:
+  //           currentCycle.decisionDateCycle.decisionDate
+  //             .info_session_recorded_link,
+  //         message: 'Info Session Recorded Link should be provided.',
+  //       },
+  //     ];
+
+  //     requiredFields.forEach(({ field, message }) => {
+  //       if (field === null) {
+  //         throwError(message, HttpStatus.BAD_REQUEST);
+  //       }
+  //     });
+
+  //     const uniqueEmails: string[] = [
+  //       ...new Set(emails.map((entry) => entry.emails)),
+  //     ];
+
+  //     const applicationsWhereConditions = cycleId
+  //       ? {
+  //           applicationCycle: { cycleId },
+  //         }
+  //       : {};
+
+  //     const applicationsByCycle = await this.applicationsService.findMany(
+  //       applicationsWhereConditions,
+  //       ['applicationInfo', 'applicationUser'],
+  //     );
+
+  //     const applicationsToEmail = [];
+
+  //     for (const application of applicationsByCycle) {
+  //       const email: string = application.applicationUser[0]?.user?.email;
+  //       if (uniqueEmails.includes(email) && application.is_eligible) {
+  //         if (!application.passed_screening) {
+  //           application.passed_screening = true;
+  //           application.passed_screening_date = new Date();
+  //           await this.applicationsService.update(
+  //             { id: application.id },
+  //             {
+  //               passed_screening: true,
+  //               passed_screening_date: new Date(),
+  //             },
+  //           );
+  //           applicationsToEmail.push({
+  //             ...application,
+  //             passed_screening: 'Yes',
+  //           });
+  //         } else if (!application.screening_email_sent) {
+  //           applicationsToEmail.push({
+  //             ...application,
+  //             passed_screening: 'Yes',
+  //           });
+  //         }
+  //       }
+  //     }
+
+  //     const emailsToSend = applicationsToEmail.map(
+  //       (app) => app.applicationUser[0]?.user?.email,
+  //     );
+
+  //     let mailerResponse: any;
+  //     const examDate = formatExamDate(
+  //       currentCycle.decisionDateCycle.decisionDate.exam_date,
+  //     );
+  //     const templateVariables = {
+  //       examDate: examDate,
+  //       examLink: currentCycle.decisionDateCycle.decisionDate.exam_link,
+  //       examRegistrationForm:
+  //         currentCycle.decisionDateCycle.decisionDate.exam_registration_form,
+  //       infoSessionRecordedLink:
+  //         currentCycle.decisionDateCycle.decisionDate
+  //           .info_session_recorded_link,
+  //     };
+
+  //     if (emailsToSend.length > 0) {
+  //       const subject = 'SE Factory Screening Process';
+  //       const templateName = 'FSE/shortlisted.hbs';
+  //       mailerResponse = await this.mailService.sendEmails(
+  //         emailsToSend,
+  //         templateName,
+  //         subject,
+  //         templateVariables,
+  //       );
+  //     }
+
+  //     const results = mailerResponse?.results || [];
+  //     const sentEmailSet = new Set(
+  //       results.filter((res) => !res.error).map((res) => res.email),
+  //     );
+
+  //     for (const application of applicationsToEmail) {
+  //       const email = application.applicationUser[0]?.user?.email;
+  //       if (sentEmailSet.has(email)) {
+  //         await this.applicationsService.update(
+  //           { id: application.id },
+  //           { screening_email_sent: true },
+  //         );
+  //         application.screening_email_sent = 'Yes';
+  //       } else {
+  //         await this.applicationsService.update(
+  //           { id: application.id },
+  //           { screening_email_sent: false },
+  //         );
+  //         application.screening_email_sent = 'No';
+  //       }
+  //     }
+
+  //     const camelCaseApplications = convertToCamelCase(applicationsToEmail);
+
+  //     return {
+  //       message: 'Emails have been processed. Check the status for details.',
+  //       foundEmails: mailerResponse?.foundEmails || [],
+  //       notFoundEmails: mailerResponse?.notFoundEmails || [],
+  //       applications: camelCaseApplications,
+  //     };
+  //   });
+  // };
+
   sendPostScreeningEmails = async (data: SendingEmailsDto) => {
     return catcher(async () => {
       const { cycleId, emails } = data;
@@ -469,87 +613,152 @@ export class ApplicationMediator {
         ['applicationInfo', 'applicationUser'],
       );
 
-      const applicationsToEmail = [];
+      const eligibleApplicationsToEmail = [];
+      const ineligibleApplicationsToEmail = [];
 
       for (const application of applicationsByCycle) {
         const email: string = application.applicationUser[0]?.user?.email;
-        if (uniqueEmails.includes(email) && application.is_eligible) {
-          if (!application.passed_screening) {
-            application.passed_screening = true;
+        if (uniqueEmails.includes(email)) {
+          if (application.is_eligible) {
+            if (!application.passed_screening) {
+              application.passed_screening = true;
+              application.passed_screening_date = new Date();
+              await this.applicationsService.update(
+                { id: application.id },
+                {
+                  passed_screening: true,
+                  passed_screening_date: new Date(),
+                },
+              );
+              eligibleApplicationsToEmail.push({
+                ...application,
+                passed_screening: 'Yes',
+              });
+            } else if (!application.screening_email_sent) {
+              eligibleApplicationsToEmail.push({
+                ...application,
+                passed_screening: 'Yes',
+              });
+            }
+          } else {
+            application.passed_screening = false;
             application.passed_screening_date = new Date();
             await this.applicationsService.update(
               { id: application.id },
               {
-                passed_screening: true,
+                passed_screening: false,
                 passed_screening_date: new Date(),
               },
             );
-            applicationsToEmail.push({
+            ineligibleApplicationsToEmail.push({
               ...application,
-              passed_screening: 'Yes',
-            });
-          } else if (!application.screening_email_sent) {
-            applicationsToEmail.push({
-              ...application,
-              passed_screening: 'Yes',
+              // is_eligible: 'No',
+              passed_screening: 'No',
             });
           }
         }
       }
 
-      const emailsToSend = applicationsToEmail.map(
+      const eligibleEmailsToSend = eligibleApplicationsToEmail.map(
         (app) => app.applicationUser[0]?.user?.email,
       );
 
-      let mailerResponse: any;
+      const ineligibleEmailsToSend = ineligibleApplicationsToEmail.map(
+        (app) => app.applicationUser[0]?.user?.email,
+      );
+
       const examDate = formatExamDate(
         currentCycle.decisionDateCycle.decisionDate.exam_date,
       );
-      const templateVariables = {
-        examDate: examDate,
-        examLink: currentCycle.decisionDateCycle.decisionDate.exam_link,
-        examRegistrationForm:
-          currentCycle.decisionDateCycle.decisionDate.exam_registration_form,
-        infoSessionRecordedLink:
-          currentCycle.decisionDateCycle.decisionDate
-            .info_session_recorded_link,
-      };
 
-      if (emailsToSend.length > 0) {
+      let mailerResponseEligible: any;
+      let mailerResponseIneligible: any;
+
+      if (eligibleEmailsToSend.length > 0) {
         const subject = 'SE Factory Screening Process';
         const templateName = 'FSE/shortlisted.hbs';
-        mailerResponse = await this.mailService.sendEmails(
-          emailsToSend,
+        const templateVariables = {
+          examDate: examDate,
+          examLink: currentCycle.decisionDateCycle.decisionDate.exam_link,
+          examRegistrationForm:
+            currentCycle.decisionDateCycle.decisionDate.exam_registration_form,
+          infoSessionRecordedLink:
+            currentCycle.decisionDateCycle.decisionDate
+              .info_session_recorded_link,
+        };
+
+        mailerResponseEligible = await this.mailService.sendEmails(
+          eligibleEmailsToSend,
           templateName,
           subject,
           templateVariables,
         );
       }
 
-      const sentEmailSet = new Set(
-        mailerResponse?.foundEmails.map((e) => e.email) || [],
-      );
-      const notFoundEmailSet = new Set(mailerResponse?.notFoundEmails || []);
+      if (ineligibleEmailsToSend.length > 0) {
+        const subject = 'SE Factory Screening Process';
+        const templateName = 'FSE/not_eligible.hbs';
 
-      for (const application of applicationsToEmail) {
+        mailerResponseIneligible = await this.mailService.sendEmails(
+          ineligibleEmailsToSend,
+          templateName,
+          subject,
+        );
+      }
+
+      const resultsEligible = mailerResponseEligible?.results || [];
+      const resultsIneligible = mailerResponseIneligible?.results || [];
+
+      const sentEmailSetEligible = new Set(
+        resultsEligible.filter((res) => !res.error).map((res) => res.email),
+      );
+      const sentEmailSetIneligible = new Set(
+        resultsIneligible.filter((res) => !res.error).map((res) => res.email),
+      );
+
+      for (const application of eligibleApplicationsToEmail) {
         const email = application.applicationUser[0]?.user?.email;
-        if (sentEmailSet.has(email)) {
+        if (sentEmailSetEligible.has(email)) {
           await this.applicationsService.update(
             { id: application.id },
             { screening_email_sent: true },
           );
           application.screening_email_sent = 'Yes';
-        } else if (notFoundEmailSet.has(email)) {
+        } else {
+          await this.applicationsService.update(
+            { id: application.id },
+            { screening_email_sent: false },
+          );
           application.screening_email_sent = 'No';
         }
       }
 
-      const camelCaseApplications = convertToCamelCase(applicationsToEmail);
+      for (const application of ineligibleApplicationsToEmail) {
+        const email = application.applicationUser[0]?.user?.email;
+        if (sentEmailSetIneligible.has(email)) {
+          await this.applicationsService.update(
+            { id: application.id },
+            { screening_email_sent: true },
+          );
+          application.screening_email_sent = 'Yes';
+        } else {
+          await this.applicationsService.update(
+            { id: application.id },
+            { screening_email_sent: false },
+          );
+          application.screening_email_sent = 'No';
+        }
+      }
+
+      const camelCaseApplications = convertToCamelCase([
+        ...eligibleApplicationsToEmail,
+        ...ineligibleApplicationsToEmail,
+      ]);
 
       return {
-        message: 'Emails sent successfully.',
-        foundEmails: mailerResponse?.foundEmails || [],
-        notFoundEmails: mailerResponse?.notFoundEmails || [],
+        message: 'Emails have been processed. Check the status for details.',
+        eligible: mailerResponseEligible,
+        ineligible: mailerResponseIneligible,
         applications: camelCaseApplications,
       };
     });
