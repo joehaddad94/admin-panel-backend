@@ -369,29 +369,34 @@ export class ApplicationMediator {
 
       const { threshold } = thresholdCycle;
 
-      const { passedExam, passedExamDate } = calculatePassedExam(
-        updatedData.exam_score,
-        threshold.exam_passing_grade,
-      );
+      if (examScore !== undefined) {
+        const { passedExam, passedExamDate } = calculatePassedExam(
+          updatedData.exam_score,
+          threshold.exam_passing_grade,
+        );
 
-      updatedData.passed_exam = passedExam;
-      updatedData.passed_exam_date = passedExamDate;
+        updatedData.passed_exam = passedExam;
+        updatedData.passed_exam_date = passedExamDate;
+      }
 
-      const { passedInterview, interviewStatus, passedInterviewDate } =
-        calculatePassedInterview(
-          updatedData.tech_interview_score,
-          updatedData.soft_interview_score,
-          {
+      const techScoreToUse =
+        techInterviewScore ?? application.tech_interview_score;
+      const softScoreToUse =
+        softInterviewScore ?? application.soft_interview_score;
+
+      if (techScoreToUse && softScoreToUse) {
+        const { passedInterview, applicationStatus, passedInterviewDate } =
+          calculatePassedInterview(techScoreToUse, softScoreToUse, {
             weightTech: threshold.weight_tech,
             weightSoft: threshold.weight_soft,
             primaryPassingGrade: threshold.primary_passing_grade,
             secondaryPassingGrade: threshold.secondary_passing_grade,
-          },
-        );
+          });
 
-      updatedData.passed_interview = passedInterview;
-      updatedData.status = interviewStatus;
-      updatedData.passed_interview_date = passedInterviewDate;
+        updatedData.passed_interview = passedInterview;
+        updatedData.status = applicationStatus;
+        updatedData.passed_interview_date = passedInterviewDate;
+      }
 
       await this.applicationsService.update({ id }, updatedData);
 
