@@ -1,5 +1,5 @@
 /* eslint-disable camelcase */
-import { HttpStatus, Injectable } from '@nestjs/common';
+import { HttpStatus, Injectable, Logger } from '@nestjs/common';
 import { ApplicationService } from './application.service';
 import { GlobalEntities } from '../../core/data/types';
 import { catcher } from '../../core/helpers/operation';
@@ -624,12 +624,9 @@ export class ApplicationMediator {
     const { cycleId, examScores } = data;
 
     try {
-      const cycle = await this.cyclesService.findOne(
-        {
-          id: cycleId,
-        },
-        ['thresholdCycle'],
-      );
+      const cycle = await this.cyclesService.findOne({ id: cycleId }, [
+        'thresholdCycle',
+      ]);
 
       if (!cycle) {
         throwError('Cycle not found.', HttpStatus.BAD_REQUEST);
@@ -648,40 +645,54 @@ export class ApplicationMediator {
         );
       }
 
-      const applicationsWhereConditions = cycleId
-        ? { applicationCycle: { cycleId } }
-        : {};
-
       const applicationsByCycle = await this.applicationsService.findMany(
-        applicationsWhereConditions,
+        { applicationCycle: { cycleId } },
         ['applicationInfo'],
       );
 
-      const applicationsMap = new Map(
-        applicationsByCycle.map((app) => [
-          app.applicationInfo[0].info.email,
-          {
-            id: app.id,
-            passed_screening: app.passed_screening,
-            screening_email_sent: app.screening_email_sent,
-          },
-        ]),
-      );
+      const applicationsMap = new Map();
+
+      applicationsByCycle.forEach((app) => {
+        const email = app.applicationInfo[0].info.email;
+        if (!applicationsMap.has(email)) {
+          applicationsMap.set(email, []);
+        }
+        applicationsMap.get(email).push({
+          id: app.id,
+          passed_screening: app.passed_screening,
+          screening_email_sent: app.screening_email_sent,
+        });
+      });
 
       const updateResults = await Promise.all(
         examScores.map(async ({ email, score }) => {
-          const application = applicationsMap.get(email);
+          const applications = applicationsMap.get(email);
+
+          if (!applications || applications.length === 0) {
+            return { email, status: 'Email not found' };
+          }
+
+          if (applications.length > 1) {
+            Logger.warn(
+              `Multiple applications found for email: ${email}. Using the most recent.`,
+            );
+
+            applications.sort((a, b) => {
+              const dateA = new Date(a.created_at).getTime() || 0;
+              const dateB = new Date(b.created_at).getTime() || 0;
+              return dateB - dateA;
+            });
+          }
+
+          const application = applications[0];
+
           if (
-            application &&
             application.passed_screening &&
             application.screening_email_sent
           ) {
-            let passed_exam = false;
+            const passed_exam =
+              score >= cycle.thresholdCycle.threshold.exam_passing_grade;
             const passed_exam_date = new Date();
-
-            if (score >= cycle.thresholdCycle.threshold.exam_passing_grade) {
-              passed_exam = true;
-            }
 
             await this.applicationsService.update(
               { id: application.id },
@@ -691,32 +702,31 @@ export class ApplicationMediator {
                 passed_exam_date,
               },
             );
+
             return {
               id: application.id,
+              email,
               examScore: score,
-              passedExam:
-                passed_exam === true
-                  ? 'Yes'
-                  : passed_exam === false
-                  ? 'No'
-                  : '-',
+              passedExam: passed_exam ? 'Yes' : 'No',
               passed_exam_date,
             };
           }
-          return null;
+
+          return { email, status: 'Application not eligible for exam update' };
         }),
       );
 
       let updatedData = updateResults.filter((result) => result !== null);
       updatedData = convertToCamelCase(updatedData);
 
-      return { message: 'Exam scores imported successfully.', updatedData };
+      return {
+        message: 'Exam scores imported successfully.',
+        updatedData,
+        warnings: updateResults.filter((result) => result?.status),
+      };
     } catch (error) {
-      console.error('Error importing exam scores:', error);
-      throwError(
-        'Error importing exam scores: ' + error.message,
-        HttpStatus.INTERNAL_SERVER_ERROR,
-      );
+      Logger.error('Error processing exam scores', error.stack);
+      throw error;
     }
   };
 
