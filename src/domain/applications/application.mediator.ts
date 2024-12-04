@@ -1,5 +1,5 @@
 /* eslint-disable camelcase */
-import { HttpStatus, Injectable } from '@nestjs/common';
+import { HttpStatus, Injectable, Logger } from '@nestjs/common';
 import { ApplicationService } from './application.service';
 import { GlobalEntities } from '../../core/data/types';
 import { catcher } from '../../core/helpers/operation';
@@ -369,29 +369,34 @@ export class ApplicationMediator {
 
       const { threshold } = thresholdCycle;
 
-      const { passedExam, passedExamDate } = calculatePassedExam(
-        updatedData.exam_score,
-        threshold.exam_passing_grade,
-      );
+      if (examScore !== undefined) {
+        const { passedExam, passedExamDate } = calculatePassedExam(
+          updatedData.exam_score,
+          threshold.exam_passing_grade,
+        );
 
-      updatedData.passed_exam = passedExam;
-      updatedData.passed_exam_date = passedExamDate;
+        updatedData.passed_exam = passedExam;
+        updatedData.passed_exam_date = passedExamDate;
+      }
 
-      const { passedInterview, interviewStatus, passedInterviewDate } =
-        calculatePassedInterview(
-          updatedData.tech_interview_score,
-          updatedData.soft_interview_score,
-          {
+      const techScoreToUse =
+        techInterviewScore ?? application.tech_interview_score;
+      const softScoreToUse =
+        softInterviewScore ?? application.soft_interview_score;
+
+      if (techScoreToUse && softScoreToUse) {
+        const { passedInterview, applicationStatus, passedInterviewDate } =
+          calculatePassedInterview(techScoreToUse, softScoreToUse, {
             weightTech: threshold.weight_tech,
             weightSoft: threshold.weight_soft,
             primaryPassingGrade: threshold.primary_passing_grade,
             secondaryPassingGrade: threshold.secondary_passing_grade,
-          },
-        );
+          });
 
-      updatedData.passed_interview = passedInterview;
-      updatedData.status = interviewStatus;
-      updatedData.passed_interview_date = passedInterviewDate;
+        updatedData.passed_interview = passedInterview;
+        updatedData.status = applicationStatus;
+        updatedData.passed_interview_date = passedInterviewDate;
+      }
 
       await this.applicationsService.update({ id }, updatedData);
 
@@ -414,150 +419,6 @@ export class ApplicationMediator {
       };
     });
   };
-
-  // sendPostScreeningEmails = async (data: SendingEmailsDto) => {
-  //   return catcher(async () => {
-  //     const { cycleId, emails } = data;
-
-  //     const cyclesWhereConditions = cycleId ? { id: cycleId } : {};
-
-  //     const currentCycle = await this.cyclesService.findOne(
-  //       cyclesWhereConditions,
-  //       ['decisionDateCycle'],
-  //     );
-
-  //     const requiredFields = [
-  //       {
-  //         field: currentCycle.decisionDateCycle.decisionDate.exam_date,
-  //         message: 'Exam Date and time should be provided.',
-  //       },
-  //       {
-  //         field: currentCycle.decisionDateCycle.decisionDate.exam_link,
-  //         message: 'Exam Link should be provided.',
-  //       },
-  //       {
-  //         field:
-  //           currentCycle.decisionDateCycle.decisionDate.exam_registration_form,
-  //         message: 'Exam Registration Form should be provided.',
-  //       },
-  //       {
-  //         field:
-  //           currentCycle.decisionDateCycle.decisionDate
-  //             .info_session_recorded_link,
-  //         message: 'Info Session Recorded Link should be provided.',
-  //       },
-  //     ];
-
-  //     requiredFields.forEach(({ field, message }) => {
-  //       if (field === null) {
-  //         throwError(message, HttpStatus.BAD_REQUEST);
-  //       }
-  //     });
-
-  //     const uniqueEmails: string[] = [
-  //       ...new Set(emails.map((entry) => entry.emails)),
-  //     ];
-
-  //     const applicationsWhereConditions = cycleId
-  //       ? {
-  //           applicationCycle: { cycleId },
-  //         }
-  //       : {};
-
-  //     const applicationsByCycle = await this.applicationsService.findMany(
-  //       applicationsWhereConditions,
-  //       ['applicationInfo', 'applicationUser'],
-  //     );
-
-  //     const applicationsToEmail = [];
-
-  //     for (const application of applicationsByCycle) {
-  //       const email: string = application.applicationUser[0]?.user?.email;
-  //       if (uniqueEmails.includes(email) && application.is_eligible) {
-  //         if (!application.passed_screening) {
-  //           application.passed_screening = true;
-  //           application.passed_screening_date = new Date();
-  //           await this.applicationsService.update(
-  //             { id: application.id },
-  //             {
-  //               passed_screening: true,
-  //               passed_screening_date: new Date(),
-  //             },
-  //           );
-  //           applicationsToEmail.push({
-  //             ...application,
-  //             passed_screening: 'Yes',
-  //           });
-  //         } else if (!application.screening_email_sent) {
-  //           applicationsToEmail.push({
-  //             ...application,
-  //             passed_screening: 'Yes',
-  //           });
-  //         }
-  //       }
-  //     }
-
-  //     const emailsToSend = applicationsToEmail.map(
-  //       (app) => app.applicationUser[0]?.user?.email,
-  //     );
-
-  //     let mailerResponse: any;
-  //     const examDate = formatExamDate(
-  //       currentCycle.decisionDateCycle.decisionDate.exam_date,
-  //     );
-  //     const templateVariables = {
-  //       examDate: examDate,
-  //       examLink: currentCycle.decisionDateCycle.decisionDate.exam_link,
-  //       examRegistrationForm:
-  //         currentCycle.decisionDateCycle.decisionDate.exam_registration_form,
-  //       infoSessionRecordedLink:
-  //         currentCycle.decisionDateCycle.decisionDate
-  //           .info_session_recorded_link,
-  //     };
-
-  //     if (emailsToSend.length > 0) {
-  //       const subject = 'SE Factory Screening Process';
-  //       const templateName = 'FSE/shortlisted.hbs';
-  //       mailerResponse = await this.mailService.sendEmails(
-  //         emailsToSend,
-  //         templateName,
-  //         subject,
-  //         templateVariables,
-  //       );
-  //     }
-
-  //     const results = mailerResponse?.results || [];
-  //     const sentEmailSet = new Set(
-  //       results.filter((res) => !res.error).map((res) => res.email),
-  //     );
-
-  //     for (const application of applicationsToEmail) {
-  //       const email = application.applicationUser[0]?.user?.email;
-  //       if (sentEmailSet.has(email)) {
-  //         await this.applicationsService.update(
-  //           { id: application.id },
-  //           { screening_email_sent: true },
-  //         );
-  //         application.screening_email_sent = 'Yes';
-  //       } else {
-  //         await this.applicationsService.update(
-  //           { id: application.id },
-  //           { screening_email_sent: false },
-  //         );
-  //         application.screening_email_sent = 'No';
-  //       }
-  //     }
-
-  //     const camelCaseApplications = convertToCamelCase(applicationsToEmail);
-
-  //     return {
-  //       message: 'Emails have been processed. Check the status for details.',
-  //       foundEmails: mailerResponse?.foundEmails || [],
-  //       notFoundEmails: mailerResponse?.notFoundEmails || [],
-  //       applications: camelCaseApplications,
-  //     };
-  //   });
-  // };
 
   sendPostScreeningEmails = async (data: SendingEmailsDto) => {
     return catcher(async () => {
@@ -768,12 +629,9 @@ export class ApplicationMediator {
     const { cycleId, examScores } = data;
 
     try {
-      const cycle = await this.cyclesService.findOne(
-        {
-          id: cycleId,
-        },
-        ['thresholdCycle'],
-      );
+      const cycle = await this.cyclesService.findOne({ id: cycleId }, [
+        'thresholdCycle',
+      ]);
 
       if (!cycle) {
         throwError('Cycle not found.', HttpStatus.BAD_REQUEST);
@@ -792,40 +650,54 @@ export class ApplicationMediator {
         );
       }
 
-      const applicationsWhereConditions = cycleId
-        ? { applicationCycle: { cycleId } }
-        : {};
-
       const applicationsByCycle = await this.applicationsService.findMany(
-        applicationsWhereConditions,
+        { applicationCycle: { cycleId } },
         ['applicationInfo'],
       );
 
-      const applicationsMap = new Map(
-        applicationsByCycle.map((app) => [
-          app.applicationInfo[0].info.email,
-          {
-            id: app.id,
-            passed_screening: app.passed_screening,
-            screening_email_sent: app.screening_email_sent,
-          },
-        ]),
-      );
+      const applicationsMap = new Map();
+
+      applicationsByCycle.forEach((app) => {
+        const email = app.applicationInfo[0].info.email;
+        if (!applicationsMap.has(email)) {
+          applicationsMap.set(email, []);
+        }
+        applicationsMap.get(email).push({
+          id: app.id,
+          passed_screening: app.passed_screening,
+          screening_email_sent: app.screening_email_sent,
+        });
+      });
 
       const updateResults = await Promise.all(
         examScores.map(async ({ email, score }) => {
-          const application = applicationsMap.get(email);
+          const applications = applicationsMap.get(email);
+
+          if (!applications || applications.length === 0) {
+            return { email, status: 'Email not found' };
+          }
+
+          if (applications.length > 1) {
+            Logger.warn(
+              `Multiple applications found for email: ${email}. Using the most recent.`,
+            );
+
+            applications.sort((a, b) => {
+              const dateA = new Date(a.created_at).getTime() || 0;
+              const dateB = new Date(b.created_at).getTime() || 0;
+              return dateB - dateA;
+            });
+          }
+
+          const application = applications[0];
+
           if (
-            application &&
             application.passed_screening &&
             application.screening_email_sent
           ) {
-            let passed_exam = false;
+            const passed_exam =
+              score >= cycle.thresholdCycle.threshold.exam_passing_grade;
             const passed_exam_date = new Date();
-
-            if (score >= cycle.thresholdCycle.threshold.exam_passing_grade) {
-              passed_exam = true;
-            }
 
             await this.applicationsService.update(
               { id: application.id },
@@ -835,32 +707,31 @@ export class ApplicationMediator {
                 passed_exam_date,
               },
             );
+
             return {
               id: application.id,
+              email,
               examScore: score,
-              passedExam:
-                passed_exam === true
-                  ? 'Yes'
-                  : passed_exam === false
-                  ? 'No'
-                  : '-',
+              passedExam: passed_exam ? 'Yes' : 'No',
               passed_exam_date,
             };
           }
-          return null;
+
+          return { email, status: 'Application not eligible for exam update' };
         }),
       );
 
       let updatedData = updateResults.filter((result) => result !== null);
       updatedData = convertToCamelCase(updatedData);
 
-      return { message: 'Exam scores imported successfully.', updatedData };
+      return {
+        message: 'Exam scores imported successfully.',
+        updatedData,
+        warnings: updateResults.filter((result) => result?.status),
+      };
     } catch (error) {
-      console.error('Error importing exam scores:', error);
-      throwError(
-        'Error importing exam scores: ' + error.message,
-        HttpStatus.INTERNAL_SERVER_ERROR,
-      );
+      Logger.error('Error processing exam scores', error.stack);
+      throw error;
     }
   };
 

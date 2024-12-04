@@ -15,59 +15,53 @@ export const calculatePassedExam = (
 };
 
 export const calculatePassedInterview = (
-  techInterviewScore: number,
-  softInterviewScore: number,
-  thresholds: {
+  techInterviewScore?: number,
+  softInterviewScore?: number,
+  thresholds?: {
     weightTech: number;
     weightSoft: number;
     primaryPassingGrade: number;
     secondaryPassingGrade: number;
   },
 ): {
-  passedInterview: boolean;
-  interviewStatus: Status;
+  passedInterview: boolean | null;
+  applicationStatus: Status;
   passedInterviewDate: Date | null;
 } => {
-  const { weightTech, weightSoft, primaryPassingGrade, secondaryPassingGrade } =
-    thresholds;
-
   if (
-    weightTech === undefined ||
-    weightSoft === undefined ||
-    techInterviewScore < 0 ||
-    softInterviewScore < 0
+    techInterviewScore === undefined ||
+    softInterviewScore === undefined ||
+    !thresholds ||
+    thresholds.weightTech === undefined ||
+    thresholds.weightSoft === undefined ||
+    thresholds.primaryPassingGrade === undefined ||
+    thresholds.secondaryPassingGrade === undefined
   ) {
     return {
-      passedInterview: false,
-      interviewStatus: Status.REJECTED,
+      passedInterview: null,
+      applicationStatus: Status.PENDING,
       passedInterviewDate: null,
     };
   }
+
+  const { weightTech, weightSoft, primaryPassingGrade, secondaryPassingGrade } =
+    thresholds;
 
   const interviewGrade =
     weightTech * techInterviewScore + weightSoft * softInterviewScore;
 
-  let interviewStatus: Status;
+  let applicationStatus: Status;
+
   if (interviewGrade >= primaryPassingGrade) {
-    interviewStatus = Status.ACCEPTED;
+    applicationStatus = Status.ACCEPTED;
   } else if (interviewGrade >= secondaryPassingGrade) {
-    interviewStatus = Status.WAITING_LIST;
-  } else if (interviewGrade <= secondaryPassingGrade) {
-    interviewStatus = Status.REJECTED;
+    applicationStatus = Status.WAITING_LIST;
   } else {
-    interviewStatus = Status.PENDING;
+    applicationStatus = Status.REJECTED;
   }
 
-  if (interviewStatus === Status.PENDING) {
-    return {
-      passedInterview: null,
-      interviewStatus,
-      passedInterviewDate: null,
-    };
-  }
-
-  const passedInterview = interviewStatus !== Status.REJECTED;
+  const passedInterview = applicationStatus === Status.REJECTED ? false : true;
   const passedInterviewDate = passedInterview ? new Date() : null;
 
-  return { passedInterview, interviewStatus, passedInterviewDate };
+  return { passedInterview, applicationStatus, passedInterviewDate };
 };
