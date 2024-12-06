@@ -6,7 +6,7 @@ export class CreateEditThresholdsDto {
   @IsNumber()
   @IsOptional()
   @Min(0, { message: 'examPassingGrade must be at least 0' })
-  @Max(20, { message: 'examPassingGrade must be at most 20' })
+  @Max(100, { message: 'examPassingGrade must be at most 100' })
   examPassingGrade?: number;
 
   @ApiProperty()
