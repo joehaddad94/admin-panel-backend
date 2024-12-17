@@ -822,8 +822,11 @@ export class ApplicationMediator {
               await this.applicationsService.update(
                 { id: application.id },
                 {
+                  tech_interview_score: techScore,
+                  soft_interview_score: softScore,
                   passed_interview: passedInterview,
                   passed_interview_date: passedInterviewDate,
+                  remarks,
                   status: applicationStatus,
                 },
               );
@@ -831,8 +834,12 @@ export class ApplicationMediator {
               return {
                 id: application.id,
                 email,
+                techInterviewScore: techScore,
+                softInterviewScore: softScore,
                 passedInterview: passedInterview ? 'Yes' : 'No',
                 passedInterviewDate,
+                remarks,
+                applicationStatus,
               };
             }
             return {
