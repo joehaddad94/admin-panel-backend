@@ -9,7 +9,7 @@ export const calculatePassedExam = (
   }
 
   const passedExam = examScore >= passingGrade;
-  const passedExamDate = passedExam ? new Date() : null;
+  const passedExamDate = new Date();
 
   return { passedExam, passedExamDate };
 };
@@ -61,7 +61,7 @@ export const calculatePassedInterview = (
   }
 
   const passedInterview = applicationStatus === Status.REJECTED ? false : true;
-  const passedInterviewDate = passedInterview ? new Date() : null;
+  const passedInterviewDate = new Date();
 
   return { passedInterview, applicationStatus, passedInterviewDate };
 };

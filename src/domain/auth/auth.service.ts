@@ -6,6 +6,7 @@ import { JwtService } from '@nestjs/jwt';
 import { AuthRepository } from './auth.repository';
 import { Admin } from '../../core/data/database';
 import { BaseService } from '../../core/settings/base/service/base.service';
+import { throwBadRequest } from 'src/core/settings/base/errors/errors';
 
 @Injectable()
 export class AuthService extends BaseService<AuthRepository, Admin> {
@@ -85,8 +86,24 @@ export class AuthService extends BaseService<AuthRepository, Admin> {
   async verifyToken(token: string) {
     const payload = await this.jwtService.decode(token);
 
+    throwBadRequest({
+      message: 'Invalid token payload',
+      errorCheck: !payload,
+    });
+
+    const currentTimestamp = Math.floor(Date.now() / 1000);
+    throwBadRequest({
+      message: 'Token has expired',
+      errorCheck: payload.exp && payload.exp < currentTimestamp,
+    });
+
     const updated = await this.authRepository.findOne({
       where: { id: payload.sub },
+    });
+
+    throwBadRequest({
+      message: 'User not found for token',
+      errorCheck: !updated,
     });
 
     return updated;

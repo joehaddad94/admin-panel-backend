@@ -11,6 +11,7 @@ import { FiltersDto } from '../reports/dtos/filters.dto';
 import { SendingEmailsDto } from './dtos/sending.emails.dto';
 import { ExamScoresDto } from './dtos/exam.scores.dto';
 import { EditApplicationsDto } from './dtos/edit.applications.dto';
+import { InterviewScoresDto } from './dtos/interview.scores.dto';
 
 @ApiTags('applications')
 @Controller('applications')
@@ -51,6 +52,12 @@ export class ApplicationController {
   @UsePipes(new ValidationPipe({ whitelist: true }))
   sendInterviewDateEmails(@Body() data: SendingEmailsDto) {
     return this.mediator.sendPassedExamEmails(data);
+  }
+
+  @Post('import-interview-scores')
+  @UsePipes(new ValidationPipe({ whitelist: true }))
+  importInterviewScores(@Body() data: InterviewScoresDto) {
+    return this.mediator.importInterviewScores(data);
   }
 
   @Post('send-status-emails')
