@@ -20,6 +20,7 @@ import {
   calculatePassedInterview,
 } from 'src/core/helpers/calculatePassingGrades';
 import { In } from 'typeorm';
+import { InterviewScoresDto } from './dtos/interview.scores.dto';
 
 @Injectable()
 export class ApplicationMediator {
@@ -513,7 +514,6 @@ export class ApplicationMediator {
             );
             ineligibleApplicationsToEmail.push({
               ...application,
-              // is_eligible: 'No',
               passed_screening: 'No',
             });
           }
@@ -731,6 +731,135 @@ export class ApplicationMediator {
       };
     } catch (error) {
       Logger.error('Error processing exam scores', error.stack);
+      throw error;
+    }
+  };
+
+  importInterviewScores = async (data: InterviewScoresDto) => {
+    const { cycleId, interviewScores } = data;
+
+    try {
+      const cycle = await this.cyclesService.findOne({ id: cycleId }, [
+        'thresholdCycle',
+      ]);
+
+      if (!cycle) {
+        throwError('Cycle not found.', HttpStatus.BAD_REQUEST);
+      }
+
+      if (
+        !cycle.thresholdCycle?.threshold ||
+        [
+          cycle.thresholdCycle.threshold.weight_tech,
+          cycle.thresholdCycle.threshold.primary_passing_grade,
+          cycle.thresholdCycle.threshold.secondary_passing_grade,
+        ].some((value) => value == null || value === 0)
+      ) {
+        throwError('All thresholds must be provided.', HttpStatus.BAD_REQUEST);
+      }
+
+      const applicationsByCycle = await this.applicationsService.findMany(
+        { applicationCycle: { cycleId } },
+        ['applicationInfo'],
+      );
+
+      const applicationsMap = new Map();
+
+      applicationsByCycle.forEach((app) => {
+        const email = app.applicationInfo[0].info.email;
+        if (!applicationsMap.has(email)) {
+          applicationsMap.set(email, []);
+        }
+        applicationsMap.get(email).push({
+          id: app.id,
+          passed_exam: app.passed_exam,
+          passed_exam_email_sent: app.passed_exam_email_sent,
+        });
+      });
+
+      const updatedResults = await Promise.all(
+        interviewScores.map(
+          async ({ email, techScore, softScore, remarks }) => {
+            const applications = applicationsMap.get(email);
+
+            if (!applications || applications.length === 0) {
+              return {
+                email,
+                techScore,
+                softScore,
+                remarks: 'Email not found',
+              };
+            }
+
+            if (applications.length > 1) {
+              Logger.warn(
+                `Multiple applications found for email: ${email}. Using the most recent.`,
+              );
+
+              applications.sort((a, b) => {
+                const dateA = new Date(a.created_at).getTime() || 0;
+                const dateB = new Date(b.created_at).getTime() || 0;
+                return dateB - dateA;
+              });
+            }
+
+            const application = applications[0];
+
+            if (application.passed_exam && application.passed_exam_email_sent) {
+              const {
+                passedInterview,
+                applicationStatus,
+                passedInterviewDate,
+              } = calculatePassedInterview(techScore, softScore, {
+                weightTech: cycle.thresholdCycle.threshold.weight_tech,
+                weightSoft: cycle.thresholdCycle.threshold.weight_soft,
+                primaryPassingGrade:
+                  cycle.thresholdCycle.threshold.primary_passing_grade,
+                secondaryPassingGrade:
+                  cycle.thresholdCycle.threshold.secondary_passing_grade,
+              });
+
+              await this.applicationsService.update(
+                { id: application.id },
+                {
+                  tech_interview_score: techScore,
+                  soft_interview_score: softScore,
+                  passed_interview: passedInterview,
+                  passed_interview_date: passedInterviewDate,
+                  remarks,
+                  status: applicationStatus,
+                },
+              );
+
+              return {
+                id: application.id,
+                email,
+                techInterviewScore: techScore,
+                softInterviewScore: softScore,
+                passedInterview: passedInterview ? 'Yes' : 'No',
+                passedInterviewDate,
+                remarks,
+                applicationStatus,
+              };
+            }
+            return {
+              email,
+              techScore,
+              softScore,
+            };
+          },
+        ),
+      );
+
+      let updatedData = updatedResults.filter((result) => result !== null);
+      updatedData = convertToCamelCase(updatedData);
+
+      return {
+        message: 'Interview scores imported successfully.',
+        updatedData,
+      };
+    } catch (error) {
+      Logger.error('Error processing interview scores', error.stack);
       throw error;
     }
   };
