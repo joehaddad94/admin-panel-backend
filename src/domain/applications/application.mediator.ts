@@ -448,11 +448,11 @@ export class ApplicationMediator {
           field: currentCycle.decisionDateCycle.decisionDate.exam_link,
           message: 'Exam Link should be provided.',
         },
-        {
-          field:
-            currentCycle.decisionDateCycle.decisionDate.exam_registration_form,
-          message: 'Exam Registration Form should be provided.',
-        },
+        // {
+        //   field:
+        //     currentCycle.decisionDateCycle.decisionDate.exam_registration_form,
+        //   message: 'Exam Registration Form should be provided.',
+        // },
         {
           field:
             currentCycle.decisionDateCycle.decisionDate
@@ -548,8 +548,8 @@ export class ApplicationMediator {
         const templateVariables = {
           examDate: examDate,
           examLink: currentCycle.decisionDateCycle.decisionDate.exam_link,
-          examRegistrationForm:
-            currentCycle.decisionDateCycle.decisionDate.exam_registration_form,
+          // examRegistrationForm:
+          //   currentCycle.decisionDateCycle.decisionDate.exam_registration_form,
           infoSessionRecordedLink:
             currentCycle.decisionDateCycle.decisionDate
               .info_session_recorded_link,
