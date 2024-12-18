@@ -285,7 +285,7 @@ export class ApplicationMediator {
         passedInterview:
           app.passed_interview === true
             ? 'Yes'
-            : app.passed_exam === false
+            : app.passed_interview === false
             ? 'No'
             : '-',
         applicationStatus: app.status,
@@ -403,6 +403,13 @@ export class ApplicationMediator {
 
       const updatedPayload = convertToCamelCase({
         ...updatedData,
+        passedInterview:
+          updatedData.passed_interview === true
+            ? 'Yes'
+            : updatedData.passed_interview === false
+            ? 'No'
+            : '-',
+        passedInterviewDate: updatedData.passed_interview_date,
         applicationStatus: updatedData.status,
         passedExam:
           updatedData.passed_exam === true
