@@ -19,7 +19,7 @@ export class DecisionDateMediator {
         decisionDateId,
         interviewMeetLink,
         examLink,
-        examRegistrationForm,
+        // examRegistrationForm,
         infoSessionRecordedLink,
       } = data;
 
@@ -46,10 +46,10 @@ export class DecisionDateMediator {
           interviewMeetLink,
         );
         decisionDate.exam_link = updateField(decisionDate.exam_link, examLink);
-        decisionDate.exam_registration_form = updateField(
-          decisionDate.exam_registration_form,
-          examRegistrationForm,
-        );
+        // decisionDate.exam_registration_form = updateField(
+        //   decisionDate.exam_registration_form,
+        //   examRegistrationForm,
+        // );
         decisionDate.info_session_recorded_link = updateField(
           decisionDate.info_session_recorded_link,
           infoSessionRecordedLink,
@@ -69,10 +69,10 @@ export class DecisionDateMediator {
               ? interviewMeetLink
               : null,
           exam_link: examLink && examLink.trim() !== '' ? examLink : null,
-          exam_registration_form:
-            examRegistrationForm && examRegistrationForm.trim() !== ''
-              ? examRegistrationForm
-              : null,
+          // exam_registration_form:
+          //   examRegistrationForm && examRegistrationForm.trim() !== ''
+          //     ? examRegistrationForm
+          //     : null,
           info_session_recorded_link:
             infoSessionRecordedLink && infoSessionRecordedLink.trim() !== ''
               ? infoSessionRecordedLink
