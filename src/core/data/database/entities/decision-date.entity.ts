@@ -44,10 +44,16 @@ export class DecisionDates extends BaseEntity {
   info_session_recorded_link: string;
 
   @Column({ type: 'varchar', length: 255, nullable: true })
-  exam_registration_form: string;
+  exam_link: string;
 
   @Column({ type: 'varchar', length: 255, nullable: true })
-  exam_link: string;
+  status_confirmation_form: string;
+
+  @Column({ type: 'timestamp without time zone', nullable: true })
+  orientation_date: Date;
+
+  @Column({ type: 'timestamp without time zone', nullable: true })
+  class_debut_date: Date;
 
   @OneToOne(
     () => DecisionDateCycle,
