@@ -25,16 +25,16 @@ export function formatExamDate(date: Date): string {
   };
 
   const formattedDate = new Intl.DateTimeFormat('en-US', dateOptions).format(
-    date,
+    new Date(date.toISOString().split('T')[0]),
   );
 
-  const hours = date.getHours();
-  const minutes = date.getMinutes().toString().padStart(2, '0');
+  const utcHours = date.getUTCHours();
+  const minutes = date.getUTCMinutes().toString().padStart(2, '0');
 
-  const period = hours >= 12 ? 'pm' : 'am';
-  const formattedHours = hours % 12 || 12;
+  const period = utcHours >= 12 ? 'pm' : 'am';
+  const formattedHours = utcHours % 12 || 12;
 
-  const endHours = (hours + 3) % 24;
+  const endHours = (utcHours + 3) % 24;
   const formattedEndHours = endHours % 12 || 12;
   const endPeriod = endHours >= 12 ? 'pm' : 'am';
 
