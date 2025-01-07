@@ -538,6 +538,10 @@ export class ApplicationMediator {
       const examDate = formatExamDate(
         currentCycle.decisionDateCycle.decisionDate.exam_date,
       );
+      console.log(
+        '🚀 ~ ApplicationMediator ~ returncatcher ~ examDate:',
+        examDate,
+      );
 
       let mailerResponseEligible: any;
       let mailerResponseIneligible: any;
@@ -565,7 +569,7 @@ export class ApplicationMediator {
 
       if (ineligibleEmailsToSend.length > 0) {
         const subject = 'SE Factory Screening Process';
-        const templateName = 'FSE/not_eligible.hbs';
+        const templateName = 'FSE/notEligible.hbs';
 
         mailerResponseIneligible = await this.mailService.sendEmails(
           ineligibleEmailsToSend,
@@ -1026,15 +1030,15 @@ export class ApplicationMediator {
 
         switch (application.status) {
           case Status.ACCEPTED:
-            templateName = 'acceptance-mail.hbs';
+            templateName = 'FSE/passedInterview.hbs';
             subject = 'SE Factory Acceptance';
             break;
           case Status.REJECTED:
-            templateName = 'rejection-mail.hbs';
+            templateName = 'FSE/failedInterview.hbs';
             subject = 'SE Factory Application Status';
             break;
           case Status.WAITING_LIST:
-            templateName = 'waiting-list-mail.hbs';
+            templateName = 'FSE/waitingList.hbs';
             subject = 'SE Factory Application Status';
             break;
           default:

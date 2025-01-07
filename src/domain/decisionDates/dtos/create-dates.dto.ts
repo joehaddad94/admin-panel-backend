@@ -22,11 +22,19 @@ export class CreateEditDecisionDateDto {
 
   @ApiProperty()
   @IsOptional()
-  examRegistrationForm?: string;
+  statusConfirmationForm?: string;
 
   @ApiProperty()
   @IsOptional()
   infoSessionRecordedLink?: string;
+
+  @ApiProperty()
+  @IsOptional()
+  orientationDate?: Date;
+
+  @ApiProperty()
+  @IsOptional()
+  classDebutDate?: Date;
 
   @ApiProperty()
   @IsNotEmpty({ message: 'cycleId must be provided' })
