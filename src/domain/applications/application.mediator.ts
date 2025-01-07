@@ -538,6 +538,10 @@ export class ApplicationMediator {
       const examDate = formatExamDate(
         currentCycle.decisionDateCycle.decisionDate.exam_date,
       );
+      console.log(
+        '🚀 ~ ApplicationMediator ~ returncatcher ~ examDate:',
+        examDate,
+      );
 
       let mailerResponseEligible: any;
       let mailerResponseIneligible: any;
