@@ -42,6 +42,7 @@ export function formatExamDate(date: Date): string {
 
   const endHours = (hours + 3) % 24;
   console.log('🚀 ~ formatExamDate ~ endHours:', endHours);
+
   const formattedEndHours = endHours % 12 || 12;
   console.log('🚀 ~ formatExamDate ~ formattedEndHours:', formattedEndHours);
   const endPeriod = endHours >= 12 ? 'pm' : 'am';
