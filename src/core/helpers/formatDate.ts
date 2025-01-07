@@ -16,45 +16,8 @@ export const formatDate = (dateInput: string | Date) => {
   return dateInput.toLocaleDateString();
 };
 
-// export function formatExamDate(date: Date): string {
-//   console.log('🚀 ~ formatExamDate ~ date:', date);
-//   const dateOptions: Intl.DateTimeFormatOptions = {
-//     weekday: 'long',
-//     month: 'long',
-//     day: 'numeric',
-//     year: 'numeric',
-//   };
-
-//   const formattedDate = new Intl.DateTimeFormat('en-US', dateOptions).format(
-//     date,
-//   );
-//   console.log('🚀 ~ formatExamDate ~ formattedDate:', formattedDate);
-
-//   const hours = date.getHours();
-//   console.log('🚀 ~ formatExamDate ~ hours:', hours);
-//   const minutes = date.getMinutes().toString().padStart(2, '0');
-//   console.log('🚀 ~ formatExamDate ~ minutes:', minutes);
-
-//   const period = hours >= 12 ? 'pm' : 'am';
-//   console.log('🚀 ~ formatExamDate ~ period:', period);
-//   const formattedHours = hours % 12 || 12;
-//   console.log('🚀 ~ formatExamDate ~ formattedHours:', formattedHours);
-
-//   const endHours = (hours + 3) % 24;
-//   console.log('🚀 ~ formatExamDate ~ endHours:', endHours);
-
-//   const formattedEndHours = endHours % 12 || 12;
-//   console.log('🚀 ~ formatExamDate ~ formattedEndHours:', formattedEndHours);
-//   const endPeriod = endHours >= 12 ? 'pm' : 'am';
-//   console.log('🚀 ~ formatExamDate ~ endPeriod:', endPeriod);
-
-//   return `${formattedDate} from ${formattedHours}:${minutes} ${period} to ${formattedEndHours}:${minutes} ${endPeriod}`;
-// }
-
 export function formatExamDate(date: Date): string {
-  console.log('🚀 ~ formatExamDate ~ original date:', date);
-
-  const timeZone = 'Asia/Beirut'; // Change this to your required timezone
+  const timeZone = 'Asia/Beirut';
 
   const dateOptions: Intl.DateTimeFormatOptions = {
     weekday: 'long',
@@ -67,7 +30,6 @@ export function formatExamDate(date: Date): string {
   const formattedDate = new Intl.DateTimeFormat('en-US', dateOptions).format(
     date,
   );
-  console.log('🚀 ~ formatExamDate ~ formattedDate:', formattedDate);
 
   const timeOptions: Intl.DateTimeFormatOptions = {
     hour: 'numeric',
@@ -79,15 +41,12 @@ export function formatExamDate(date: Date): string {
   const formattedTime = new Intl.DateTimeFormat('en-US', timeOptions).format(
     date,
   );
-  console.log('🚀 ~ formatExamDate ~ formattedTime:', formattedTime);
 
   const endTime = new Date(date);
-  endTime.setHours(endTime.getHours() + 3); // Add 3 hours
-
+  endTime.setHours(endTime.getHours() + 3);
   const formattedEndTime = new Intl.DateTimeFormat('en-US', timeOptions).format(
     endTime,
   );
-  console.log('🚀 ~ formatExamDate ~ formattedEndTime:', formattedEndTime);
 
   return `${formattedDate} from ${formattedTime} to ${formattedEndTime}`;
 }
