@@ -141,6 +141,12 @@ export class ApplicationMediator {
         passedInterviewDate: new Date(app.passed_interview_date),
         passedInterview: app.passed_interview,
         applicationStatus: app.status,
+        statusEmailSent:
+          app.status_email_sent === true
+            ? 'Yes'
+            : app.status_email_sent === false
+            ? 'No'
+            : '-',
         remarks: app.remarks,
         extras: app.extras,
       }));
@@ -289,6 +295,12 @@ export class ApplicationMediator {
             ? 'No'
             : '-',
         applicationStatus: app.status,
+        statusEmailSent:
+          app.status_email_sent === true
+            ? 'Yes'
+            : app.status_email_sent === false
+            ? 'No'
+            : '-',
         remarks: app.remarks,
         extras: app.extras,
       }));
@@ -448,11 +460,6 @@ export class ApplicationMediator {
           field: currentCycle.decisionDateCycle.decisionDate.exam_link,
           message: 'Exam Link should be provided.',
         },
-        // {
-        //   field:
-        //     currentCycle.decisionDateCycle.decisionDate.exam_registration_form,
-        //   message: 'Exam Registration Form should be provided.',
-        // },
         {
           field:
             currentCycle.decisionDateCycle.decisionDate
@@ -548,8 +555,6 @@ export class ApplicationMediator {
         const templateVariables = {
           examDate: examDate,
           examLink: currentCycle.decisionDateCycle.decisionDate.exam_link,
-          // examRegistrationForm:
-          //   currentCycle.decisionDateCycle.decisionDate.exam_registration_form,
           infoSessionRecordedLink:
             currentCycle.decisionDateCycle.decisionDate
               .info_session_recorded_link,
@@ -973,7 +978,7 @@ export class ApplicationMediator {
     const camelCaseApplications = convertToCamelCase(affectedApplications);
 
     return {
-      message: 'Emails sent successfully.',
+      message: 'Emails have been processed. Check the status for details.',
       passedExamEmails: {
         sent: passedMailerResponse?.foundEmails || [],
         notSent: passedMailerResponse?.notFoundEmails || [],
@@ -985,6 +990,118 @@ export class ApplicationMediator {
       applications: camelCaseApplications,
     };
   };
+
+  // sendStatusEmail = async (data: SendingEmailsDto) => {
+  //   const { cycleId, emails } = data;
+
+  //   const cyclesWhereConditions = cycleId ? { id: cycleId } : {};
+
+  //   const currentCycle = await this.cyclesService.findOne(
+  //     cyclesWhereConditions,
+  //     ['decisionDateCycle'],
+  //   );
+
+  //   if (!currentCycle) {
+  //     throwError('Cycle not found.', HttpStatus.BAD_REQUEST);
+  //   }
+
+  //   const uniqueEmails: string[] = [
+  //     ...new Set(emails.map((entry) => entry.emails)),
+  //   ];
+
+  //   const applicationWhereConditions = cycleId
+  //     ? { applicationCycle: { cycleId } }
+  //     : {};
+
+  //   const applicationsByCycle = await this.applicationsService.findMany(
+  //     applicationWhereConditions,
+  //     ['applicationUser'],
+  //   );
+
+  //   const applicationsToEmail = applicationsByCycle.filter((application) => {
+  //     const email: string = application.applicationUser[0]?.user?.email;
+  //     return uniqueEmails.includes(email);
+  //   });
+
+  //   const emailsToSend = applicationsToEmail
+  //     .map((application) => {
+  //       const email: string = application.applicationUser[0].user.email;
+  //       let templateName: string;
+  //       let subject: string;
+
+  //       switch (application.status) {
+  //         case Status.ACCEPTED:
+  //           templateName = 'FSE/passedInterview.hbs';
+  //           subject = 'SE Factory Acceptance';
+  //           break;
+  //         case Status.REJECTED:
+  //           templateName = 'FSE/failedInterview.hbs';
+  //           subject = 'SE Factory Application Status';
+  //           break;
+  //         case Status.WAITING_LIST:
+  //           templateName = 'FSE/waitingList.hbs';
+  //           subject = 'SE Factory Application Status';
+  //           break;
+  //         default:
+  //           return null;
+  //       }
+
+  //       return {
+  //         email,
+  //         templateName,
+  //         subject,
+  //       };
+  //     })
+  //     .filter((item) => item !== null);
+
+  //   let mailerResponse: any = { foundEmails: [], notFoundEmails: [] };
+
+  //   if (emailsToSend.length > 0) {
+  //     for (const emailData of emailsToSend) {
+  //       const { email, templateName, subject } = emailData;
+  //       const templateVariables = {};
+
+  //       const response = await this.mailService.sendEmails(
+  //         [email],
+  //         templateName,
+  //         subject,
+  //         templateVariables,
+  //       );
+
+  //       mailerResponse.foundEmails.push(email);
+  //       mailerResponse.notFoundEmails.push(...response.notFoundEmails);
+  //     }
+  //   }
+
+  //   const affectedApplications = await Promise.all(
+  //     applicationsByIds.map(async (application) => {
+  //       const email = application.applicationUser[0]?.user?.email;
+  //       const emailSent =
+  //         passedMailerResponse?.foundEmails.some((e) => e.email === email) ||
+  //         failedMailerResponse?.foundEmails.some((e) => e.email === email);
+
+  //       await this.applicationsService.update(
+  //         { id: application.id },
+  //         { status_email_sent: emailSent },
+  //       );
+
+  //       return {
+  //         id: application.id,
+  //         email,
+  //         status_email_sent: emailSent === true ? 'Yes' : 'No',
+  //       };
+  //     }),
+  //   );
+
+  //   const camelCaseApplications = convertToCamelCase(affectedApplications);
+
+  //   return {
+  //     message: 'Emails have been processed. Check the status for details.',
+  //     foundEmails: mailerResponse.foundEmails,
+  //     notFoundEmails: mailerResponse.notFoundEmails,
+  //     applications: camelCaseApplications,
+  //   };
+  // };
 
   sendStatusEmail = async (data: SendingEmailsDto) => {
     const { cycleId, emails } = data;
@@ -999,6 +1116,28 @@ export class ApplicationMediator {
     if (!currentCycle) {
       throwError('Cycle not found.', HttpStatus.BAD_REQUEST);
     }
+
+    const requiredFields = [
+      {
+        field:
+          currentCycle.decisionDateCycle.decisionDate.status_confirmation_form,
+        message: 'Status Confirmation Form should be provided.',
+      },
+      {
+        field: currentCycle.decisionDateCycle.decisionDate.orientation_date,
+        message: 'Orientation Date should be provided.',
+      },
+      {
+        field: currentCycle.decisionDateCycle.decisionDate.class_debut_date,
+        message: 'Class Debut Date should be provided.',
+      },
+    ];
+
+    requiredFields.forEach(({ field, message }) => {
+      if (field === null) {
+        throwError(message, HttpStatus.BAD_REQUEST);
+      }
+    });
 
     const uniqueEmails: string[] = [
       ...new Set(emails.map((entry) => entry.emails)),
@@ -1020,14 +1159,24 @@ export class ApplicationMediator {
 
     const emailsToSend = applicationsToEmail
       .map((application) => {
-        const email: string = application.applicationUser[0].user.email;
+        const email: string = application.applicationUser[0]?.user?.email;
         let templateName: string;
         let subject: string;
+        let templateVariables = {};
 
         switch (application.status) {
           case Status.ACCEPTED:
             templateName = 'FSE/passedInterview.hbs';
             subject = 'SE Factory Acceptance';
+            templateVariables = {
+              statusConfirmationForm:
+                currentCycle.decisionDateCycle.decisionDate
+                  .status_confirmation_form,
+              orientationDate:
+                currentCycle.decisionDateCycle.decisionDate.orientation_date,
+              classDebutDate:
+                currentCycle.decisionDateCycle.decisionDate.class_debut_date,
+            };
             break;
           case Status.REJECTED:
             templateName = 'FSE/failedInterview.hbs';
@@ -1045,6 +1194,7 @@ export class ApplicationMediator {
           email,
           templateName,
           subject,
+          templateVariables,
         };
       })
       .filter((item) => item !== null);
@@ -1053,8 +1203,7 @@ export class ApplicationMediator {
 
     if (emailsToSend.length > 0) {
       for (const emailData of emailsToSend) {
-        const { email, templateName, subject } = emailData;
-        const templateVariables = {};
+        const { email, templateName, subject, templateVariables } = emailData!;
 
         const response = await this.mailService.sendEmails(
           [email],
@@ -1068,10 +1217,31 @@ export class ApplicationMediator {
       }
     }
 
+    const affectedApplications = await Promise.all(
+      applicationsToEmail.map(async (application) => {
+        const email = application.applicationUser[0]?.user?.email;
+        const emailSent = mailerResponse.foundEmails.includes(email);
+
+        await this.applicationsService.update(
+          { id: application.id },
+          { status_email_sent: emailSent },
+        );
+
+        return {
+          id: application.id,
+          email,
+          status_email_sent: emailSent ? 'Yes' : 'No',
+        };
+      }),
+    );
+
+    const camelCaseApplications = convertToCamelCase(affectedApplications);
+
     return {
-      message: 'Status emails sent successfully.',
+      message: 'Emails have been processed. Check the status for details.',
       foundEmails: mailerResponse.foundEmails,
       notFoundEmails: mailerResponse.notFoundEmails,
+      applications: camelCaseApplications,
     };
   };
 }
