@@ -538,10 +538,6 @@ export class ApplicationMediator {
       const examDate = formatExamDate(
         currentCycle.decisionDateCycle.decisionDate.exam_date,
       );
-      console.log(
-        '🚀 ~ ApplicationMediator ~ returncatcher ~ examDate:',
-        examDate,
-      );
 
       let mailerResponseEligible: any;
       let mailerResponseIneligible: any;
@@ -736,7 +732,7 @@ export class ApplicationMediator {
       updatedData = convertToCamelCase(updatedData);
 
       return {
-        message: 'Exam scores imported successfully.',
+        message: 'Emails have been processed. Check the status for details.',
         updatedData,
         warnings: updateResults.filter((result) => result?.status),
       };
