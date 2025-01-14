@@ -14,7 +14,10 @@ import { EditApplicationsDto } from './dtos/edit.applications.dto';
 import { convertToCamelCase } from 'src/core/helpers/camelCase';
 import { validateThresholdEntity } from 'src/core/helpers/validateThresholds';
 import { Status } from 'src/core/data/types/applications/applications.types';
-import { formatExamDate } from 'src/core/helpers/formatDate';
+import {
+  formatExamDate,
+  formatReadableDate,
+} from 'src/core/helpers/formatDate';
 import {
   calculatePassedExam,
   calculatePassedInterview,
@@ -330,7 +333,7 @@ export class ApplicationMediator {
         techInterviewScore,
         softInterviewScore,
         remarks,
-        status,
+        applicationStatus,
         cycleId,
       } = data;
 
@@ -376,7 +379,7 @@ export class ApplicationMediator {
             ? softInterviewScore
             : Number(application.soft_interview_score),
         remarks: remarks !== '' ? remarks : application.remarks,
-        status: status,
+        status: applicationStatus,
         updated_at: new Date(),
       };
 
@@ -397,19 +400,36 @@ export class ApplicationMediator {
       const softScoreToUse =
         softInterviewScore ?? application.soft_interview_score;
 
+      let recalculatedStatus = updatedData.status;
+
       if (techScoreToUse && softScoreToUse) {
-        const { passedInterview, applicationStatus, passedInterviewDate } =
-          calculatePassedInterview(techScoreToUse, softScoreToUse, {
+        const {
+          passedInterview,
+          applicationStatus: calculatedStatus,
+          passedInterviewDate,
+        } = calculatePassedInterview(
+          techScoreToUse,
+          softScoreToUse,
+          {
             weightTech: threshold.weight_tech,
             weightSoft: threshold.weight_soft,
             primaryPassingGrade: threshold.primary_passing_grade,
             secondaryPassingGrade: threshold.secondary_passing_grade,
-          });
+          },
+          applicationStatus !== application.status,
+        );
 
         updatedData.passed_interview = passedInterview;
-        updatedData.status = applicationStatus;
         updatedData.passed_interview_date = passedInterviewDate;
+
+        if (applicationStatus === application.status) {
+          recalculatedStatus = calculatedStatus;
+        } else {
+          recalculatedStatus = applicationStatus;
+        }
       }
+
+      updatedData.status = recalculatedStatus;
 
       await this.applicationsService.update({ id }, updatedData);
 
@@ -430,8 +450,6 @@ export class ApplicationMediator {
             ? 'No'
             : '-',
       });
-
-      delete updatedPayload.status;
 
       return {
         message: 'Application updated successfully.',
@@ -991,118 +1009,6 @@ export class ApplicationMediator {
     };
   };
 
-  // sendStatusEmail = async (data: SendingEmailsDto) => {
-  //   const { cycleId, emails } = data;
-
-  //   const cyclesWhereConditions = cycleId ? { id: cycleId } : {};
-
-  //   const currentCycle = await this.cyclesService.findOne(
-  //     cyclesWhereConditions,
-  //     ['decisionDateCycle'],
-  //   );
-
-  //   if (!currentCycle) {
-  //     throwError('Cycle not found.', HttpStatus.BAD_REQUEST);
-  //   }
-
-  //   const uniqueEmails: string[] = [
-  //     ...new Set(emails.map((entry) => entry.emails)),
-  //   ];
-
-  //   const applicationWhereConditions = cycleId
-  //     ? { applicationCycle: { cycleId } }
-  //     : {};
-
-  //   const applicationsByCycle = await this.applicationsService.findMany(
-  //     applicationWhereConditions,
-  //     ['applicationUser'],
-  //   );
-
-  //   const applicationsToEmail = applicationsByCycle.filter((application) => {
-  //     const email: string = application.applicationUser[0]?.user?.email;
-  //     return uniqueEmails.includes(email);
-  //   });
-
-  //   const emailsToSend = applicationsToEmail
-  //     .map((application) => {
-  //       const email: string = application.applicationUser[0].user.email;
-  //       let templateName: string;
-  //       let subject: string;
-
-  //       switch (application.status) {
-  //         case Status.ACCEPTED:
-  //           templateName = 'FSE/passedInterview.hbs';
-  //           subject = 'SE Factory Acceptance';
-  //           break;
-  //         case Status.REJECTED:
-  //           templateName = 'FSE/failedInterview.hbs';
-  //           subject = 'SE Factory Application Status';
-  //           break;
-  //         case Status.WAITING_LIST:
-  //           templateName = 'FSE/waitingList.hbs';
-  //           subject = 'SE Factory Application Status';
-  //           break;
-  //         default:
-  //           return null;
-  //       }
-
-  //       return {
-  //         email,
-  //         templateName,
-  //         subject,
-  //       };
-  //     })
-  //     .filter((item) => item !== null);
-
-  //   let mailerResponse: any = { foundEmails: [], notFoundEmails: [] };
-
-  //   if (emailsToSend.length > 0) {
-  //     for (const emailData of emailsToSend) {
-  //       const { email, templateName, subject } = emailData;
-  //       const templateVariables = {};
-
-  //       const response = await this.mailService.sendEmails(
-  //         [email],
-  //         templateName,
-  //         subject,
-  //         templateVariables,
-  //       );
-
-  //       mailerResponse.foundEmails.push(email);
-  //       mailerResponse.notFoundEmails.push(...response.notFoundEmails);
-  //     }
-  //   }
-
-  //   const affectedApplications = await Promise.all(
-  //     applicationsByIds.map(async (application) => {
-  //       const email = application.applicationUser[0]?.user?.email;
-  //       const emailSent =
-  //         passedMailerResponse?.foundEmails.some((e) => e.email === email) ||
-  //         failedMailerResponse?.foundEmails.some((e) => e.email === email);
-
-  //       await this.applicationsService.update(
-  //         { id: application.id },
-  //         { status_email_sent: emailSent },
-  //       );
-
-  //       return {
-  //         id: application.id,
-  //         email,
-  //         status_email_sent: emailSent === true ? 'Yes' : 'No',
-  //       };
-  //     }),
-  //   );
-
-  //   const camelCaseApplications = convertToCamelCase(affectedApplications);
-
-  //   return {
-  //     message: 'Emails have been processed. Check the status for details.',
-  //     foundEmails: mailerResponse.foundEmails,
-  //     notFoundEmails: mailerResponse.notFoundEmails,
-  //     applications: camelCaseApplications,
-  //   };
-  // };
-
   sendStatusEmail = async (data: SendingEmailsDto) => {
     const { cycleId, emails } = data;
 
@@ -1172,10 +1078,23 @@ export class ApplicationMediator {
               statusConfirmationForm:
                 currentCycle.decisionDateCycle.decisionDate
                   .status_confirmation_form,
-              orientationDate:
+              orientationDate: formatReadableDate(
                 currentCycle.decisionDateCycle.decisionDate.orientation_date,
-              classDebutDate:
+              ),
+              classDebutDate: formatReadableDate(
                 currentCycle.decisionDateCycle.decisionDate.class_debut_date,
+              ),
+              submissionConfirmationDate: formatReadableDate(
+                new Date(
+                  new Date(
+                    currentCycle.decisionDateCycle.decisionDate.orientation_date,
+                  ).setDate(
+                    new Date(
+                      currentCycle.decisionDateCycle.decisionDate.orientation_date,
+                    ).getDate() - 3,
+                  ),
+                ),
+              ),
             };
             break;
           case Status.REJECTED:
@@ -1204,6 +1123,10 @@ export class ApplicationMediator {
     if (emailsToSend.length > 0) {
       for (const emailData of emailsToSend) {
         const { email, templateName, subject, templateVariables } = emailData!;
+        console.log(
+          '🚀 ~ ApplicationMediator ~ sendStatusEmail= ~ templateVariables:',
+          templateVariables,
+        );
 
         const response = await this.mailService.sendEmails(
           [email],

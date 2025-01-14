@@ -50,3 +50,39 @@ export function formatExamDate(date: Date): string {
 
   return `${formattedDate} from ${formattedTime} to ${formattedEndTime}`;
 }
+
+export function formatReadableDate(date: Date): string {
+  const timeZone = 'Asia/Beirut';
+
+  const dateOptions: Intl.DateTimeFormatOptions = {
+    weekday: 'long',
+    month: 'long',
+    day: 'numeric',
+    year: 'numeric',
+    timeZone,
+  };
+
+  const formattedDate = new Intl.DateTimeFormat('en-US', dateOptions).format(
+    date,
+  );
+
+  const day = date.getDate();
+  const suffix = getOrdinalSuffix(day);
+  const dayWithSuffix = formattedDate.replace(/\d+/, `${day}${suffix}`);
+
+  return `${dayWithSuffix}`;
+}
+
+function getOrdinalSuffix(day: number): string {
+  if (day >= 11 && day <= 13) return 'th';
+  switch (day % 10) {
+    case 1:
+      return 'st';
+    case 2:
+      return 'nd';
+    case 3:
+      return 'rd';
+    default:
+      return 'th';
+  }
+}

@@ -104,7 +104,7 @@
                             >
                               Orientation:
                               {{orientationDate}}
-                              (9:00 AM - 6:00 PM)
+                              starting 9:00 AM until 6:00 PM
                             </p>
                             <p
                               style='
@@ -129,19 +129,22 @@
                               You will receive an invitation link on the Slack
                               channel once all participants confirm their
                               participation. Please confirm by filling out the
-                              form below by Tuesday, June 18th, 2024:
+                              form below by
+                              {{submissionConfirmationDate}}:
                             </p>
                             <p style='text-align: center'>
                               <a
-                                href={{statusConfirmationLink}}
+                                href='{{statusConfirmationForm}}'
+                                target='_blank'
                                 style='
-                                  background: rgb(40, 238, 167);
-                                  color: #000;
-                                  text-decoration: none;
-                                  padding: 10px 18px;
-                                  border-radius: 6px;
-                                  font-weight: bold;
-                                '
+                                    background: rgb(40, 238, 167);
+                                    color: #000;
+                                    text-decoration: none;
+                                    padding: 10px 18px;
+                                    border-radius: 6px;
+                                    font-weight: bold;
+                                    display: inline-block;
+                                  '
                               >
                                 Confirm Participation
                               </a>
