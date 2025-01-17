@@ -23,9 +23,10 @@ export const calculatePassedInterview = (
     primaryPassingGrade: number;
     secondaryPassingGrade: number;
   },
+  skipStatusUpdate: boolean = false,
 ): {
   passedInterview: boolean | null;
-  applicationStatus: Status;
+  applicationStatus?: Status;
   passedInterviewDate: Date | null;
 } => {
   if (
@@ -63,5 +64,9 @@ export const calculatePassedInterview = (
   const passedInterview = applicationStatus === Status.REJECTED ? false : true;
   const passedInterviewDate = new Date();
 
-  return { passedInterview, applicationStatus, passedInterviewDate };
+  if (skipStatusUpdate) {
+    return { passedInterview, passedInterviewDate };
+  } else {
+    return { passedInterview, applicationStatus, passedInterviewDate };
+  }
 };

@@ -14,7 +14,10 @@ import { EditApplicationsDto } from './dtos/edit.applications.dto';
 import { convertToCamelCase } from 'src/core/helpers/camelCase';
 import { validateThresholdEntity } from 'src/core/helpers/validateThresholds';
 import { Status } from 'src/core/data/types/applications/applications.types';
-import { formatExamDate } from 'src/core/helpers/formatDate';
+import {
+  formatExamDate,
+  formatReadableDate,
+} from 'src/core/helpers/formatDate';
 import {
   calculatePassedExam,
   calculatePassedInterview,
@@ -141,6 +144,12 @@ export class ApplicationMediator {
         passedInterviewDate: new Date(app.passed_interview_date),
         passedInterview: app.passed_interview,
         applicationStatus: app.status,
+        statusEmailSent:
+          app.status_email_sent === true
+            ? 'Yes'
+            : app.status_email_sent === false
+            ? 'No'
+            : '-',
         remarks: app.remarks,
         extras: app.extras,
       }));
@@ -289,6 +298,12 @@ export class ApplicationMediator {
             ? 'No'
             : '-',
         applicationStatus: app.status,
+        statusEmailSent:
+          app.status_email_sent === true
+            ? 'Yes'
+            : app.status_email_sent === false
+            ? 'No'
+            : '-',
         remarks: app.remarks,
         extras: app.extras,
       }));
@@ -318,7 +333,7 @@ export class ApplicationMediator {
         techInterviewScore,
         softInterviewScore,
         remarks,
-        status,
+        applicationStatus,
         cycleId,
       } = data;
 
@@ -364,7 +379,7 @@ export class ApplicationMediator {
             ? softInterviewScore
             : Number(application.soft_interview_score),
         remarks: remarks !== '' ? remarks : application.remarks,
-        status: status,
+        status: applicationStatus,
         updated_at: new Date(),
       };
 
@@ -385,19 +400,36 @@ export class ApplicationMediator {
       const softScoreToUse =
         softInterviewScore ?? application.soft_interview_score;
 
+      let recalculatedStatus = updatedData.status;
+
       if (techScoreToUse && softScoreToUse) {
-        const { passedInterview, applicationStatus, passedInterviewDate } =
-          calculatePassedInterview(techScoreToUse, softScoreToUse, {
+        const {
+          passedInterview,
+          applicationStatus: calculatedStatus,
+          passedInterviewDate,
+        } = calculatePassedInterview(
+          techScoreToUse,
+          softScoreToUse,
+          {
             weightTech: threshold.weight_tech,
             weightSoft: threshold.weight_soft,
             primaryPassingGrade: threshold.primary_passing_grade,
             secondaryPassingGrade: threshold.secondary_passing_grade,
-          });
+          },
+          applicationStatus !== application.status,
+        );
 
         updatedData.passed_interview = passedInterview;
-        updatedData.status = applicationStatus;
         updatedData.passed_interview_date = passedInterviewDate;
+
+        if (applicationStatus === application.status) {
+          recalculatedStatus = calculatedStatus;
+        } else {
+          recalculatedStatus = applicationStatus;
+        }
       }
+
+      updatedData.status = recalculatedStatus;
 
       await this.applicationsService.update({ id }, updatedData);
 
@@ -418,8 +450,6 @@ export class ApplicationMediator {
             ? 'No'
             : '-',
       });
-
-      delete updatedPayload.status;
 
       return {
         message: 'Application updated successfully.',
@@ -448,11 +478,6 @@ export class ApplicationMediator {
           field: currentCycle.decisionDateCycle.decisionDate.exam_link,
           message: 'Exam Link should be provided.',
         },
-        // {
-        //   field:
-        //     currentCycle.decisionDateCycle.decisionDate.exam_registration_form,
-        //   message: 'Exam Registration Form should be provided.',
-        // },
         {
           field:
             currentCycle.decisionDateCycle.decisionDate
@@ -548,8 +573,6 @@ export class ApplicationMediator {
         const templateVariables = {
           examDate: examDate,
           examLink: currentCycle.decisionDateCycle.decisionDate.exam_link,
-          // examRegistrationForm:
-          //   currentCycle.decisionDateCycle.decisionDate.exam_registration_form,
           infoSessionRecordedLink:
             currentCycle.decisionDateCycle.decisionDate
               .info_session_recorded_link,
@@ -973,7 +996,7 @@ export class ApplicationMediator {
     const camelCaseApplications = convertToCamelCase(affectedApplications);
 
     return {
-      message: 'Emails sent successfully.',
+      message: 'Emails have been processed. Check the status for details.',
       passedExamEmails: {
         sent: passedMailerResponse?.foundEmails || [],
         notSent: passedMailerResponse?.notFoundEmails || [],
@@ -1000,6 +1023,28 @@ export class ApplicationMediator {
       throwError('Cycle not found.', HttpStatus.BAD_REQUEST);
     }
 
+    const requiredFields = [
+      {
+        field:
+          currentCycle.decisionDateCycle.decisionDate.status_confirmation_form,
+        message: 'Status Confirmation Form should be provided.',
+      },
+      {
+        field: currentCycle.decisionDateCycle.decisionDate.orientation_date,
+        message: 'Orientation Date should be provided.',
+      },
+      {
+        field: currentCycle.decisionDateCycle.decisionDate.class_debut_date,
+        message: 'Class Debut Date should be provided.',
+      },
+    ];
+
+    requiredFields.forEach(({ field, message }) => {
+      if (field === null) {
+        throwError(message, HttpStatus.BAD_REQUEST);
+      }
+    });
+
     const uniqueEmails: string[] = [
       ...new Set(emails.map((entry) => entry.emails)),
     ];
@@ -1020,14 +1065,37 @@ export class ApplicationMediator {
 
     const emailsToSend = applicationsToEmail
       .map((application) => {
-        const email: string = application.applicationUser[0].user.email;
+        const email: string = application.applicationUser[0]?.user?.email;
         let templateName: string;
         let subject: string;
+        let templateVariables = {};
 
         switch (application.status) {
           case Status.ACCEPTED:
             templateName = 'FSE/passedInterview.hbs';
             subject = 'SE Factory Acceptance';
+            templateVariables = {
+              statusConfirmationForm:
+                currentCycle.decisionDateCycle.decisionDate
+                  .status_confirmation_form,
+              orientationDate: formatReadableDate(
+                currentCycle.decisionDateCycle.decisionDate.orientation_date,
+              ),
+              classDebutDate: formatReadableDate(
+                currentCycle.decisionDateCycle.decisionDate.class_debut_date,
+              ),
+              submissionConfirmationDate: formatReadableDate(
+                new Date(
+                  new Date(
+                    currentCycle.decisionDateCycle.decisionDate.orientation_date,
+                  ).setDate(
+                    new Date(
+                      currentCycle.decisionDateCycle.decisionDate.orientation_date,
+                    ).getDate() - 3,
+                  ),
+                ),
+              ),
+            };
             break;
           case Status.REJECTED:
             templateName = 'FSE/failedInterview.hbs';
@@ -1045,6 +1113,7 @@ export class ApplicationMediator {
           email,
           templateName,
           subject,
+          templateVariables,
         };
       })
       .filter((item) => item !== null);
@@ -1053,8 +1122,11 @@ export class ApplicationMediator {
 
     if (emailsToSend.length > 0) {
       for (const emailData of emailsToSend) {
-        const { email, templateName, subject } = emailData;
-        const templateVariables = {};
+        const { email, templateName, subject, templateVariables } = emailData!;
+        console.log(
+          '🚀 ~ ApplicationMediator ~ sendStatusEmail= ~ templateVariables:',
+          templateVariables,
+        );
 
         const response = await this.mailService.sendEmails(
           [email],
@@ -1068,10 +1140,31 @@ export class ApplicationMediator {
       }
     }
 
+    const affectedApplications = await Promise.all(
+      applicationsToEmail.map(async (application) => {
+        const email = application.applicationUser[0]?.user?.email;
+        const emailSent = mailerResponse.foundEmails.includes(email);
+
+        await this.applicationsService.update(
+          { id: application.id },
+          { status_email_sent: emailSent },
+        );
+
+        return {
+          id: application.id,
+          email,
+          status_email_sent: emailSent ? 'Yes' : 'No',
+        };
+      }),
+    );
+
+    const camelCaseApplications = convertToCamelCase(affectedApplications);
+
     return {
-      message: 'Status emails sent successfully.',
+      message: 'Emails have been processed. Check the status for details.',
       foundEmails: mailerResponse.foundEmails,
       notFoundEmails: mailerResponse.notFoundEmails,
+      applications: camelCaseApplications,
     };
   };
 }

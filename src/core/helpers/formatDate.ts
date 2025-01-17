@@ -16,41 +16,6 @@ export const formatDate = (dateInput: string | Date) => {
   return dateInput.toLocaleDateString();
 };
 
-// export function formatExamDate(date: Date): string {
-//   console.log('🚀 ~ formatExamDate ~ date:', date);
-//   const dateOptions: Intl.DateTimeFormatOptions = {
-//     weekday: 'long',
-//     month: 'long',
-//     day: 'numeric',
-//     year: 'numeric',
-//   };
-
-//   const formattedDate = new Intl.DateTimeFormat('en-US', dateOptions).format(
-//     date,
-//   );
-//   console.log('🚀 ~ formatExamDate ~ formattedDate:', formattedDate);
-
-//   const hours = date.getHours();
-//   console.log('🚀 ~ formatExamDate ~ hours:', hours);
-//   const minutes = date.getMinutes().toString().padStart(2, '0');
-//   console.log('🚀 ~ formatExamDate ~ minutes:', minutes);
-
-//   const period = hours >= 12 ? 'pm' : 'am';
-//   console.log('🚀 ~ formatExamDate ~ period:', period);
-//   const formattedHours = hours % 12 || 12;
-//   console.log('🚀 ~ formatExamDate ~ formattedHours:', formattedHours);
-
-//   const endHours = (hours + 3) % 24;
-//   console.log('🚀 ~ formatExamDate ~ endHours:', endHours);
-
-//   const formattedEndHours = endHours % 12 || 12;
-//   console.log('🚀 ~ formatExamDate ~ formattedEndHours:', formattedEndHours);
-//   const endPeriod = endHours >= 12 ? 'pm' : 'am';
-//   console.log('🚀 ~ formatExamDate ~ endPeriod:', endPeriod);
-
-//   return `${formattedDate} from ${formattedHours}:${minutes} ${period} to ${formattedEndHours}:${minutes} ${endPeriod}`;
-// }
-
 export function formatExamDate(date: Date): string {
   const timeZone = 'Asia/Beirut';
 
@@ -84,4 +49,40 @@ export function formatExamDate(date: Date): string {
   );
 
   return `${formattedDate} from ${formattedTime} to ${formattedEndTime}`;
+}
+
+export function formatReadableDate(date: Date): string {
+  const timeZone = 'Asia/Beirut';
+
+  const dateOptions: Intl.DateTimeFormatOptions = {
+    weekday: 'long',
+    month: 'long',
+    day: 'numeric',
+    year: 'numeric',
+    timeZone,
+  };
+
+  const formattedDate = new Intl.DateTimeFormat('en-US', dateOptions).format(
+    date,
+  );
+
+  const day = date.getDate();
+  const suffix = getOrdinalSuffix(day);
+  const dayWithSuffix = formattedDate.replace(/\d+/, `${day}${suffix}`);
+
+  return `${dayWithSuffix}`;
+}
+
+function getOrdinalSuffix(day: number): string {
+  if (day >= 11 && day <= 13) return 'th';
+  switch (day % 10) {
+    case 1:
+      return 'st';
+    case 2:
+      return 'nd';
+    case 3:
+      return 'rd';
+    default:
+      return 'th';
+  }
 }
