@@ -407,19 +407,6 @@ export class ApplicationMediator {
         (applicationStatus !== application.status ||
           application.status === null);
 
-      console.log(
-        '🚀 ~ ApplicationMediator ~ returncatcher ~ application.status:',
-        application.status,
-      );
-      console.log(
-        '🚀 ~ ApplicationMediator ~ returncatcher ~ applicationStatus:',
-        applicationStatus,
-      );
-      console.log(
-        '🚀 ~ ApplicationMediator ~ returncatcher ~ skipStatusUpdate:',
-        skipStatusUpdate,
-      );
-
       if (!skipStatusUpdate) {
         if (techScoreToUse && softScoreToUse) {
           const {
@@ -449,10 +436,6 @@ export class ApplicationMediator {
         recalculatedStatus = applicationStatus;
       }
 
-      console.log(
-        '🚀 ~ ApplicationMediator ~ returncatcher ~ recalculatedStatus:',
-        recalculatedStatus,
-      );
       updatedData.status = recalculatedStatus;
 
       await this.applicationsService.update({ id }, updatedData);
