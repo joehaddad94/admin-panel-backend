@@ -402,33 +402,57 @@ export class ApplicationMediator {
 
       let recalculatedStatus = updatedData.status;
 
-      if (techScoreToUse && softScoreToUse) {
-        const {
-          passedInterview,
-          applicationStatus: calculatedStatus,
-          passedInterviewDate,
-        } = calculatePassedInterview(
-          techScoreToUse,
-          softScoreToUse,
-          {
-            weightTech: threshold.weight_tech,
-            weightSoft: threshold.weight_soft,
-            primaryPassingGrade: threshold.primary_passing_grade,
-            secondaryPassingGrade: threshold.secondary_passing_grade,
-          },
-          applicationStatus !== application.status,
-        );
+      const skipStatusUpdate =
+        applicationStatus !== undefined &&
+        (applicationStatus !== application.status ||
+          application.status === null);
 
-        updatedData.passed_interview = passedInterview;
-        updatedData.passed_interview_date = passedInterviewDate;
+      console.log(
+        '🚀 ~ ApplicationMediator ~ returncatcher ~ application.status:',
+        application.status,
+      );
+      console.log(
+        '🚀 ~ ApplicationMediator ~ returncatcher ~ applicationStatus:',
+        applicationStatus,
+      );
+      console.log(
+        '🚀 ~ ApplicationMediator ~ returncatcher ~ skipStatusUpdate:',
+        skipStatusUpdate,
+      );
 
-        if (applicationStatus === application.status) {
+      if (!skipStatusUpdate) {
+        if (techScoreToUse && softScoreToUse) {
+          const {
+            passedInterview,
+            applicationStatus: calculatedStatus,
+            passedInterviewDate,
+          } = calculatePassedInterview(
+            techScoreToUse,
+            softScoreToUse,
+            {
+              weightTech: threshold.weight_tech,
+              weightSoft: threshold.weight_soft,
+              primaryPassingGrade: threshold.primary_passing_grade,
+              secondaryPassingGrade: threshold.secondary_passing_grade,
+            },
+            false,
+          );
+
+          updatedData.passed_interview = passedInterview;
+          updatedData.passed_interview_date = passedInterviewDate;
+
           recalculatedStatus = calculatedStatus;
-        } else {
-          recalculatedStatus = applicationStatus;
         }
+      } else {
+        updatedData.passed_interview = application.passed_interview;
+        updatedData.passed_interview_date = application.passed_interview_date;
+        recalculatedStatus = applicationStatus;
       }
 
+      console.log(
+        '🚀 ~ ApplicationMediator ~ returncatcher ~ recalculatedStatus:',
+        recalculatedStatus,
+      );
       updatedData.status = recalculatedStatus;
 
       await this.applicationsService.update({ id }, updatedData);
@@ -447,6 +471,18 @@ export class ApplicationMediator {
           updatedData.passed_exam === true
             ? 'Yes'
             : updatedData.passed_exam === false
+            ? 'No'
+            : '-',
+        passedExamEmailSent:
+          application.passed_exam_email_sent === true
+            ? 'Yes'
+            : application.passed_exam_email_sent === false
+            ? 'No'
+            : '-',
+        passedScreening:
+          application.passed_screening === true
+            ? 'Yes'
+            : application.passed_screening === false
             ? 'No'
             : '-',
       });
