@@ -102,8 +102,9 @@
                                 margin: 20px 0;
                               '
                             >
-                              Orientation: Thursday, June 20th, 2024 (9:00 AM -
-                              6:00 PM)
+                              Orientation:
+                              {{orientationDate}}
+                              starting 9:00 AM until 6:00 PM
                             </p>
                             <p
                               style='
@@ -113,8 +114,9 @@
                                 margin: 20px 0;
                               '
                             >
-                              Classes Start: Monday, June 24th, 2024 (Online via
-                              Google Meet)
+                              Classes Start:
+                              {{classDebutDate}}
+                              (Online via Google Meet)
                             </p>
                             <p
                               style='
@@ -127,19 +129,22 @@
                               You will receive an invitation link on the Slack
                               channel once all participants confirm their
                               participation. Please confirm by filling out the
-                              form below by Tuesday, June 18th, 2024:
+                              form below by
+                              {{submissionConfirmationDate}}:
                             </p>
                             <p style='text-align: center'>
                               <a
-                                href='https://forms.gle/qzf6i8k5KpdxZHVw8'
+                                href='{{statusConfirmationForm}}'
+                                target='_blank'
                                 style='
-                                  background: rgb(40, 238, 167);
-                                  color: #000;
-                                  text-decoration: none;
-                                  padding: 10px 18px;
-                                  border-radius: 6px;
-                                  font-weight: bold;
-                                '
+                                    background: rgb(40, 238, 167);
+                                    color: #000;
+                                    text-decoration: none;
+                                    padding: 10px 18px;
+                                    border-radius: 6px;
+                                    font-weight: bold;
+                                    display: inline-block;
+                                  '
                               >
                                 Confirm Participation
                               </a>
