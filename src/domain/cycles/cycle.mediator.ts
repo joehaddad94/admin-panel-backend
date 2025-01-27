@@ -98,10 +98,23 @@ export class CycleMediator {
           throw new Error('Cycle Name must be unique.');
         }
 
+        const program = await this.programService.findOne({ id: programId });
+        if (!program) {
+          throw new Error('Program with the provided ID does not exist.');
+        }
+
+        const programAbbreviation = program.abbreviation;
+
+        const code = await this.cycleService.generateCycleCode(
+          programAbbreviation,
+          programId,
+        );
+
         cycle = this.cycleService.create({
           name: cycleName,
           from_date: fromDate,
           to_date: toDate,
+          code,
           created_at: new Date(),
           updated_at: new Date(),
         });
