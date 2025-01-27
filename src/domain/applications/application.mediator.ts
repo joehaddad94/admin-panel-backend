@@ -966,7 +966,7 @@ export class ApplicationMediator {
     const passedTemplateName = 'FSE/passedExam.hbs';
     const failedTemplateName = 'FSE/failedExam.hbs';
     const passedSubject = 'SE Factory | Welcome to Stage 3';
-    const failedSubject = 'SE Factory | Full Stack Engineer';
+    const failedSubject = 'SE Factory | Full Stack Software Engineer';
     let passedMailerResponse;
     let failedMailerResponse;
 
