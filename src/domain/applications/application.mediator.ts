@@ -385,7 +385,10 @@ export class ApplicationMediator {
 
       const { threshold } = thresholdCycle;
 
-      if (examScore !== undefined) {
+      if (
+        examScore !== undefined &&
+        examScore !== Number(application.exam_score)
+      ) {
         const { passedExam, passedExamDate } = calculatePassedExam(
           updatedData.exam_score,
           threshold.exam_passing_grade,
@@ -393,6 +396,9 @@ export class ApplicationMediator {
 
         updatedData.passed_exam = passedExam;
         updatedData.passed_exam_date = passedExamDate;
+      } else {
+        updatedData.passed_exam = application.passed_exam;
+        updatedData.passed_exam_date = application.passed_exam_date;
       }
 
       const techScoreToUse =
@@ -1142,10 +1148,6 @@ export class ApplicationMediator {
     if (emailsToSend.length > 0) {
       for (const emailData of emailsToSend) {
         const { email, templateName, subject, templateVariables } = emailData!;
-        console.log(
-          '🚀 ~ ApplicationMediator ~ sendStatusEmail= ~ templateVariables:',
-          templateVariables,
-        );
 
         const response = await this.mailService.sendEmails(
           [email],
