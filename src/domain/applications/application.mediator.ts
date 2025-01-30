@@ -368,17 +368,12 @@ export class ApplicationMediator {
       }
 
       const updatedData: any = {
-        exam_score:
-          examScore !== 0 ? examScore : Number(application.exam_score),
+        exam_score: examScore !== undefined ? examScore : null,
         tech_interview_score:
-          techInterviewScore !== 0
-            ? techInterviewScore
-            : Number(application.tech_interview_score),
+          techInterviewScore !== undefined ? techInterviewScore : null,
         soft_interview_score:
-          softInterviewScore !== 0
-            ? softInterviewScore
-            : Number(application.soft_interview_score),
-        remarks: remarks !== '' ? remarks : application.remarks,
+          softInterviewScore !== undefined ? softInterviewScore : null,
+        remarks: remarks !== undefined ? remarks : null,
         status: applicationStatus,
         updated_at: new Date(),
       };
@@ -387,7 +382,8 @@ export class ApplicationMediator {
 
       if (
         examScore !== undefined &&
-        examScore !== Number(application.exam_score)
+        (application.exam_score === null ||
+          examScore !== Number(application.exam_score))
       ) {
         const { passedExam, passedExamDate } = calculatePassedExam(
           updatedData.exam_score,
@@ -396,15 +392,22 @@ export class ApplicationMediator {
 
         updatedData.passed_exam = passedExam;
         updatedData.passed_exam_date = passedExamDate;
+      } else if (examScore === null) {
+        updatedData.passed_exam = null;
+        updatedData.passed_exam_date = null;
       } else {
         updatedData.passed_exam = application.passed_exam;
         updatedData.passed_exam_date = application.passed_exam_date;
       }
 
       const techScoreToUse =
-        techInterviewScore ?? application.tech_interview_score;
+        techInterviewScore !== undefined
+          ? techInterviewScore
+          : application.tech_interview_score;
       const softScoreToUse =
-        softInterviewScore ?? application.soft_interview_score;
+        softInterviewScore !== undefined
+          ? softInterviewScore
+          : application.soft_interview_score;
 
       let recalculatedStatus = updatedData.status;
 
@@ -413,7 +416,10 @@ export class ApplicationMediator {
         (applicationStatus !== application.status ||
           application.status === null);
 
-      if (!skipStatusUpdate) {
+      if (techScoreToUse == null || softScoreToUse == null) {
+        updatedData.passed_interview = null;
+        updatedData.passed_interview_date = null;
+      } else if (!skipStatusUpdate) {
         if (techScoreToUse && softScoreToUse) {
           const {
             passedInterview,
@@ -433,7 +439,6 @@ export class ApplicationMediator {
 
           updatedData.passed_interview = passedInterview;
           updatedData.passed_interview_date = passedInterviewDate;
-
           recalculatedStatus = calculatedStatus;
         }
       } else {
