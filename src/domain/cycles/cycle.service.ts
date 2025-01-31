@@ -5,10 +5,7 @@ import { Cycles } from 'src/core/data/database/entities/cycle.entity';
 
 @Injectable()
 export class CycleService extends BaseService<CycleRepository, Cycles> {
-  constructor(
-    private readonly cycleRepository: CycleRepository,
-    private readonly cycleService: CycleService,
-  ) {
+  constructor(private readonly cycleRepository: CycleRepository) {
     super(cycleRepository);
   }
 

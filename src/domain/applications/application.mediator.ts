@@ -45,9 +45,18 @@ export class ApplicationMediator {
         pageSize: dtoPageSize,
         cycleId,
       } = filtersDto;
+      console.log(
+        '🚀 ~ ApplicationMediator ~ returncatcher ~ programId:',
+        programId,
+      );
+      console.log(
+        '🚀 ~ ApplicationMediator ~ returncatcher ~ cycleId:',
+        cycleId,
+      );
 
       const currentPage = dtoPage ?? page;
       const currentPageSize = dtoPageSize ?? pageSize;
+      let latestCycle;
 
       const options: GlobalEntities[] = [
         'applicationInfo',
@@ -59,15 +68,33 @@ export class ApplicationMediator {
       const whereConditions: any = {};
 
       if (programId) {
-        if (whereConditions.applicationProgram === undefined) {
+        if (!whereConditions.applicationProgram) {
           whereConditions.applicationProgram = {};
         }
         whereConditions.applicationProgram.programId = programId;
-      } else if (cycleId) {
-        if (whereConditions.applicationCycle === undefined) {
+      }
+
+      if (cycleId) {
+        if (!whereConditions.applicationCycle) {
           whereConditions.applicationCycle = {};
         }
         whereConditions.applicationCycle.cycleId = cycleId;
+        console.log(
+          '🚀 ~ ApplicationMediator ~ returncatcher ~ whereConditions:',
+          whereConditions,
+        );
+      } else if (cycleId) {
+        latestCycle = await this.applicationsService.getLatestCycle(programId);
+        console.log(
+          '🚀 ~ ApplicationMediator ~ returncatcher ~ latestCycle:',
+          latestCycle,
+        );
+        if (latestCycle) {
+          if (!whereConditions.applicationCycle) {
+            whereConditions.applicationCycle = {};
+          }
+          whereConditions.applicationCycle.cycleId = latestCycle.id;
+        }
       }
 
       const [applications, total] = await this.applicationsService.findAndCount(
@@ -165,6 +192,7 @@ export class ApplicationMediator {
         total,
         page: currentPage,
         pageSize: currentPageSize,
+        latestCycle,
       };
     });
   };

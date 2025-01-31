@@ -13,6 +13,7 @@ import { convertToCamelCase } from '../../core/helpers/camelCase';
 import { Admin, In } from 'typeorm';
 import { GlobalEntities } from '../../core/data/types';
 import { ProgramService } from '../programs/program.service';
+import { CycleRepository } from './cycle.repository';
 
 @Injectable()
 export class CycleMediator {
