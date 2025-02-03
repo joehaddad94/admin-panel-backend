@@ -12,9 +12,7 @@ export function convertToCamelCase(obj: any): any {
     const value = obj[key];
     const camelKey = key.replace(/_([a-z])/g, (g) => g[1].toUpperCase());
 
-    if (value === null || typeof value !== 'object') {
-      camelCaseObj[camelKey] = value;
-    } else if (value instanceof Date) {
+    if (value instanceof Date) {
       camelCaseObj[camelKey] = value.toISOString();
     } else {
       camelCaseObj[camelKey] = convertToCamelCase(value);
