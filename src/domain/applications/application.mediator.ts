@@ -45,15 +45,6 @@ export class ApplicationMediator {
         pageSize: dtoPageSize,
         cycleId,
       } = filtersDto;
-      console.log(
-        '🚀 ~ ApplicationMediator ~ returncatcher ~ programId:',
-        programId,
-      );
-      console.log(
-        '🚀 ~ ApplicationMediator ~ returncatcher ~ cycleId:',
-        cycleId,
-      );
-
       const currentPage = dtoPage ?? page;
       const currentPageSize = dtoPageSize ?? pageSize;
       let latestCycle;
@@ -79,16 +70,8 @@ export class ApplicationMediator {
           whereConditions.applicationCycle = {};
         }
         whereConditions.applicationCycle.cycleId = cycleId;
-        console.log(
-          '🚀 ~ ApplicationMediator ~ returncatcher ~ whereConditions:',
-          whereConditions,
-        );
-      } else if (cycleId) {
+      } else {
         latestCycle = await this.applicationsService.getLatestCycle(programId);
-        console.log(
-          '🚀 ~ ApplicationMediator ~ returncatcher ~ latestCycle:',
-          latestCycle,
-        );
         if (latestCycle) {
           if (!whereConditions.applicationCycle) {
             whereConditions.applicationCycle = {};
@@ -142,7 +125,12 @@ export class ApplicationMediator {
         infoCreatedAt: app.applicationInfo[0].info.created_at,
         programName: app.applicationProgram[0].program.program_name,
         program: app.applicationProgram[0].program.abbreviation,
-        passedScreening: app.passed_screening,
+        passedScreening:
+          app.passed_screening === true
+            ? 'Yes'
+            : app.passed_screening === false
+            ? 'No'
+            : '-',
         screeningEmailSent:
           app.screening_email_sent === true
             ? 'Yes'
@@ -158,7 +146,12 @@ export class ApplicationMediator {
             : '-',
         passedScreeningDate: new Date(app.passed_screening_date),
         examScore: app.exam_score,
-        passedExam: app.passed_exam,
+        passedExam:
+          app.passed_exam === true
+            ? 'Yes'
+            : app.passed_exam === false
+            ? 'No'
+            : '-',
         passedExamDate: new Date(app.passed_exam_date),
         passedExamEmailSent:
           app.passed_exam_email_sent === true
@@ -169,7 +162,12 @@ export class ApplicationMediator {
         techInterviewScore: app.tech_interview_score,
         softInterviewScore: app.soft_interview_score,
         passedInterviewDate: new Date(app.passed_interview_date),
-        passedInterview: app.passed_interview,
+        passedInterview:
+          app.passed_interview === true
+            ? 'Yes'
+            : app.passed_interview === false
+            ? 'No'
+            : '-',
         applicationStatus: app.status,
         statusEmailSent:
           app.status_email_sent === true
@@ -357,6 +355,7 @@ export class ApplicationMediator {
     return catcher(async () => {
       const {
         id,
+        isEligible,
         examScore,
         techInterviewScore,
         softInterviewScore,
@@ -367,16 +366,6 @@ export class ApplicationMediator {
 
       const application = await this.applicationsService.findOne({ id });
       throwNotFound({ entity: 'application', errorCheck: !application });
-
-      const { is_eligible, passed_screening, screening_email_sent } =
-        application;
-
-      if (!is_eligible || !passed_screening || !screening_email_sent) {
-        throwError(
-          'Application cannot be edited. Ensure it meets the eligibility and screening criteria.',
-          HttpStatus.BAD_REQUEST,
-        );
-      }
 
       const options: GlobalEntities[] = ['thresholdCycle'];
       const cycle = await this.cyclesService.findOne({ id: cycleId }, options);
@@ -396,6 +385,7 @@ export class ApplicationMediator {
       }
 
       const updatedData: any = {
+        is_eligible: isEligible,
         exam_score:
           examScore !== 0 ? examScore : Number(application.exam_score),
         tech_interview_score:
@@ -465,11 +455,21 @@ export class ApplicationMediator {
       }
 
       updatedData.status = recalculatedStatus;
+      console.log(
+        '🚀 ~ ApplicationMediator ~ returncatcher ~ updatedData:',
+        updatedData,
+      );
 
       await this.applicationsService.update({ id }, updatedData);
 
       const updatedPayload = convertToCamelCase({
         ...updatedData,
+        isEligible:
+          updatedData.is_eligible === true
+            ? 'Yes'
+            : updatedData.is_eligible === false
+            ? 'No'
+            : '-',
         passedInterview:
           updatedData.passed_interview === true
             ? 'Yes'

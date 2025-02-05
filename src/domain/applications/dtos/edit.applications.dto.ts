@@ -9,6 +9,7 @@ import {
   MinLength,
   MaxLength,
   IsNotEmpty,
+  IsBoolean,
 } from 'class-validator';
 
 export class EditApplicationsDto {
@@ -16,6 +17,10 @@ export class EditApplicationsDto {
   @IsNotEmpty({ message: 'ID must be provided' })
   @IsInt({ message: 'ID must be an integer' })
   id: number;
+
+  @ApiProperty({ required: false })
+  @IsOptional()
+  isEligible?: boolean;
 
   @ApiProperty({ required: false })
   @IsOptional()
