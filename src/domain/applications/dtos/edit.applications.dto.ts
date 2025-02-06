@@ -9,7 +9,6 @@ import {
   MinLength,
   MaxLength,
   IsNotEmpty,
-  IsBoolean,
 } from 'class-validator';
 
 export class EditApplicationsDto {
@@ -59,4 +58,9 @@ export class EditApplicationsDto {
   @IsNotEmpty({ message: 'Cycle Id must be provided' })
   @IsNumber({}, { message: 'Cycle Id must be a number' })
   cycleId: number;
+
+  @ApiProperty({ required: false })
+  @IsOptional()
+  @IsNumber({}, { message: 'Cycle Id must be a number' })
+  inputCycleId: number;
 }

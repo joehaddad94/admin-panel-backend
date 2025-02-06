@@ -177,6 +177,7 @@ export class ApplicationMediator {
             : '-',
         remarks: app.remarks,
         extras: app.extras,
+        cycleId: app.applicationCycle[0]?.cycleId,
       }));
 
       mappedApplications.sort(
@@ -362,6 +363,7 @@ export class ApplicationMediator {
         remarks,
         applicationStatus,
         cycleId,
+        inputCycleId,
       } = data;
 
       const application = await this.applicationsService.findOne({ id });
@@ -387,18 +389,19 @@ export class ApplicationMediator {
       const updatedData: any = {
         is_eligible: isEligible,
         exam_score:
-          examScore !== 0 ? examScore : Number(application.exam_score),
+          examScore !== undefined ? examScore : Number(application.exam_score),
         tech_interview_score:
-          techInterviewScore !== 0
+          techInterviewScore !== undefined
             ? techInterviewScore
             : Number(application.tech_interview_score),
         soft_interview_score:
-          softInterviewScore !== 0
+          softInterviewScore !== undefined
             ? softInterviewScore
             : Number(application.soft_interview_score),
         remarks: remarks !== '' ? remarks : application.remarks,
         status: applicationStatus,
         updated_at: new Date(),
+        cycle_id: inputCycleId,
       };
 
       const { threshold } = thresholdCycle;
