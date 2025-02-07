@@ -10,7 +10,10 @@ import { CycleService } from '../cycles/cycle.service';
 import { throwError } from 'src/core/settings/base/errors/base.error';
 import { MailService } from '../mail/mail.service';
 import { ExamScoresDto } from './dtos/exam.scores.dto';
-import { EditApplicationsDto } from './dtos/edit.applications.dto';
+import {
+  EditApplicationDto,
+  EditApplicationsDto,
+} from './dtos/edit.applications.dto';
 import { convertToCamelCase } from 'src/core/helpers/camelCase';
 import { validateThresholdEntity } from 'src/core/helpers/validateThresholds';
 import { Status } from 'src/core/data/types/applications/applications.types';
@@ -353,7 +356,7 @@ export class ApplicationMediator {
     });
   };
 
-  editApplications = async (data: EditApplicationsDto) => {
+  editApplication = async (data: EditApplicationDto) => {
     return catcher(async () => {
       const {
         id,
@@ -520,6 +523,13 @@ export class ApplicationMediator {
         message: 'Application updated successfully.',
         updatedPayload,
       };
+    });
+  };
+
+  editApplications = async (data: EditApplicationsDto) => {
+    return catcher(async () => {
+      const { ids, cycleId, inputCycleId, isEligible } = data;
+      console.log('🚀 ~ ApplicationMediator ~ returncatcher ~ data:', data);
     });
   };
 

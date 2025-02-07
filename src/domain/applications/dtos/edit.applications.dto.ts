@@ -11,7 +11,7 @@ import {
   IsNotEmpty,
 } from 'class-validator';
 
-export class EditApplicationsDto {
+export class EditApplicationDto {
   @ApiProperty()
   @IsNotEmpty({ message: 'ID must be provided' })
   @IsInt({ message: 'ID must be an integer' })
@@ -53,6 +53,26 @@ export class EditApplicationsDto {
   @MinLength(1, { message: 'Status must be at least 1 character long' })
   @MaxLength(50, { message: 'Status must be at most 50 characters long' })
   applicationStatus?: string;
+
+  @ApiProperty()
+  @IsNotEmpty({ message: 'Cycle Id must be provided' })
+  @IsNumber({}, { message: 'Cycle Id must be a number' })
+  cycleId: number;
+
+  @ApiProperty({ required: false })
+  @IsOptional()
+  @IsNumber({}, { message: 'Cycle Id must be a number' })
+  inputCycleId: number;
+}
+
+export class EditApplicationsDto {
+  @ApiProperty({ type: [Number], description: 'Array of application IDs' })
+  @IsNotEmpty({ message: 'Ids must be provided' })
+  ids: number[];
+
+  @ApiProperty({ required: false })
+  @IsOptional()
+  isEligible?: boolean;
 
   @ApiProperty()
   @IsNotEmpty({ message: 'Cycle Id must be provided' })
