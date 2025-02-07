@@ -24,6 +24,7 @@ import {
 } from 'src/core/helpers/calculatePassingGrades';
 import { In } from 'typeorm';
 import { InterviewScoresDto } from './dtos/interview.scores.dto';
+import { ApplicationCycle } from 'src/core/data/database/relations/application-cycle.entity';
 
 @Injectable()
 export class ApplicationMediator {
@@ -401,7 +402,6 @@ export class ApplicationMediator {
         remarks: remarks !== '' ? remarks : application.remarks,
         status: applicationStatus,
         updated_at: new Date(),
-        cycle_id: inputCycleId,
       };
 
       const { threshold } = thresholdCycle;
@@ -458,12 +458,27 @@ export class ApplicationMediator {
       }
 
       updatedData.status = recalculatedStatus;
-      console.log(
-        '🚀 ~ ApplicationMediator ~ returncatcher ~ updatedData:',
-        updatedData,
-      );
 
       await this.applicationsService.update({ id }, updatedData);
+
+      if (inputCycleId && inputCycleId !== cycleId) {
+        const applicationCycle = await ApplicationCycle.findOne({
+          where: { applicationId: id, cycleId: cycleId },
+        });
+
+        if (applicationCycle) {
+          applicationCycle.cycleId = inputCycleId;
+
+          await ApplicationCycle.update(
+            { id: applicationCycle.id },
+            { cycleId: inputCycleId },
+          );
+
+          updatedData.cycleId = inputCycleId;
+        }
+      } else {
+        updatedData.cycleId = cycleId;
+      }
 
       const updatedPayload = convertToCamelCase({
         ...updatedData,
