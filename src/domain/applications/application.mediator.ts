@@ -28,6 +28,8 @@ import {
 import { In } from 'typeorm';
 import { InterviewScoresDto } from './dtos/interview.scores.dto';
 import { ApplicationCycle } from 'src/core/data/database/relations/application-cycle.entity';
+import { Application } from 'src/core/data/database/entities/application.entity';
+import { ApplicationRepository } from './application.repository';
 
 @Injectable()
 export class ApplicationMediator {
@@ -529,7 +531,69 @@ export class ApplicationMediator {
   editApplications = async (data: EditApplicationsDto) => {
     return catcher(async () => {
       const { ids, cycleId, inputCycleId, isEligible } = data;
-      console.log('🚀 ~ ApplicationMediator ~ returncatcher ~ data:', data);
+      const idsArray = Array.isArray(ids) ? ids : [ids];
+
+      if (isEligible !== undefined) {
+        console.log(
+          '🚀 ~ ApplicationMediator ~ returncatcher ~ isEligible:',
+          isEligible,
+        );
+        console.log('Updating isEligible for applications:', idsArray);
+        const updateResult = await Application.update(
+          { id: In(idsArray) },
+          { is_eligible: isEligible },
+        );
+        console.log('🚀 ~ isEligible Update Result:', updateResult);
+      }
+
+      if (inputCycleId) {
+        console.log(
+          '🚀 ~ ApplicationMediator ~ returncatcher ~ inputCycleId:',
+          inputCycleId,
+        );
+        console.log('Updating cycleId for ApplicationCycle:', idsArray);
+        const updateResult = await ApplicationCycle.update(
+          { applicationId: In(idsArray) },
+          { cycleId: inputCycleId },
+        );
+        console.log('🚀 ~ cycleId Update Result:', updateResult);
+      }
+
+      const options: GlobalEntities[] = ['applicationCycle'];
+
+      const applicationsEdited = await this.applicationsService.findMany(
+        {
+          id: In(idsArray),
+        },
+        options,
+      );
+      console.log(
+        '🚀 ~ ApplicationMediator ~ returncatcher ~ applicationsEdited:',
+        applicationsEdited,
+      );
+
+      let updatedPayload = applicationsEdited.map((app) => {
+        return {
+          id: app.id,
+          isEligible:
+            app.is_eligible === true
+              ? 'Yes'
+              : app.is_eligible === false
+              ? 'No'
+              : '-',
+          cycleId: app.applicationCycle[0].cycleId,
+        };
+      });
+
+      updatedPayload = convertToCamelCase(updatedPayload);
+      console.log(
+        '🚀 ~ ApplicationMediator ~ returncatcher ~ updatedPayload:',
+        updatedPayload,
+      );
+      return {
+        message: 'Applications adjusted successfully.',
+        updatedPayload,
+      };
     });
   };
 
@@ -1198,10 +1262,6 @@ export class ApplicationMediator {
     if (emailsToSend.length > 0) {
       for (const emailData of emailsToSend) {
         const { email, templateName, subject, templateVariables } = emailData!;
-        console.log(
-          '🚀 ~ ApplicationMediator ~ sendStatusEmail= ~ templateVariables:',
-          templateVariables,
-        );
 
         const response = await this.mailService.sendEmails(
           [email],
