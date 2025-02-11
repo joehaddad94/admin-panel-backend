@@ -534,29 +534,17 @@ export class ApplicationMediator {
       const idsArray = Array.isArray(ids) ? ids : [ids];
 
       if (isEligible !== undefined) {
-        console.log(
-          '🚀 ~ ApplicationMediator ~ returncatcher ~ isEligible:',
-          isEligible,
-        );
-        console.log('Updating isEligible for applications:', idsArray);
         const updateResult = await Application.update(
           { id: In(idsArray) },
           { is_eligible: isEligible },
         );
-        console.log('🚀 ~ isEligible Update Result:', updateResult);
       }
 
       if (inputCycleId) {
-        console.log(
-          '🚀 ~ ApplicationMediator ~ returncatcher ~ inputCycleId:',
-          inputCycleId,
-        );
-        console.log('Updating cycleId for ApplicationCycle:', idsArray);
         const updateResult = await ApplicationCycle.update(
           { applicationId: In(idsArray) },
           { cycleId: inputCycleId },
         );
-        console.log('🚀 ~ cycleId Update Result:', updateResult);
       }
 
       const options: GlobalEntities[] = ['applicationCycle'];
@@ -567,15 +555,11 @@ export class ApplicationMediator {
         },
         options,
       );
-      console.log(
-        '🚀 ~ ApplicationMediator ~ returncatcher ~ applicationsEdited:',
-        applicationsEdited,
-      );
 
       let updatedPayload = applicationsEdited.map((app) => {
         return {
           id: app.id,
-          isEligible:
+          eligible:
             app.is_eligible === true
               ? 'Yes'
               : app.is_eligible === false
@@ -586,10 +570,7 @@ export class ApplicationMediator {
       });
 
       updatedPayload = convertToCamelCase(updatedPayload);
-      console.log(
-        '🚀 ~ ApplicationMediator ~ returncatcher ~ updatedPayload:',
-        updatedPayload,
-      );
+
       return {
         message: 'Applications adjusted successfully.',
         updatedPayload,
