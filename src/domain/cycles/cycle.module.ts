@@ -11,7 +11,11 @@ import { AuthModule } from '../auth';
 import { ProgramModule } from '../programs/program.module';
 
 @Module({
-  imports: [TypeOrmModule.forFeature([Cycles]), AuthModule, ProgramModule],
+  imports: [
+    TypeOrmModule.forFeature([Cycles, CycleRepository]),
+    AuthModule,
+    ProgramModule,
+  ],
   controllers: [CycleController],
   providers: [CycleMediator, CycleRepository, CycleService, JwtStrategy],
   exports: [CycleRepository, CycleService],

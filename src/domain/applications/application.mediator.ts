@@ -10,7 +10,10 @@ import { CycleService } from '../cycles/cycle.service';
 import { throwError } from 'src/core/settings/base/errors/base.error';
 import { MailService } from '../mail/mail.service';
 import { ExamScoresDto } from './dtos/exam.scores.dto';
-import { EditApplicationsDto } from './dtos/edit.applications.dto';
+import {
+  EditApplicationDto,
+  EditApplicationsDto,
+} from './dtos/edit.applications.dto';
 import { convertToCamelCase } from 'src/core/helpers/camelCase';
 import { validateThresholdEntity } from 'src/core/helpers/validateThresholds';
 import { Status } from 'src/core/data/types/applications/applications.types';
@@ -24,6 +27,9 @@ import {
 } from 'src/core/helpers/calculatePassingGrades';
 import { In } from 'typeorm';
 import { InterviewScoresDto } from './dtos/interview.scores.dto';
+import { ApplicationCycle } from 'src/core/data/database/relations/application-cycle.entity';
+import { Application } from 'src/core/data/database/entities/application.entity';
+import { ApplicationRepository } from './application.repository';
 
 @Injectable()
 export class ApplicationMediator {
@@ -45,9 +51,9 @@ export class ApplicationMediator {
         pageSize: dtoPageSize,
         cycleId,
       } = filtersDto;
-
       const currentPage = dtoPage ?? page;
       const currentPageSize = dtoPageSize ?? pageSize;
+      let latestCycle;
 
       const options: GlobalEntities[] = [
         'applicationInfo',
@@ -59,15 +65,25 @@ export class ApplicationMediator {
       const whereConditions: any = {};
 
       if (programId) {
-        if (whereConditions.applicationProgram === undefined) {
+        if (!whereConditions.applicationProgram) {
           whereConditions.applicationProgram = {};
         }
         whereConditions.applicationProgram.programId = programId;
-      } else if (cycleId) {
-        if (whereConditions.applicationCycle === undefined) {
+      }
+
+      if (cycleId) {
+        if (!whereConditions.applicationCycle) {
           whereConditions.applicationCycle = {};
         }
         whereConditions.applicationCycle.cycleId = cycleId;
+      } else {
+        latestCycle = await this.applicationsService.getLatestCycle(programId);
+        if (latestCycle) {
+          if (!whereConditions.applicationCycle) {
+            whereConditions.applicationCycle = {};
+          }
+          whereConditions.applicationCycle.cycleId = latestCycle.id;
+        }
       }
 
       const [applications, total] = await this.applicationsService.findAndCount(
@@ -115,7 +131,12 @@ export class ApplicationMediator {
         infoCreatedAt: app.applicationInfo[0].info.created_at,
         programName: app.applicationProgram[0].program.program_name,
         program: app.applicationProgram[0].program.abbreviation,
-        passedScreening: app.passed_screening,
+        passedScreening:
+          app.passed_screening === true
+            ? 'Yes'
+            : app.passed_screening === false
+            ? 'No'
+            : '-',
         screeningEmailSent:
           app.screening_email_sent === true
             ? 'Yes'
@@ -131,7 +152,12 @@ export class ApplicationMediator {
             : '-',
         passedScreeningDate: new Date(app.passed_screening_date),
         examScore: app.exam_score,
-        passedExam: app.passed_exam,
+        passedExam:
+          app.passed_exam === true
+            ? 'Yes'
+            : app.passed_exam === false
+            ? 'No'
+            : '-',
         passedExamDate: new Date(app.passed_exam_date),
         passedExamEmailSent:
           app.passed_exam_email_sent === true
@@ -142,7 +168,12 @@ export class ApplicationMediator {
         techInterviewScore: app.tech_interview_score,
         softInterviewScore: app.soft_interview_score,
         passedInterviewDate: new Date(app.passed_interview_date),
-        passedInterview: app.passed_interview,
+        passedInterview:
+          app.passed_interview === true
+            ? 'Yes'
+            : app.passed_interview === false
+            ? 'No'
+            : '-',
         applicationStatus: app.status,
         statusEmailSent:
           app.status_email_sent === true
@@ -152,6 +183,7 @@ export class ApplicationMediator {
             : '-',
         remarks: app.remarks,
         extras: app.extras,
+        cycleId: app.applicationCycle[0]?.cycleId,
       }));
 
       mappedApplications.sort(
@@ -165,6 +197,7 @@ export class ApplicationMediator {
         total,
         page: currentPage,
         pageSize: currentPageSize,
+        latestCycle,
       };
     });
   };
@@ -325,30 +358,22 @@ export class ApplicationMediator {
     });
   };
 
-  editApplications = async (data: EditApplicationsDto) => {
+  editApplication = async (data: EditApplicationDto) => {
     return catcher(async () => {
       const {
         id,
+        isEligible,
         examScore,
         techInterviewScore,
         softInterviewScore,
         remarks,
         applicationStatus,
         cycleId,
+        inputCycleId,
       } = data;
 
       const application = await this.applicationsService.findOne({ id });
       throwNotFound({ entity: 'application', errorCheck: !application });
-
-      const { is_eligible, passed_screening, screening_email_sent } =
-        application;
-
-      if (!is_eligible || !passed_screening || !screening_email_sent) {
-        throwError(
-          'Application cannot be edited. Ensure it meets the eligibility and screening criteria.',
-          HttpStatus.BAD_REQUEST,
-        );
-      }
 
       const options: GlobalEntities[] = ['thresholdCycle'];
       const cycle = await this.cyclesService.findOne({ id: cycleId }, options);
@@ -368,12 +393,19 @@ export class ApplicationMediator {
       }
 
       const updatedData: any = {
-        exam_score: examScore !== undefined ? examScore : null,
+
+        is_eligible: isEligible,
+        exam_score:
+          examScore !== undefined ? examScore : Number(application.exam_score),
         tech_interview_score:
-          techInterviewScore !== undefined ? techInterviewScore : null,
+          techInterviewScore !== undefined
+            ? techInterviewScore
+            : Number(application.tech_interview_score),
         soft_interview_score:
-          softInterviewScore !== undefined ? softInterviewScore : null,
-        remarks: remarks !== undefined ? remarks : null,
+          softInterviewScore !== undefined
+            ? softInterviewScore
+            : Number(application.soft_interview_score),
+        remarks: remarks !== '' ? remarks : application.remarks,
         status: applicationStatus,
         updated_at: new Date(),
       };
@@ -451,8 +483,33 @@ export class ApplicationMediator {
 
       await this.applicationsService.update({ id }, updatedData);
 
+      if (inputCycleId && inputCycleId !== cycleId) {
+        const applicationCycle = await ApplicationCycle.findOne({
+          where: { applicationId: id, cycleId: cycleId },
+        });
+
+        if (applicationCycle) {
+          applicationCycle.cycleId = inputCycleId;
+
+          await ApplicationCycle.update(
+            { id: applicationCycle.id },
+            { cycleId: inputCycleId },
+          );
+
+          updatedData.cycleId = inputCycleId;
+        }
+      } else {
+        updatedData.cycleId = cycleId;
+      }
+
       const updatedPayload = convertToCamelCase({
         ...updatedData,
+        isEligible:
+          updatedData.is_eligible === true
+            ? 'Yes'
+            : updatedData.is_eligible === false
+            ? 'No'
+            : '-',
         passedInterview:
           updatedData.passed_interview === true
             ? 'Yes'
@@ -483,6 +540,56 @@ export class ApplicationMediator {
 
       return {
         message: 'Application updated successfully.',
+        updatedPayload,
+      };
+    });
+  };
+
+  editApplications = async (data: EditApplicationsDto) => {
+    return catcher(async () => {
+      const { ids, cycleId, inputCycleId, isEligible } = data;
+      const idsArray = Array.isArray(ids) ? ids : [ids];
+
+      if (isEligible !== undefined) {
+        const updateResult = await Application.update(
+          { id: In(idsArray) },
+          { is_eligible: isEligible },
+        );
+      }
+
+      if (inputCycleId) {
+        const updateResult = await ApplicationCycle.update(
+          { applicationId: In(idsArray) },
+          { cycleId: inputCycleId },
+        );
+      }
+
+      const options: GlobalEntities[] = ['applicationCycle'];
+
+      const applicationsEdited = await this.applicationsService.findMany(
+        {
+          id: In(idsArray),
+        },
+        options,
+      );
+
+      let updatedPayload = applicationsEdited.map((app) => {
+        return {
+          id: app.id,
+          eligible:
+            app.is_eligible === true
+              ? 'Yes'
+              : app.is_eligible === false
+              ? 'No'
+              : '-',
+          cycleId: app.applicationCycle[0].cycleId,
+        };
+      });
+
+      updatedPayload = convertToCamelCase(updatedPayload);
+
+      return {
+        message: 'Applications adjusted successfully.',
         updatedPayload,
       };
     });

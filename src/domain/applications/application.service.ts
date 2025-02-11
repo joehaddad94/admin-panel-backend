@@ -42,4 +42,27 @@ export class ApplicationService extends BaseService<
 
     return relevantCycle ? relevantCycle : null;
   }
+
+  async getLatestCycle(programId: number): Promise<any | null> {
+    const options: GlobalEntities[] = ['cycleProgram'];
+
+    const whereConditions: any = {
+      cycleProgram: {
+        program_id: programId,
+      },
+    };
+
+    const cycles = await this.cycleService.findMany(whereConditions, options);
+
+    const sortedCycles = cycles.sort((a, b) => {
+      const numA = parseInt(a.code.match(/\d+$/)?.[0] || '0', 10);
+      const numB = parseInt(b.code.match(/\d+$/)?.[0] || '0', 10);
+
+      return numB - numA;
+    });
+
+    const latestCycle = sortedCycles[0] || null;
+
+    return latestCycle;
+  }
 }
