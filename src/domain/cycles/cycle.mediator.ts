@@ -55,6 +55,10 @@ export class CycleMediator {
         abbreviation: cycle.cycleProgram?.program?.abbreviation,
       }));
 
+      flattenedCycles = flattenedCycles.sort((a, b) =>
+        a.code.localeCompare(b.code, undefined, { numeric: true }),
+      );
+
       flattenedCycles = convertToCamelCase(flattenedCycles);
 
       return { cycles: flattenedCycles, total, page, pageSize };
