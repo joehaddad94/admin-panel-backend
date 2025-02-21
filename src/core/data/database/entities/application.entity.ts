@@ -4,6 +4,7 @@ import {
   Column,
   Entity,
   OneToMany,
+  OneToOne,
   PrimaryGeneratedColumn,
 } from 'typeorm';
 import { ApplicationInfo } from '../relations/application-info.entity';
@@ -11,6 +12,7 @@ import { ApplicationProgram } from '../relations/application-program.entity';
 import { ApplicationUser } from '../relations/application-user.entity';
 import { ApplicationCycle } from '../relations/application-cycle.entity';
 import { Status } from '../../types/applications/applications.types';
+import { ApplicationSection } from '../relations/applications-sections.entity';
 
 @Entity('application_news')
 export class Application extends BaseEntity {
@@ -110,4 +112,11 @@ export class Application extends BaseEntity {
     { nullable: true },
   )
   applicationCycle: ApplicationCycle[];
+
+  @OneToOne(
+    () => ApplicationSection,
+    (applicationSection) => applicationSection.application,
+    { nullable: true },
+  )
+  applicationSection: ApplicationSection;
 }
