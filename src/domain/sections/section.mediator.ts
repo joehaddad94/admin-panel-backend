@@ -4,6 +4,7 @@ import { catcher } from 'src/core/helpers/operation';
 import { throwNotFound } from 'src/core/settings/base/errors/errors';
 import { GlobalEntities } from 'src/core/data/types';
 import { convertToCamelCase } from 'src/core/helpers/camelCase';
+import { In } from 'typeorm';
 
 @Injectable()
 export class SectionMediator {
@@ -34,8 +35,40 @@ export class SectionMediator {
         errorCheck: !found,
       });
 
-      let sections = convertToCamelCase(found);
+      let sections = found.map((section) => ({
+        ...section,
+        cycleName: section.sectionCycle?.cycle?.name,
+      }));
+
+      sections = convertToCamelCase(sections);
       return { sections, total };
+    });
+  };
+
+  deleteCycles = async (ids: string | string[]) => {
+    return catcher(async () => {
+      const idArray = Array.isArray(ids) ? ids : [ids];
+
+      const sectionsOptions: GlobalEntities[] = ['sectionCycle'];
+
+      const sections = await this.sectionService.findMany(
+        { id: In(idArray) },
+        sectionsOptions,
+      );
+
+      throwNotFound({
+        entity: 'sections',
+        errorCheck: !sections,
+      });
+
+      const sectionsIdsToDelete = sections.map((section) => section.id);
+
+      await this.sectionService.delete({ id: In(sectionsIdsToDelete) });
+
+      return {
+        message: 'Section(s) successfully deleted',
+        deletedIds: sectionsIdsToDelete,
+      };
     });
   };
 }
