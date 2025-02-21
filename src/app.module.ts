@@ -24,6 +24,8 @@ import { CycleModule } from './domain/cycles/cycle.module';
 import { DecisionDateModule } from './domain/decisionDates/decision-date.module';
 import { ThresholdModule } from './domain/thresholds/threshold.module';
 import { HealthCheckModule } from './domain/healthCheck/health.module';
+import { Sections } from './core/data/database/entities/section.entity';
+import { SectionModule } from './domain/sections/section.module';
 
 @Module({
   imports: [
@@ -56,6 +58,7 @@ import { HealthCheckModule } from './domain/healthCheck/health.module';
     DecisionDateModule,
     ThresholdModule,
     HealthCheckModule,
+    SectionModule,
   ],
   controllers: [AppController],
   providers: [AppService],
