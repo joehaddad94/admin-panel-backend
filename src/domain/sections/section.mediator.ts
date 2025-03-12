@@ -5,6 +5,9 @@ import { throwNotFound } from 'src/core/settings/base/errors/errors';
 import { GlobalEntities } from 'src/core/data/types';
 import { convertToCamelCase } from 'src/core/helpers/camelCase';
 import { In } from 'typeorm';
+import { CreateEditSectionDto } from './dtos/createEditSection.dtos';
+import { Sections } from 'src/core/data/database/entities/section.entity';
+import { SectionCycle } from 'src/core/data/database/relations/section-cycle.entity';
 
 @Injectable()
 export class SectionMediator {
@@ -42,6 +45,92 @@ export class SectionMediator {
 
       sections = convertToCamelCase(sections);
       return { sections, total };
+    });
+  };
+
+  createEditSection = async (data: CreateEditSectionDto) => {
+    return catcher(async () => {
+      const { sectionId, sectionName, cycleId } = data;
+      console.log('🚀 ~ SectionMediator ~ returncatcher ~ data:', data);
+
+      let section: Sections;
+      let savedSection: Sections;
+      let flattenedSection: any;
+      let successMessage: string;
+
+      if (sectionId) {
+        console.log('editing');
+        section = await this.sectionService.findOne({ id: sectionId }, [
+          'sectionCycle',
+        ]);
+        if (!section) {
+          throwNotFound({ entity: 'section', errorCheck: !section });
+        }
+
+        if (sectionName) section.name = sectionName;
+        if (section.sectionCycle) {
+          section.sectionCycle.cycle_id = cycleId;
+        }
+        section.updated_at = new Date();
+
+        section = (await this.sectionService.save(section)) as Sections;
+        savedSection = await this.sectionService.findOne({ id: section.id }, [
+          'sectionCycle',
+        ]);
+        console.log(
+          '🚀 ~ SectionMediator ~ returncatcher ~ savedSection:',
+          savedSection,
+        );
+
+        successMessage = 'Section successfully updated';
+      } else {
+        console.log('creating');
+        const existingSection = await this.sectionService.findOne({
+          name: sectionName,
+        });
+        if (existingSection) {
+          throw new Error('Cycle Name must be unique.');
+        }
+
+        const sectionCycle = new SectionCycle();
+        sectionCycle.cycle_id = cycleId;
+        await sectionCycle.save();
+
+        section = this.sectionService.create({
+          name: sectionName,
+          sectionCycle: sectionCycle,
+          created_at: new Date(),
+          updated_at: new Date(),
+        });
+
+        section = (await this.sectionService.save(section)) as Sections;
+        if (!section || !section.id) {
+          throw new Error('Section could not be created');
+        }
+
+        successMessage = 'Section created successfully';
+
+        savedSection = await this.sectionService.findOne({ id: section.id }, [
+          'sectionCycle',
+        ]);
+        if (!savedSection || !savedSection.sectionCycle) {
+          console.log('No sectionCycle found in savedSection:', savedSection);
+        } else {
+          console.log('Section with cycle:', savedSection);
+        }
+      }
+      flattenedSection = {
+        ...savedSection,
+        cycleName: savedSection.sectionCycle
+          ? savedSection.sectionCycle.cycle.name
+          : 'N/A',
+      };
+
+      flattenedSection = convertToCamelCase(flattenedSection);
+      return {
+        message: successMessage,
+        section: flattenedSection,
+      };
     });
   };
 
