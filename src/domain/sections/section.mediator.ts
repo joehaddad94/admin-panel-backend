@@ -51,7 +51,6 @@ export class SectionMediator {
   createEditSection = async (data: CreateEditSectionDto) => {
     return catcher(async () => {
       const { sectionId, sectionName, cycleId } = data;
-      console.log('🚀 ~ SectionMediator ~ returncatcher ~ data:', data);
 
       let section: Sections;
       let savedSection: Sections;
@@ -59,7 +58,6 @@ export class SectionMediator {
       let successMessage: string;
 
       if (sectionId) {
-        console.log('editing');
         section = await this.sectionService.findOne({ id: sectionId }, [
           'sectionCycle',
         ]);
@@ -77,20 +75,13 @@ export class SectionMediator {
           );
         }
 
-        console.log('🚀 ~ SectionMediator ~ returncatcher ~ section:', section);
-
         await this.sectionService.save(section);
         savedSection = await this.sectionService.findOne({ id: section.id }, [
           'sectionCycle',
         ]);
-        console.log(
-          '🚀 ~ SectionMediator ~ returncatcher ~ savedSection:',
-          savedSection,
-        );
 
         successMessage = 'Section successfully updated';
       } else {
-        console.log('creating');
         const existingSection = await this.sectionService.findOne({
           name: sectionName,
         });
@@ -119,11 +110,6 @@ export class SectionMediator {
         savedSection = await this.sectionService.findOne({ id: section.id }, [
           'sectionCycle',
         ]);
-        if (!savedSection || !savedSection.sectionCycle) {
-          console.log('No sectionCycle found in savedSection:', savedSection);
-        } else {
-          console.log('Section with cycle:', savedSection);
-        }
       }
       flattenedSection = {
         ...savedSection,
