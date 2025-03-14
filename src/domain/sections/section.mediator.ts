@@ -68,12 +68,18 @@ export class SectionMediator {
         }
 
         if (sectionName) section.name = sectionName;
-        if (section.sectionCycle) {
-          section.sectionCycle.cycle_id = cycleId;
-        }
         section.updated_at = new Date();
 
-        section = (await this.sectionService.save(section)) as Sections;
+        if (section.sectionCycle) {
+          await SectionCycle.update(
+            { id: section.sectionCycle.id },
+            { cycle_id: cycleId },
+          );
+        }
+
+        console.log('🚀 ~ SectionMediator ~ returncatcher ~ section:', section);
+
+        await this.sectionService.save(section);
         savedSection = await this.sectionService.findOne({ id: section.id }, [
           'sectionCycle',
         ]);
