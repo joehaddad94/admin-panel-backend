@@ -50,7 +50,12 @@ export class ApplicationMediator {
         page: dtoPage,
         pageSize: dtoPageSize,
         cycleId,
+        useAllCycles,
       } = filtersDto;
+      console.log(
+        '🚀 ~ ApplicationMediator ~ returncatcher ~ filtersDto:',
+        filtersDto,
+      );
       const currentPage = dtoPage ?? page;
       const currentPageSize = dtoPageSize ?? pageSize;
       let latestCycle;
@@ -76,7 +81,7 @@ export class ApplicationMediator {
           whereConditions.applicationCycle = {};
         }
         whereConditions.applicationCycle.cycleId = cycleId;
-      } else {
+      } else if (!useAllCycles) {
         latestCycle = await this.applicationsService.getLatestCycle(programId);
         if (latestCycle) {
           if (!whereConditions.applicationCycle) {

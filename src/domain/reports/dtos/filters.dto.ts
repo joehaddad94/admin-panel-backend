@@ -36,4 +36,8 @@ export class FiltersDto {
   @IsNumber()
   @IsOptional()
   cycleId?: number;
+
+  @ApiProperty()
+  @IsOptional()
+  useAllCycles?: boolean;
 }
