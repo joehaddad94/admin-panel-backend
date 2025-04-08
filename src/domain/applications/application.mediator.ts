@@ -52,10 +52,7 @@ export class ApplicationMediator {
         cycleId,
         useAllCycles,
       } = filtersDto;
-      console.log(
-        '🚀 ~ ApplicationMediator ~ returncatcher ~ filtersDto:',
-        filtersDto,
-      );
+
       const currentPage = dtoPage ?? page;
       const currentPageSize = dtoPageSize ?? pageSize;
       let latestCycle;
