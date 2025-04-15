@@ -40,4 +40,8 @@ export class FiltersDto {
   @ApiProperty()
   @IsOptional()
   useAllCycles?: boolean;
+
+  @ApiProperty()
+  @IsOptional()
+  microcampId?: number;
 }

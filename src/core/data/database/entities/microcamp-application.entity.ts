@@ -4,6 +4,7 @@ import {
   Entity,
   OneToOne,
   PrimaryGeneratedColumn,
+  JoinColumn,
 } from 'typeorm';
 import { ApplicationMicrocamp } from '../relations/microcamp-application.entity';
 
@@ -53,7 +54,7 @@ export class MicrocampApplication extends BaseEntity {
 
   @OneToOne(
     () => ApplicationMicrocamp,
-    (applicationMicrocamp) => applicationMicrocamp.microcampApplication,
+    (appMicrocamp) => appMicrocamp.microcampApplication,
   )
   applicationMicrocamp: ApplicationMicrocamp;
 }

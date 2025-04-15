@@ -7,7 +7,7 @@ import {
 } from 'typeorm';
 import { ApplicationMicrocamp } from '../relations/microcamp-application.entity';
 
-@Entity('microcamp')
+@Entity('microcamps')
 export class Microcamp extends BaseEntity {
   @PrimaryGeneratedColumn()
   id: number;
@@ -41,7 +41,7 @@ export class Microcamp extends BaseEntity {
 
   @OneToOne(
     () => ApplicationMicrocamp,
-    (applicationMicrocamp) => applicationMicrocamp.microcampApplication,
+    (appMicrocamp) => appMicrocamp.microcamp,
   )
   applicationMicrocamp: ApplicationMicrocamp;
 }
