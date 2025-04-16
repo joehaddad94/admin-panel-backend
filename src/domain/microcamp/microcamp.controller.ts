@@ -1,9 +1,15 @@
-import { Controller } from '@nestjs/common';
+import { Controller, Get, UsePipes, ValidationPipe } from '@nestjs/common';
 import { ApiTags } from '@nestjs/swagger';
 import { MicrocampMediator } from './microcamp.mediator';
 
-@ApiTags('microcamp')
-@Controller('microcamp')
+@ApiTags('microcamps')
+@Controller('microcamps')
 export class MicrocampController {
   constructor(private readonly mediator: MicrocampMediator) {}
+
+  @Get()
+  @UsePipes(new ValidationPipe({ whitelist: true }))
+  async findAll() {
+    return this.mediator.findAll();
+  }
 }
