@@ -388,7 +388,7 @@ export class ReportMediator {
           new Date(b['Created At']).getTime(),
       );
 
-      return mappedMicrocampApplications;
+      return { data: mappedMicrocampApplications };
     });
   };
 }
