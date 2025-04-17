@@ -16,8 +16,6 @@ import { MicrocampApplicationService } from '../microcampApplications/microcamp-
 export class ReportMediator {
   constructor(
     private readonly informationService: InformationService,
-
-    @InjectRepository(Application)
     private readonly applicationService: ApplicationService,
     private readonly userService: UserService,
     private readonly microcampApplicationService: MicrocampApplicationService,
