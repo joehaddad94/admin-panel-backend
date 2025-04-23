@@ -3,7 +3,6 @@ import { Injectable } from '@nestjs/common';
 import { FiltersDto } from './dtos/filters.dto';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Between, LessThanOrEqual, MoreThanOrEqual } from 'typeorm';
-import { ApplicationRepository } from '../applications/application.repository';
 import { ApplicationService } from '../applications/application.service';
 import { InformationService } from '../information/information.service';
 import { UserService } from '../users/user.service';
@@ -11,16 +10,15 @@ import { Application } from '../../core/data/database/entities/application.entit
 import { GlobalEntities } from '../../core/data/types';
 import { catcher } from '../../core/helpers/operation';
 import { throwNotFound } from '../../core/settings/base/errors/errors';
+import { MicrocampApplicationService } from '../microcampApplications/microcamp-applications.service';
 
 @Injectable()
 export class ReportMediator {
   constructor(
     private readonly informationService: InformationService,
-
-    @InjectRepository(Application)
-    private readonly applicationRepository: ApplicationRepository,
     private readonly applicationService: ApplicationService,
     private readonly userService: UserService,
+    private readonly microcampApplicationService: MicrocampApplicationService,
   ) {}
 
   applicationReport = async (filtersDto: FiltersDto) => {
@@ -328,6 +326,67 @@ export class ReportMediator {
       return {
         data: sortedUsers,
       };
+    });
+  };
+
+  microcampApplicationsReport = async (filtersDto: FiltersDto) => {
+    return catcher(async () => {
+      const { fromDate, toDate, microcampId } = filtersDto;
+
+      const whereConditions: any = {};
+      const options: GlobalEntities[] = ['applicationMicrocamp'];
+
+      if (fromDate && toDate) {
+        const adjustedToDate = new Date(toDate);
+        adjustedToDate.setHours(23, 59, 59, 999); // Set to the end of the day
+        whereConditions.created_at = Between(fromDate, adjustedToDate);
+      } else if (fromDate) {
+        whereConditions.created_at = MoreThanOrEqual(fromDate);
+      } else if (toDate) {
+        const adjustedToDate = new Date(toDate);
+        adjustedToDate.setHours(23, 59, 59, 999);
+        whereConditions.created_at = LessThanOrEqual(adjustedToDate);
+      }
+      if (microcampId) {
+        if (!whereConditions.applicationMicrocamp) {
+          whereConditions.applicationMicrocamp = {};
+        }
+
+        whereConditions.applicationMicrocamp.microcampId = microcampId;
+      }
+
+      const microcampApplications =
+        await this.microcampApplicationService.findMany(
+          whereConditions,
+          options,
+        );
+
+      throwNotFound({
+        entity: 'microcampApplicationsReport',
+        errorCheck: !microcampApplications,
+      });
+
+      const mappedMicrocampApplications = microcampApplications.map(
+        (microcampApplication) => ({
+          'Full Name': microcampApplication.full_name,
+          'Enrolled Micrcamp':
+            microcampApplication.applicationMicrocamp.microcamp.name,
+          email: microcampApplication.email,
+          'Phone Number': microcampApplication.phone_number,
+          'Country Of Residence': microcampApplication.country_residence,
+          'Age Range': microcampApplication.age_range,
+          'Referral Source': microcampApplication.referral_source,
+          'Created At': microcampApplication.created_at,
+        }),
+      );
+
+      mappedMicrocampApplications.sort(
+        (a, b) =>
+          new Date(a['Created At']).getTime() -
+          new Date(b['Created At']).getTime(),
+      );
+
+      return { data: mappedMicrocampApplications };
     });
   };
 }
