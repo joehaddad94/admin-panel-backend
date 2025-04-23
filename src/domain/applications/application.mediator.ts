@@ -377,6 +377,71 @@ export class ApplicationMediator {
       const application = await this.applicationsService.findOne({ id });
       throwNotFound({ entity: 'application', errorCheck: !application });
 
+      // Check if we're only updating isEligible or cycleId
+      const isOnlyUpdatingEligibility =
+        isEligible !== undefined &&
+        examScore === undefined &&
+        techInterviewScore === undefined &&
+        softInterviewScore === undefined &&
+        remarks === undefined &&
+        applicationStatus === undefined &&
+        inputCycleId === undefined;
+
+      const isOnlyUpdatingCycle =
+        cycleId !== undefined &&
+        isEligible === undefined &&
+        examScore === undefined &&
+        techInterviewScore === undefined &&
+        softInterviewScore === undefined &&
+        remarks === undefined &&
+        applicationStatus === undefined;
+
+      if (isOnlyUpdatingEligibility) {
+        // Only update eligibility status
+        await this.applicationsService.update(
+          { id },
+          {
+            is_eligible: isEligible,
+            updated_at: new Date(),
+          },
+        );
+
+        const updatedPayload = convertToCamelCase({
+          id,
+          is_eligible: isEligible,
+          cycleId: application.applicationCycle[0]?.cycleId,
+          inputCycleId: application.applicationCycle[0]?.cycleId,
+        });
+
+        return {
+          message: 'Application eligibility updated successfully.',
+          updatedPayload,
+        };
+      }
+
+      if (isOnlyUpdatingCycle) {
+        // Only update cycle
+        await this.applicationsService.update(
+          { id },
+          {
+            applicationCycle: [{ cycleId }],
+            updated_at: new Date(),
+          },
+        );
+
+        const updatedPayload = convertToCamelCase({
+          id,
+          cycleId,
+          inputCycleId: cycleId,
+        });
+
+        return {
+          message: 'Application cycle updated successfully.',
+          updatedPayload,
+        };
+      }
+
+      // Original logic for full updates
       const options: GlobalEntities[] = ['thresholdCycle'];
       const cycle = await this.cyclesService.findOne({ id: cycleId }, options);
 
@@ -397,15 +462,15 @@ export class ApplicationMediator {
       const updatedData: any = {
         is_eligible: isEligible,
         exam_score:
-          examScore !== undefined ? examScore : Number(application.exam_score),
+          examScore !== undefined ? examScore : application.exam_score,
         tech_interview_score:
           techInterviewScore !== undefined
             ? techInterviewScore
-            : Number(application.tech_interview_score),
+            : application.tech_interview_score,
         soft_interview_score:
           softInterviewScore !== undefined
             ? softInterviewScore
-            : Number(application.soft_interview_score),
+            : application.soft_interview_score,
         remarks: remarks !== '' ? remarks : application.remarks,
         status: applicationStatus,
         updated_at: new Date(),
@@ -489,7 +554,7 @@ export class ApplicationMediator {
 
       const updatedPayload = convertToCamelCase({
         ...updatedData,
-        isEligible:
+        eligible:
           updatedData.is_eligible === true
             ? 'Yes'
             : updatedData.is_eligible === false
@@ -649,11 +714,13 @@ export class ApplicationMediator {
               eligibleApplicationsToEmail.push({
                 ...application,
                 passed_screening: 'Yes',
+                status: application.applicationInfo[0].info.status,
               });
             } else if (!application.screening_email_sent) {
               eligibleApplicationsToEmail.push({
                 ...application,
                 passed_screening: 'Yes',
+                status: application.applicationInfo[0].info.status,
               });
             }
           } else {
@@ -669,6 +736,7 @@ export class ApplicationMediator {
             ineligibleApplicationsToEmail.push({
               ...application,
               passed_screening: 'No',
+              status: application.applicationInfo[0].info.status,
             });
           }
         }
