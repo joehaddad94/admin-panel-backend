@@ -29,6 +29,9 @@ export class ReportController {
       case ReportType.USERS:
         return this.mediator.usersReport(filtersDto);
 
+      case ReportType.MICROCAMP_APPLICATIONS:
+        return this.mediator.microcampApplicationsReport(filtersDto);
+
       default:
         throw new HttpException('Invalid report type', HttpStatus.BAD_REQUEST);
     }

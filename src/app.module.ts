@@ -26,6 +26,8 @@ import { ThresholdModule } from './domain/thresholds/threshold.module';
 import { HealthCheckModule } from './domain/healthCheck/health.module';
 import { Sections } from './core/data/database/entities/section.entity';
 import { SectionModule } from './domain/sections/section.module';
+import { MicrocampModule } from './domain/microcamp/microcamp.module';
+import { MicrocampApplicationModule } from './domain/microcampApplications/microcamp-applications.module';
 
 @Module({
   imports: [
@@ -59,6 +61,8 @@ import { SectionModule } from './domain/sections/section.module';
     ThresholdModule,
     HealthCheckModule,
     SectionModule,
+    MicrocampModule,
+    MicrocampApplicationModule,
   ],
   controllers: [AppController],
   providers: [AppService],
