@@ -460,7 +460,7 @@ export class ApplicationMediator {
       }
 
       const updatedData: any = {
-        is_eligible: isEligible,
+        is_eligible: isEligible !== undefined ? isEligible : application.is_eligible,
         exam_score:
           examScore !== undefined ? examScore : application.exam_score,
         tech_interview_score:
