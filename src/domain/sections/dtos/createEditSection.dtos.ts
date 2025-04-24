@@ -1,12 +1,7 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { IsNumber, IsOptional, IsString } from 'class-validator';
 
-export class CreateEditCycleDto {
-  @ApiProperty()
-  @IsOptional()
-  @IsNumber()
-  programId?: number;
-
+export class CreateEditSectionDto {
   @ApiProperty()
   @IsOptional()
   @IsNumber()
@@ -14,14 +9,11 @@ export class CreateEditCycleDto {
 
   @ApiProperty()
   @IsOptional()
-  fromDate?: Date;
-
-  @ApiProperty()
-  @IsOptional()
-  toDate?: Date;
+  @IsNumber()
+  sectionId?: number;
 
   @ApiProperty()
   @IsOptional()
   @IsString()
-  cycleName?: string;
+  sectionName?: string;
 }
