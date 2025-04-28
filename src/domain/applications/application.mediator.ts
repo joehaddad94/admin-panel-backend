@@ -29,7 +29,6 @@ import { In } from 'typeorm';
 import { InterviewScoresDto } from './dtos/interview.scores.dto';
 import { ApplicationCycle } from 'src/core/data/database/relations/application-cycle.entity';
 import { Application } from 'src/core/data/database/entities/application.entity';
-import { ApplicationRepository } from './application.repository';
 
 @Injectable()
 export class ApplicationMediator {
