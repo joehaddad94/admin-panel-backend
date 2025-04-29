@@ -647,35 +647,48 @@ export class ApplicationMediator {
 
   sendPostScreeningEmails = async (data: SendingEmailsDto) => {
     return catcher(async () => {
+      console.log('[sendPostScreeningEmails] Starting with data:', JSON.stringify(data, null, 2));
       const { cycleId, emails } = data;
       
       const cyclesWhereConditions = cycleId ? { id: cycleId } : {};
+      console.log('[sendPostScreeningEmails] Finding cycle with conditions:', cyclesWhereConditions);
       
       const currentCycle = await this.cyclesService.findOne(
         cyclesWhereConditions,
         ['decisionDateCycle', 'cycleProgram'],
       );
+      console.log('[sendPostScreeningEmails] Found cycle:', JSON.stringify(currentCycle, null, 2));
 
       if (!currentCycle?.cycleProgram?.program?.abbreviation) {
+        console.error('[sendPostScreeningEmails] Program not found for cycle:', cycleId);
         throwError('Program not found for this cycle', HttpStatus.BAD_REQUEST);
       }
 
       const programAbbr = currentCycle.cycleProgram.program.abbreviation;
+      console.log('[sendPostScreeningEmails] Program abbreviation:', programAbbr);
+      
       const programConfig = programConfigs[programAbbr];
 
       if (!programConfig) {
+        console.error('[sendPostScreeningEmails] No configuration found for program:', programAbbr);
         throwError(`No configuration found for program: ${programAbbr}`, HttpStatus.BAD_REQUEST);
       }
 
       if (!currentCycle.decisionDateCycle?.decisionDate) {
+        console.error('[sendPostScreeningEmails] Decision date not found for cycle:', cycleId);
         throwError('Decision date not found for this cycle', HttpStatus.BAD_REQUEST);
       }
 
       const decisionDate = currentCycle.decisionDateCycle.decisionDate;
+      console.log('[sendPostScreeningEmails] Raw decision date:', decisionDate);
+      console.log('[sendPostScreeningEmails] Decision date type:', typeof decisionDate);
+      console.log('[sendPostScreeningEmails] Decision date keys:', Object.keys(decisionDate));
 
       // Validate required fields
       programConfig.requiredFields.forEach(({ field, message }) => {
+        console.log('[sendPostScreeningEmails] Checking required field:', field, 'Value:', decisionDate[field]);
         if (!decisionDate[field]) {
+          console.error('[sendPostScreeningEmails] Missing required field:', field);
           throwError(message, HttpStatus.BAD_REQUEST);
         }
       });
@@ -683,26 +696,33 @@ export class ApplicationMediator {
       const uniqueEmails: string[] = [
         ...new Set(emails.map((entry) => entry.emails)),
       ];
+      console.log('[sendPostScreeningEmails] Unique emails to process:', uniqueEmails);
 
       const applicationsWhereConditions = cycleId
         ? {
             applicationCycle: { cycleId },
           }
         : {};
+      console.log('[sendPostScreeningEmails] Finding applications with conditions:', applicationsWhereConditions);
 
       const applicationsByCycle = await this.applicationsService.findMany(
         applicationsWhereConditions,
         ['applicationInfo', 'applicationUser'],
       );
+      console.log('[sendPostScreeningEmails] Found applications:', applicationsByCycle.length);
 
       const eligibleApplicationsToEmail = [];
       const ineligibleApplicationsToEmail = [];
 
       for (const application of applicationsByCycle) {
         const email: string = application.applicationUser[0]?.user?.email;
+        console.log('[sendPostScreeningEmails] Processing application for email:', email);
+        
         if (uniqueEmails.includes(email)) {
           if (application.is_eligible) {
+            console.log('[sendPostScreeningEmails] Application is eligible:', application.id);
             if (!application.passed_screening) {
+              console.log('[sendPostScreeningEmails] Updating passed_screening to true for:', application.id);
               application.passed_screening = true;
               application.passed_screening_date = new Date();
               await this.applicationsService.update(
@@ -718,6 +738,7 @@ export class ApplicationMediator {
                 status: application.applicationInfo[0].info.status,
               });
             } else if (!application.screening_email_sent) {
+              console.log('[sendPostScreeningEmails] Adding eligible application to email list:', application.id);
               eligibleApplicationsToEmail.push({
                 ...application,
                 passed_screening: 'Yes',
@@ -725,6 +746,7 @@ export class ApplicationMediator {
               });
             }
           } else {
+            console.log('[sendPostScreeningEmails] Application is ineligible:', application.id);
             application.passed_screening = false;
             application.passed_screening_date = new Date();
             await this.applicationsService.update(
@@ -743,6 +765,9 @@ export class ApplicationMediator {
         }
       }
 
+      console.log('[sendPostScreeningEmails] Eligible applications to email:', eligibleApplicationsToEmail.length);
+      console.log('[sendPostScreeningEmails] Ineligible applications to email:', ineligibleApplicationsToEmail.length);
+
       const eligibleEmailsToSend = eligibleApplicationsToEmail.map(
         (app) => app.applicationUser[0]?.user?.email,
       );
@@ -755,22 +780,33 @@ export class ApplicationMediator {
       let mailerResponseIneligible: any;
 
       if (eligibleEmailsToSend.length > 0) {
-        const templateVariables = programConfig.getTemplateVariables(decisionDate);
+        console.log('[sendPostScreeningEmails] Sending eligible emails to:', eligibleEmailsToSend);
+        try {
+          console.log('[sendPostScreeningEmails] Getting template variables with decision date:', decisionDate);
+          const templateVariables = programConfig.getTemplateVariables(decisionDate);
+          console.log('[sendPostScreeningEmails] Template variables:', templateVariables);
 
-        mailerResponseEligible = await this.mailService.sendEmails(
-          eligibleEmailsToSend,
-          programConfig.templates.eligible.name,
-          programConfig.templates.eligible.subject,
-          templateVariables,
-        );
+          mailerResponseEligible = await this.mailService.sendEmails(
+            eligibleEmailsToSend,
+            programConfig.templates.eligible.name,
+            programConfig.templates.eligible.subject,
+            templateVariables,
+          );
+          console.log('[sendPostScreeningEmails] Eligible emails response:', mailerResponseEligible);
+        } catch (error) {
+          console.error('[sendPostScreeningEmails] Error getting template variables:', error);
+          throw error;
+        }
       }
 
       if (ineligibleEmailsToSend.length > 0) {
+        console.log('[sendPostScreeningEmails] Sending ineligible emails to:', ineligibleEmailsToSend);
         mailerResponseIneligible = await this.mailService.sendEmails(
           ineligibleEmailsToSend,
           programConfig.templates.ineligible.name,
           programConfig.templates.ineligible.subject,
         );
+        console.log('[sendPostScreeningEmails] Ineligible emails response:', mailerResponseIneligible);
       }
 
       const resultsEligible = mailerResponseEligible?.results || [];
@@ -783,15 +819,20 @@ export class ApplicationMediator {
         resultsIneligible.filter((res) => !res.error).map((res) => res.email),
       );
 
+      console.log('[sendPostScreeningEmails] Successfully sent eligible emails:', Array.from(sentEmailSetEligible));
+      console.log('[sendPostScreeningEmails] Successfully sent ineligible emails:', Array.from(sentEmailSetIneligible));
+
       for (const application of eligibleApplicationsToEmail) {
         const email = application.applicationUser[0]?.user?.email;
         if (sentEmailSetEligible.has(email)) {
+          console.log('[sendPostScreeningEmails] Marking eligible email as sent for:', application.id);
           await this.applicationsService.update(
             { id: application.id },
             { screening_email_sent: true },
           );
           application.screening_email_sent = 'Yes';
         } else {
+          console.log('[sendPostScreeningEmails] Marking eligible email as not sent for:', application.id);
           await this.applicationsService.update(
             { id: application.id },
             { screening_email_sent: false },
@@ -803,12 +844,14 @@ export class ApplicationMediator {
       for (const application of ineligibleApplicationsToEmail) {
         const email = application.applicationUser[0]?.user?.email;
         if (sentEmailSetIneligible.has(email)) {
+          console.log('[sendPostScreeningEmails] Marking ineligible email as sent for:', application.id);
           await this.applicationsService.update(
             { id: application.id },
             { screening_email_sent: true },
           );
           application.screening_email_sent = 'Yes';
         } else {
+          console.log('[sendPostScreeningEmails] Marking ineligible email as not sent for:', application.id);
           await this.applicationsService.update(
             { id: application.id },
             { screening_email_sent: false },
@@ -822,6 +865,7 @@ export class ApplicationMediator {
         ...ineligibleApplicationsToEmail,
       ]);
 
+      console.log('[sendPostScreeningEmails] Completed processing. Returning results.');
       return {
         message: 'Emails have been processed. Check the status for details.',
         eligible: mailerResponseEligible,

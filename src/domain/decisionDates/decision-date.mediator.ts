@@ -13,8 +13,6 @@ export class DecisionDateMediator {
 
   createEditDates = async (data: CreateEditDecisionDateDto) => {
     return catcher(async () => {
-      console.log('🚀 ~ DecisionDateMediator ~ createEditDates ~ Input data:', data);
-
       const {
         dateTime1,
         cycleId,
@@ -30,25 +28,17 @@ export class DecisionDateMediator {
       let decisionDate: DecisionDates;
       let successMessage: string;
 
-      const sanitizeField = (value: any) => {
-        const result = typeof value === 'string' && value.trim() !== '' ? value : null;
-        console.log('🔍 ~ DecisionDateMediator ~ sanitizeField ~ Input:', value, 'Output:', result);
-        return result;
-      };
+      const sanitizeField = (value: any) =>
+        typeof value === 'string' && value.trim() !== '' ? value : null;
 
       if (decisionDateId) {
-        console.log('📝 ~ DecisionDateMediator ~ Updating existing decision date with ID:', decisionDateId);
-        
         decisionDate = await this.decisionDateService.findOne({
           id: decisionDateId,
         });
 
         if (!decisionDate) {
-          console.error('❌ ~ DecisionDateMediator ~ Decision date not found with ID:', decisionDateId);
           throw new Error(`Decision date with ID ${decisionDateId} not found`);
         }
-
-        console.log('📊 ~ DecisionDateMediator ~ Current decision date state:', decisionDate);
 
         const updateData = {
           date_time_1: dateTime1 ? new Date(dateTime1) : decisionDate.date_time_1,
@@ -61,18 +51,10 @@ export class DecisionDateMediator {
           updated_at: new Date(),
         };
 
-        console.log('🔄 ~ DecisionDateMediator ~ Update data:', updateData);
-
         Object.assign(decisionDate, updateData);
-
-        console.log('💾 ~ DecisionDateMediator ~ Saving updated decision date...');
         await this.decisionDateService.save(decisionDate);
-        console.log('✅ ~ DecisionDateMediator ~ Decision date updated successfully');
-        
         successMessage = 'Decision Date updated successfully.';
       } else {
-        console.log('📝 ~ DecisionDateMediator ~ Creating new decision date');
-        
         const createData = {
           date_time_1: dateTime1 || null,
           link_1: sanitizeField(link1),
@@ -85,33 +67,22 @@ export class DecisionDateMediator {
           updated_at: new Date(),
         };
 
-        console.log('🆕 ~ DecisionDateMediator ~ Create data:', createData);
-
         decisionDate = this.decisionDateService.create(createData);
-
-        console.log('💾 ~ DecisionDateMediator ~ Saving new decision date...');
         await this.decisionDateService.save(decisionDate);
-        console.log('✅ ~ DecisionDateMediator ~ New decision date saved successfully');
 
-        console.log('🔗 ~ DecisionDateMediator ~ Creating decision date cycle relationship...');
         const decisionDateCycle = new DecisionDateCycle();
         decisionDateCycle.cycle_id = cycleId;
         decisionDateCycle.decision_date_id = decisionDate.id;
 
         await decisionDateCycle.save();
-        console.log('✅ ~ DecisionDateMediator ~ Decision date cycle relationship created');
-
         decisionDate.decisionDateCycle = decisionDateCycle;
         successMessage = 'Decision Date created successfully.';
       }
 
-      const result = {
+      return {
         message: successMessage,
         decisionDate: convertToCamelCase(decisionDate),
       };
-
-      console.log('🎉 ~ DecisionDateMediator ~ Final result:', result);
-      return result;
     });
   };
 }

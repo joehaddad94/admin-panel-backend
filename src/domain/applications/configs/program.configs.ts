@@ -1,4 +1,4 @@
-import { formatExamDate } from 'src/core/helpers/formatDate';
+import { formatExamDate, formatReadableDate } from 'src/core/helpers/formatDate';
 
 export interface ProgramConfig {
   requiredFields: {
@@ -22,46 +22,46 @@ export const programConfigs: Record<string, ProgramConfig> = {
   FCS: {
     requiredFields: [
       {
-        field: 'exam_date',
-        message: 'Exam Date and time should be provided.',
+        field: 'date_1',
+        message: 'Payment Deadline should be provided.',
       },
       {
-        field: 'exam_link',
-        message: 'Exam Link should be provided.',
+        field: 'link_4',
+        message: 'Commitment Form should be provided.',
       },
       {
-        field: 'info_session_recorded_link',
-        message: 'Info Session Recorded Link should be provided.',
+        field: 'link_1',
+        message: 'Whish application PDF file should be provided.',
       },
     ],
     templates: {
       eligible: {
-        name: 'FCS/shortlisted.hbs',
+        name: 'FCS/acceptance-mail.hbs',
         subject: 'SE Factory FCS Screening Process',
       },
       ineligible: {
-        name: 'FCS/notEligible.hbs',
+        name: 'FCS/rejection-mail.hbs',
         subject: 'SE Factory FCS Screening Process',
       },
     },
     getTemplateVariables: (decisionDate) => ({
-      examDate: formatExamDate(decisionDate.exam_date),
-      examLink: decisionDate.exam_link,
-      infoSessionRecordedLink: decisionDate.info_session_recorded_link,
+      paymentDeadline: formatReadableDate(decisionDate.date_1),
+      commitmentForm: decisionDate.link_4,
+      wishApplication: decisionDate.link_1,
     }),
   },
   FSE: {
     requiredFields: [
       {
-        field: 'exam_date',
+        field: 'date_time_1',
         message: 'Exam Date and time should be provided.',
       },
       {
-        field: 'exam_link',
+        field: 'link_4',
         message: 'Exam Link should be provided.',
       },
       {
-        field: 'info_session_recorded_link',
+        field: 'link_2',
         message: 'Info Session Recorded Link should be provided.',
       },
     ],
@@ -76,9 +76,9 @@ export const programConfigs: Record<string, ProgramConfig> = {
       },
     },
     getTemplateVariables: (decisionDate) => ({
-      examDate: formatExamDate(decisionDate.exam_date),
-      examLink: decisionDate.exam_link,
-      infoSessionRecordedLink: decisionDate.info_session_recorded_link,
+      examDate: formatExamDate(decisionDate.date_time_1),
+      examLink: decisionDate.link_4,
+      infoSessionRecordedLink: decisionDate.link_2,
     }),
   },
 }; 
