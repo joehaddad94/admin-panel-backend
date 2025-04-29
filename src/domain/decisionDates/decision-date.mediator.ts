@@ -11,189 +11,107 @@ import { CreateEditDecisionDateDto } from './dtos/create-dates.dto';
 export class DecisionDateMediator {
   constructor(private readonly decisionDateService: DecisionDateService) {}
 
-  // createEditDates = async (data: CreateEditDecisionDateDto) => {
-  //   return catcher(async () => {
-  //     const {
-  //       examDate,
-  //       cycleId,
-  //       decisionDateId,
-  //       interviewMeetLink,
-  //       examLink,
-  //       statusConfirmationForm,
-  //       infoSessionRecordedLink,
-  //       orientationDate,
-  //       classDebutDate,
-  //     } = data;
-
-  //     let decisionDate: DecisionDates;
-  //     let successMessage: string;
-
-  //     const updateField = (field: string, value: any) => {
-  //       return value !== undefined && value !== null && value.trim() !== ''
-  //         ? value
-  //         : field;
-  //     };
-
-  //     if (decisionDateId) {
-  //       decisionDate = await this.decisionDateService.findOne({
-  //         id: decisionDateId,
-  //       });
-  //       if (!decisionDate) {
-  //         throw new Error(`Decision date with ID ${decisionDateId} not found`);
-  //       }
-
-  //       decisionDate.exam_date = examDate
-  //         ? new Date(examDate)
-  //         : decisionDate.exam_date;
-  //       decisionDate.interview_meet_link = updateField(
-  //         decisionDate.interview_meet_link,
-  //         interviewMeetLink,
-  //       );
-  //       decisionDate.exam_link = updateField(decisionDate.exam_link, examLink);
-  //       decisionDate.status_confirmation_form = updateField(
-  //         decisionDate.status_confirmation_form,
-  //         statusConfirmationForm,
-  //       );
-  //       decisionDate.info_session_recorded_link = updateField(
-  //         decisionDate.info_session_recorded_link,
-  //         infoSessionRecordedLink,
-  //       );
-  //       decisionDate.orientation_date = orientationDate
-  //         ? new Date(orientationDate)
-  //         : decisionDate.orientation_date;
-
-  //       decisionDate.class_debut_date = classDebutDate
-  //         ? new Date(classDebutDate)
-  //         : decisionDate.class_debut_date;
-
-  //       decisionDate.updated_at = new Date();
-
-  //       decisionDate = (await this.decisionDateService.save(
-  //         decisionDate,
-  //       )) as DecisionDates;
-  //       successMessage = 'Decision Date updated succesfully.';
-  //     } else {
-  //       decisionDate = this.decisionDateService.create({
-  //         exam_date: examDate || null,
-  //         interview_meet_link:
-  //           interviewMeetLink && interviewMeetLink.trim() !== ''
-  //             ? interviewMeetLink
-  //             : null,
-  //         exam_link: examLink && examLink.trim() !== '' ? examLink : null,
-  //         status_confirmation_form:
-  //           statusConfirmationForm && statusConfirmationForm.trim() !== ''
-  //             ? statusConfirmationForm
-  //             : null,
-  //         info_session_recorded_link:
-  //           infoSessionRecordedLink && infoSessionRecordedLink.trim() !== ''
-  //             ? infoSessionRecordedLink
-  //             : null,
-  //         orientation_date: orientationDate || null,
-  //         class_debut_date: classDebutDate || null,
-  //         created_at: new Date(),
-  //         updated_at: new Date(),
-  //       });
-
-  //       decisionDate = (await this.decisionDateService.save(
-  //         decisionDate,
-  //       )) as DecisionDates;
-
-  //       const decisionDateCycle = new DecisionDateCycle();
-  //       decisionDateCycle.cycle_id = cycleId;
-  //       decisionDateCycle.decision_date_id = decisionDate.id;
-
-  //       await decisionDateCycle.save();
-
-  //       decisionDate.decisionDateCycle = decisionDateCycle;
-  //       successMessage = 'Decision Date created succesfully.';
-  //     }
-
-  //     const camelCaseCreatedDates = convertToCamelCase(decisionDate);
-  //     return { message: successMessage, decisionDate: camelCaseCreatedDates };
-  //   });
-  // };
-
   createEditDates = async (data: CreateEditDecisionDateDto) => {
     return catcher(async () => {
+      console.log('🚀 ~ DecisionDateMediator ~ createEditDates ~ Input data:', data);
+
       const {
-        examDate,
+        dateTime1,
         cycleId,
         decisionDateId,
-        interviewMeetLink,
-        examLink,
-        statusConfirmationForm,
-        infoSessionRecordedLink,
-        orientationDate,
-        classDebutDate,
+        link1,
+        link4,
+        link3,
+        link2,
+        date1,
+        date2,
       } = data;
 
       let decisionDate: DecisionDates;
       let successMessage: string;
 
-      const sanitizeField = (value: any) =>
-        typeof value === 'string' && value.trim() !== '' ? value : null;
+      const sanitizeField = (value: any) => {
+        const result = typeof value === 'string' && value.trim() !== '' ? value : null;
+        console.log('🔍 ~ DecisionDateMediator ~ sanitizeField ~ Input:', value, 'Output:', result);
+        return result;
+      };
 
       if (decisionDateId) {
+        console.log('📝 ~ DecisionDateMediator ~ Updating existing decision date with ID:', decisionDateId);
+        
         decisionDate = await this.decisionDateService.findOne({
           id: decisionDateId,
         });
 
         if (!decisionDate) {
+          console.error('❌ ~ DecisionDateMediator ~ Decision date not found with ID:', decisionDateId);
           throw new Error(`Decision date with ID ${decisionDateId} not found`);
         }
 
-        Object.assign(decisionDate, {
-          exam_date: examDate ? new Date(examDate) : decisionDate.exam_date,
-          interview_meet_link:
-            sanitizeField(interviewMeetLink) ??
-            decisionDate.interview_meet_link,
-          exam_link: sanitizeField(examLink) ?? decisionDate.exam_link,
-          status_confirmation_form:
-            sanitizeField(statusConfirmationForm) ??
-            decisionDate.status_confirmation_form,
-          info_session_recorded_link:
-            sanitizeField(infoSessionRecordedLink) ??
-            decisionDate.info_session_recorded_link,
-          orientation_date: orientationDate
-            ? new Date(orientationDate)
-            : decisionDate.orientation_date,
-          class_debut_date: classDebutDate
-            ? new Date(classDebutDate)
-            : decisionDate.class_debut_date,
-          updated_at: new Date(),
-        });
+        console.log('📊 ~ DecisionDateMediator ~ Current decision date state:', decisionDate);
 
+        const updateData = {
+          date_time_1: dateTime1 ? new Date(dateTime1) : decisionDate.date_time_1,
+          link_1: sanitizeField(link1) ?? decisionDate.link_1,
+          link_4: sanitizeField(link4) ?? decisionDate.link_4,
+          link_3: sanitizeField(link3) ?? decisionDate.link_3,
+          link_2: sanitizeField(link2) ?? decisionDate.link_2,
+          date_1: date1 ? new Date(date1) : decisionDate.date_1,
+          date_2: date2 ? new Date(date2) : decisionDate.date_2,
+          updated_at: new Date(),
+        };
+
+        console.log('🔄 ~ DecisionDateMediator ~ Update data:', updateData);
+
+        Object.assign(decisionDate, updateData);
+
+        console.log('💾 ~ DecisionDateMediator ~ Saving updated decision date...');
         await this.decisionDateService.save(decisionDate);
+        console.log('✅ ~ DecisionDateMediator ~ Decision date updated successfully');
+        
         successMessage = 'Decision Date updated successfully.';
       } else {
-        decisionDate = this.decisionDateService.create({
-          exam_date: examDate || null,
-          interview_meet_link: sanitizeField(interviewMeetLink),
-          exam_link: sanitizeField(examLink),
-          status_confirmation_form: sanitizeField(statusConfirmationForm),
-          info_session_recorded_link: sanitizeField(infoSessionRecordedLink),
-          orientation_date: orientationDate || null,
-          class_debut_date: classDebutDate || null,
+        console.log('📝 ~ DecisionDateMediator ~ Creating new decision date');
+        
+        const createData = {
+          date_time_1: dateTime1 || null,
+          link_1: sanitizeField(link1),
+          link_4: sanitizeField(link4),
+          link_3: sanitizeField(link3),
+          link_2: sanitizeField(link2),
+          date_1: date1 || null,
+          date_2: date2 || null,
           created_at: new Date(),
           updated_at: new Date(),
-        });
+        };
 
+        console.log('🆕 ~ DecisionDateMediator ~ Create data:', createData);
+
+        decisionDate = this.decisionDateService.create(createData);
+
+        console.log('💾 ~ DecisionDateMediator ~ Saving new decision date...');
         await this.decisionDateService.save(decisionDate);
+        console.log('✅ ~ DecisionDateMediator ~ New decision date saved successfully');
 
+        console.log('🔗 ~ DecisionDateMediator ~ Creating decision date cycle relationship...');
         const decisionDateCycle = new DecisionDateCycle();
         decisionDateCycle.cycle_id = cycleId;
         decisionDateCycle.decision_date_id = decisionDate.id;
 
         await decisionDateCycle.save();
+        console.log('✅ ~ DecisionDateMediator ~ Decision date cycle relationship created');
 
         decisionDate.decisionDateCycle = decisionDateCycle;
         successMessage = 'Decision Date created successfully.';
       }
 
-      return {
+      const result = {
         message: successMessage,
         decisionDate: convertToCamelCase(decisionDate),
       };
+
+      console.log('🎉 ~ DecisionDateMediator ~ Final result:', result);
+      return result;
     });
   };
 }

@@ -30,12 +30,12 @@ export class CycleMediator {
         'decisionDateCycle',
         'thresholdCycle',
       ];
-
+      
       let where = {};
       if (programId) {
         where = { cycleProgram: { program: { id: programId } } };
       }
-
+      
       const [found, total] = await this.cycleService.findAndCount(
         where,
         cyclesOptions,
@@ -43,7 +43,7 @@ export class CycleMediator {
         skip,
         take,
       );
-
+      
       throwNotFound({
         entity: 'cycles',
         errorCheck: !found,
@@ -57,22 +57,24 @@ export class CycleMediator {
 
       flattenedCycles = flattenedCycles.sort((a, b) =>
         a.code.localeCompare(b.code, undefined, { numeric: true }),
-      );
-
-      flattenedCycles = convertToCamelCase(flattenedCycles);
-
-      return { cycles: flattenedCycles, total, page, pageSize };
-    });
+    );
+    
+    console.log("🚀 ~ CycleMediator ~ returncatcher ~ flattenedCycles:", JSON.stringify(flattenedCycles, null, 2))
+    flattenedCycles = convertToCamelCase(flattenedCycles);
+    console.log("🚀 ~ CycleMediator ~ returncatcher ~ flattenedCycles:", JSON.stringify(flattenedCycles, null, 2))
+    
+    return { cycles: flattenedCycles, total, page, pageSize };
+  });
   };
-
+  
   createEditCycle = async (admin: Admin, data: CreateEditCycleDto) => {
     return catcher(async () => {
       const { programId, cycleName, fromDate, toDate, cycleId } = data;
-
+      
       if (!programId) {
         throw new Error('Program ID must be provided.');
       }
-
+      
       let cycle: Cycles;
       let savedCycle: Cycles;
       let successMessage: string;

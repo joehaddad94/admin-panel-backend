@@ -29,6 +29,7 @@ import { In } from 'typeorm';
 import { InterviewScoresDto } from './dtos/interview.scores.dto';
 import { ApplicationCycle } from 'src/core/data/database/relations/application-cycle.entity';
 import { Application } from 'src/core/data/database/entities/application.entity';
+import { programConfigs } from './configs/program.configs';
 
 @Injectable()
 export class ApplicationMediator {
@@ -647,33 +648,34 @@ export class ApplicationMediator {
   sendPostScreeningEmails = async (data: SendingEmailsDto) => {
     return catcher(async () => {
       const { cycleId, emails } = data;
-
+      
       const cyclesWhereConditions = cycleId ? { id: cycleId } : {};
-
+      
       const currentCycle = await this.cyclesService.findOne(
         cyclesWhereConditions,
-        ['decisionDateCycle'],
+        ['decisionDateCycle', 'cycleProgram'],
       );
 
-      const requiredFields = [
-        {
-          field: currentCycle.decisionDateCycle.decisionDate.exam_date,
-          message: 'Exam Date and time should be provided.',
-        },
-        {
-          field: currentCycle.decisionDateCycle.decisionDate.exam_link,
-          message: 'Exam Link should be provided.',
-        },
-        {
-          field:
-            currentCycle.decisionDateCycle.decisionDate
-              .info_session_recorded_link,
-          message: 'Info Session Recorded Link should be provided.',
-        },
-      ];
+      if (!currentCycle?.cycleProgram?.program?.abbreviation) {
+        throwError('Program not found for this cycle', HttpStatus.BAD_REQUEST);
+      }
 
-      requiredFields.forEach(({ field, message }) => {
-        if (field === null) {
+      const programAbbr = currentCycle.cycleProgram.program.abbreviation;
+      const programConfig = programConfigs[programAbbr];
+
+      if (!programConfig) {
+        throwError(`No configuration found for program: ${programAbbr}`, HttpStatus.BAD_REQUEST);
+      }
+
+      if (!currentCycle.decisionDateCycle?.decisionDate) {
+        throwError('Decision date not found for this cycle', HttpStatus.BAD_REQUEST);
+      }
+
+      const decisionDate = currentCycle.decisionDateCycle.decisionDate;
+
+      // Validate required fields
+      programConfig.requiredFields.forEach(({ field, message }) => {
+        if (!decisionDate[field]) {
           throwError(message, HttpStatus.BAD_REQUEST);
         }
       });
@@ -749,40 +751,25 @@ export class ApplicationMediator {
         (app) => app.applicationUser[0]?.user?.email,
       );
 
-      const examDate = formatExamDate(
-        currentCycle.decisionDateCycle.decisionDate.exam_date,
-      );
-
       let mailerResponseEligible: any;
       let mailerResponseIneligible: any;
 
       if (eligibleEmailsToSend.length > 0) {
-        const subject = 'SE Factory Screening Process';
-        const templateName = 'FSE/shortlisted.hbs';
-        const templateVariables = {
-          examDate: examDate,
-          examLink: currentCycle.decisionDateCycle.decisionDate.exam_link,
-          infoSessionRecordedLink:
-            currentCycle.decisionDateCycle.decisionDate
-              .info_session_recorded_link,
-        };
+        const templateVariables = programConfig.getTemplateVariables(decisionDate);
 
         mailerResponseEligible = await this.mailService.sendEmails(
           eligibleEmailsToSend,
-          templateName,
-          subject,
+          programConfig.templates.eligible.name,
+          programConfig.templates.eligible.subject,
           templateVariables,
         );
       }
 
       if (ineligibleEmailsToSend.length > 0) {
-        const subject = 'SE Factory Screening Process';
-        const templateName = 'FSE/notEligible.hbs';
-
         mailerResponseIneligible = await this.mailService.sendEmails(
           ineligibleEmailsToSend,
-          templateName,
-          subject,
+          programConfig.templates.ineligible.name,
+          programConfig.templates.ineligible.subject,
         );
       }
 
@@ -1100,7 +1087,7 @@ export class ApplicationMediator {
     }
 
     const interviewMeetLink =
-      currentCycle.decisionDateCycle?.decisionDate?.interview_meet_link;
+      currentCycle.decisionDateCycle?.decisionDate?.link_1;
 
     if (!interviewMeetLink) {
       throwError(
@@ -1215,15 +1202,15 @@ export class ApplicationMediator {
     const requiredFields = [
       {
         field:
-          currentCycle.decisionDateCycle.decisionDate.status_confirmation_form,
+          currentCycle.decisionDateCycle.decisionDate.link_3,
         message: 'Status Confirmation Form should be provided.',
       },
       {
-        field: currentCycle.decisionDateCycle.decisionDate.orientation_date,
+        field: currentCycle.decisionDateCycle.decisionDate.date_1,
         message: 'Orientation Date should be provided.',
       },
       {
-        field: currentCycle.decisionDateCycle.decisionDate.class_debut_date,
+        field: currentCycle.decisionDateCycle.decisionDate.date_2,
         message: 'Class Debut Date should be provided.',
       },
     ];
@@ -1266,20 +1253,20 @@ export class ApplicationMediator {
             templateVariables = {
               statusConfirmationForm:
                 currentCycle.decisionDateCycle.decisionDate
-                  .status_confirmation_form,
+                  .link_3,
               orientationDate: formatReadableDate(
-                currentCycle.decisionDateCycle.decisionDate.orientation_date,
+                currentCycle.decisionDateCycle.decisionDate.date_1,
               ),
               classDebutDate: formatReadableDate(
-                currentCycle.decisionDateCycle.decisionDate.class_debut_date,
+                currentCycle.decisionDateCycle.decisionDate.date_2,
               ),
               submissionConfirmationDate: formatReadableDate(
                 new Date(
                   new Date(
-                    currentCycle.decisionDateCycle.decisionDate.orientation_date,
+                    currentCycle.decisionDateCycle.decisionDate.date_1,
                   ).setDate(
                     new Date(
-                      currentCycle.decisionDateCycle.decisionDate.orientation_date,
+                      currentCycle.decisionDateCycle.decisionDate.date_1,
                     ).getDate() - 3,
                   ),
                 ),

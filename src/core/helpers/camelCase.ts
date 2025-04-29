@@ -10,7 +10,11 @@ export function convertToCamelCase(obj: any): any {
   const camelCaseObj: any = {};
   Object.keys(obj).forEach((key) => {
     const value = obj[key];
-    const camelKey = key.replace(/_([a-z])/g, (g) => g[1].toUpperCase());
+    // Old version - only handles single character after underscore
+    // const camelKey = key.replace(/_([a-z])/g, (g) => g[1].toUpperCase());
+    
+    // New version - handles snake_case to camelCase conversion
+    const camelKey = key.replace(/_([a-z0-9])/g, (_, letter) => letter.toUpperCase());
 
     if (value instanceof Date) {
       camelCaseObj[camelKey] = value.toISOString();
