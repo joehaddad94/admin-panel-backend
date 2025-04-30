@@ -13,6 +13,7 @@ import { ExamScoresDto } from './dtos/exam.scores.dto';
 import {
   EditApplicationDto,
   EditApplicationsDto,
+  EditFCSApplicationDto,
 } from './dtos/edit.applications.dto';
 import { InterviewScoresDto } from './dtos/interview.scores.dto';
 
@@ -37,6 +38,12 @@ export class ApplicationController {
   @UsePipes(new ValidationPipe({ whitelist: true }))
   editApplication(@Body() data: EditApplicationDto) {
     return this.mediator.editApplication(data);
+  }
+
+  @Post('edit-fcs-application')
+  @UsePipes(new ValidationPipe({ whitelist: true }))
+  editFCSApplication(@Body() data: EditFCSApplicationDto) {
+    return this.mediator.editFCSApplication(data);
   }
 
   @Post('edit-applications')

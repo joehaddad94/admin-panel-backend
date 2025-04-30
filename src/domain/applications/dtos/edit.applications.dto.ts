@@ -84,3 +84,18 @@ export class EditApplicationsDto {
   @IsNumber({}, { message: 'Cycle Id must be a number' })
   inputCycleId: number;
 }
+
+export class EditFCSApplicationDto {
+  @ApiProperty()
+  @IsNotEmpty({ message: 'ID must be provided' })
+  @IsInt({ message: 'ID must be an integer' })
+  id: number;
+  
+  @ApiProperty({ required: false })
+  @IsOptional()
+  isEligible?: boolean;
+
+  @ApiProperty({ required: false })
+  @IsOptional()
+  paid?: boolean;
+}
