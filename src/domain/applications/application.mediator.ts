@@ -63,6 +63,7 @@ export class ApplicationMediator {
         'applicationProgram',
         'applicationUser',
         'applicationCycle',
+        'applicationProgram'
       ];
 
       const whereConditions: any = {};
@@ -147,12 +148,13 @@ export class ApplicationMediator {
             ? 'No'
             : '-',
         applicationDate: new Date(app.created_at),
-        eligible:
-          app.is_eligible === true
+        eligible: app.applicationProgram[0].program.abbreviation === 'FCS' 
+          ? app.is_eligible 
+          : app.is_eligible === true
             ? 'Yes'
             : app.is_eligible === false
-            ? 'No'
-            : '-',
+              ? 'No'
+              : '-',
         passedScreeningDate: new Date(app.passed_screening_date),
         examScore: app.exam_score,
         passedExam:
@@ -187,7 +189,8 @@ export class ApplicationMediator {
         remarks: app.remarks,
         extras: app.extras,
         cycleId: app.applicationCycle[0]?.cycleId,
-        paid: app.paid === true ? 'Yes' : app.paid === false ? 'No' : '-',
+        // paid: app.paid === true ? 'Yes' : app.paid === false ? 'No' : '-',
+        paid: app.paid,
       }));
 
       mappedApplications.sort(
@@ -650,13 +653,13 @@ export class ApplicationMediator {
 
   editFCSApplication = async (data: EditFCSApplicationDto) => {
     return catcher(async () => {
-      const { id, paid } = data;
+      const { id, paid, isEligible } = data;
       
       const application = await this.applicationsService.findOne({ id });
       throwNotFound({ entity: 'application', errorCheck: !application });
 
       await this.applicationsService.update({ id }, { 
-        paid, 
+        paid, is_eligible: isEligible
       });
 
       return {
@@ -664,6 +667,7 @@ export class ApplicationMediator {
         updatedPayload: {
           id,
           paid: paid === true ? 'Yes' : paid === false ? 'No' : '-',
+          eligible: isEligible === true ? 'Yes' : isEligible === false ? 'No' : '-',
         }
       };
     });
