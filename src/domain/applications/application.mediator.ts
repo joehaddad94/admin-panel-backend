@@ -1247,6 +1247,109 @@ export class ApplicationMediator {
       applications: camelCaseApplications,
     };
   };
+  
+  sendScheduleConfirmationEmails = async (data: SendingEmailsDto) => {
+    return catcher(async () => {
+      const { cycleId, emails } = data;
+
+      const applicationIds = emails.map((entry) => entry.ids);
+      const uniqueEmails = emails.map((entry) => entry.emails);
+
+      const cyclesWhereConditions = cycleId ? { id: cycleId } : {};
+      const currentCycle = await this.cyclesService.findOne(
+        cyclesWhereConditions,
+        ['decisionDateCycle'],
+      );
+
+      if (!currentCycle) {
+        throwError('Cycle not found.', HttpStatus.BAD_REQUEST);
+      }
+
+      const requiredFields = [
+        {
+          field: currentCycle.decisionDateCycle.decisionDate.date_2,
+          message: 'Bootcamp Start Date should be provided.',
+        },
+        {
+          field: currentCycle.decisionDateCycle.decisionDate.link_2,
+          message: 'Class Division Form should be provided.',
+        }   
+      ];
+
+      requiredFields.forEach(({ field, message }) => {
+        if (field === null) {
+          throwError(message, HttpStatus.BAD_REQUEST);
+        }
+      });
+      
+      const applicationsByIds = await this.applicationsService.findMany(
+        { id: In(applicationIds) },
+        ['applicationUser', 'applicationInfo'],
+      );
+
+      const applicationsToEmail = applicationsByIds.filter((application) => {
+        const email: string = application.applicationUser[0]?.user?.email;
+        return uniqueEmails.includes(email);
+      });
+
+      const templateName = 'FCS/schedule-confirmation.hbs';
+      const subject = 'SE Factory | Schedule Confirmation';
+
+      const templateVariables = {
+        bootcampStartDate: formatReadableDate(currentCycle.decisionDateCycle.decisionDate.date_2),
+        classDivisionForm: currentCycle.decisionDateCycle.decisionDate.link_2,
+      };
+
+      let mailerResponse: any = { foundEmails: [], notFoundEmails: [] };
+
+      if (applicationsToEmail.length > 0) {
+        const response = await this.mailService.sendEmails(
+          applicationsToEmail.map((app) => app.applicationUser[0]?.user?.email),
+          templateName,
+          subject,
+          templateVariables,
+        );
+
+        mailerResponse = response;
+      }
+
+      const sentEmailSet = new Set(mailerResponse.foundEmails);
+
+      for (const app of applicationsToEmail) {
+        const email = app.applicationUser[0]?.user?.email;
+        if (sentEmailSet.has(email)) {
+          await this.applicationsService.update(
+            { id: app.id },
+            { passed_exam_email_sent: true },
+          );
+          (app as any).passed_exam_email_sent = 'Yes';
+          (app as any).passed_screening = app.passed_screening === true ? 'Yes' : 'No';
+          (app as any).screening_email_sent = app.screening_email_sent === true ? 'Yes' : 'No';
+          (app as any).app_status = app.status;
+          delete (app as any).status;
+        } else {
+          await this.applicationsService.update(
+            { id: app.id },
+            { passed_exam_email_sent: false },
+          );
+          (app as any).passed_exam_email_sent = 'No';
+          (app as any).passed_screening = app.passed_screening === true ? 'Yes' : 'No';
+          (app as any).screening_email_sent = app.screening_email_sent === true ? 'Yes' : 'No';
+          (app as any).app_status = app.status;
+          delete (app as any).status;
+        }
+      }
+
+      const camelCaseApplications = convertToCamelCase(applicationsToEmail);
+
+      return {
+        message: 'Schedule confirmation emails have been processed. Check the status for details.',
+        foundEmails: mailerResponse.foundEmails,
+        notFoundEmails: mailerResponse.notFoundEmails,
+        applications: camelCaseApplications,
+      };
+    });
+  };
 
   sendStatusEmail = async (data: SendingEmailsDto) => {
     const { cycleId, emails } = data;
