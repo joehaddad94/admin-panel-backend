@@ -85,11 +85,10 @@ export class EditApplicationsDto {
   inputCycleId: number;
 }
 
-export class EditFCSApplicationDto {
+export class EditFCSApplicationsDto {
   @ApiProperty()
   @IsNotEmpty({ message: 'ID must be provided' })
-  @IsInt({ message: 'ID must be an integer' })
-  id: number;
+  ids: number[];
   
   @ApiProperty({ required: false })
   @IsOptional()

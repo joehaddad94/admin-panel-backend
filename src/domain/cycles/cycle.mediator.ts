@@ -59,9 +59,7 @@ export class CycleMediator {
         a.code.localeCompare(b.code, undefined, { numeric: true }),
     );
     
-    console.log("🚀 ~ CycleMediator ~ returncatcher ~ flattenedCycles:", JSON.stringify(flattenedCycles, null, 2))
     flattenedCycles = convertToCamelCase(flattenedCycles);
-    console.log("🚀 ~ CycleMediator ~ returncatcher ~ flattenedCycles:", JSON.stringify(flattenedCycles, null, 2))
     
     return { cycles: flattenedCycles, total, page, pageSize };
   });

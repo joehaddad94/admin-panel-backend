@@ -13,7 +13,7 @@ import { ExamScoresDto } from './dtos/exam.scores.dto';
 import {
   EditApplicationDto,
   EditApplicationsDto,
-  EditFCSApplicationDto,
+  EditFCSApplicationsDto,
 } from './dtos/edit.applications.dto';
 import { convertToCamelCase } from 'src/core/helpers/camelCase';
 import { validateThresholdEntity } from 'src/core/helpers/validateThresholds';
@@ -651,23 +651,58 @@ export class ApplicationMediator {
     });
   };
 
-  editFCSApplication = async (data: EditFCSApplicationDto) => {
+  editFCSApplications = async (data: EditFCSApplicationsDto) => {
     return catcher(async () => {
-      const { id, paid, isEligible } = data;
-      
-      const application = await this.applicationsService.findOne({ id });
+      const { ids, paid, isEligible } = data;
+      const idsArray = Array.isArray(ids) ? ids : [ids];
+
+      if (idsArray.length > 1) {
+        const updateData: any = {};
+        if (isEligible !== undefined) {
+          updateData.is_eligible = isEligible;
+        }
+        if (paid !== undefined) {
+          updateData.paid = paid;
+        }
+
+        await Application.update({ id: In(idsArray) }, updateData);
+
+        const updatedApplications = await this.applicationsService.findMany(
+          { id: In(idsArray) },
+          []
+        );
+
+        const updatedPayload = updatedApplications.map(app => ({
+          id: app.id,
+          paid: app.paid ,
+          eligible: app.is_eligible,
+        }));
+
+        return {
+          message: 'Applications updated successfully',
+          updatedPayload
+        };
+      }
+
+      const application = await this.applicationsService.findOne({ id: idsArray[0] });
       throwNotFound({ entity: 'application', errorCheck: !application });
 
-      await this.applicationsService.update({ id }, { 
-        paid, is_eligible: isEligible
-      });
+      const updateData: any = {};
+      if (isEligible !== undefined) {
+        updateData.is_eligible = isEligible;
+      }
+      if (paid !== undefined) {
+        updateData.paid = paid;
+      }
+
+      await this.applicationsService.update({ id: idsArray[0] }, updateData);
 
       return {
         message: 'Application updated successfully',
         updatedPayload: {
-          id,
-          paid: paid === true ? 'Yes' : paid === false ? 'No' : '-',
-          eligible: isEligible === true ? 'Yes' : isEligible === false ? 'No' : '-',
+          id: idsArray[0],
+          paid: paid,
+          eligible: isEligible,
         }
       };
     });
