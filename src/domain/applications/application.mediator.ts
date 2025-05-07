@@ -19,7 +19,6 @@ import { convertToCamelCase } from 'src/core/helpers/camelCase';
 import { validateThresholdEntity } from 'src/core/helpers/validateThresholds';
 import { Status } from 'src/core/data/types/applications/applications.types';
 import {
-  formatExamDate,
   formatReadableDate,
 } from 'src/core/helpers/formatDate';
 import {
@@ -31,6 +30,7 @@ import { InterviewScoresDto } from './dtos/interview.scores.dto';
 import { ApplicationCycle } from 'src/core/data/database/relations/application-cycle.entity';
 import { Application } from 'src/core/data/database/entities/application.entity';
 import { programConfigs } from './configs/program.configs';
+import { ApplicationSection } from 'src/core/data/database/relations/applications-sections.entity';
 
 @Injectable()
 export class ApplicationMediator {
@@ -53,28 +53,29 @@ export class ApplicationMediator {
         cycleId,
         useAllCycles,
       } = filtersDto;
-
+      
       const currentPage = dtoPage ?? page;
       const currentPageSize = dtoPageSize ?? pageSize;
       let latestCycle;
-
+      
       const options: GlobalEntities[] = [
         'applicationInfo',
         'applicationProgram',
         'applicationUser',
         'applicationCycle',
-        'applicationProgram'
+        'applicationProgram',
+        'applicationSection',
       ];
-
+      
       const whereConditions: any = {};
-
+      
       if (programId) {
         if (!whereConditions.applicationProgram) {
           whereConditions.applicationProgram = {};
         }
         whereConditions.applicationProgram.programId = programId;
       }
-
+      
       if (cycleId) {
         if (!whereConditions.applicationCycle) {
           whereConditions.applicationCycle = {};
@@ -90,6 +91,14 @@ export class ApplicationMediator {
         }
       }
 
+      const application = await this.applicationsService.findOne(
+        { 
+          ...whereConditions,
+          applicationUser: { user: { email: 'joe@sefactory.io' } }
+        }, 
+        options
+      );
+      console.log("🚀 ~ ApplicationMediator ~ returncatcher ~ application:", JSON.stringify(application, null, 2))
       const [applications, total] = await this.applicationsService.findAndCount(
         whereConditions,
         options,
@@ -97,12 +106,12 @@ export class ApplicationMediator {
         (currentPage - 1) * currentPageSize,
         currentPageSize,
       );
-
+      
       throwNotFound({
         entity: 'applications',
         errorCheck: !applications,
       });
-
+      
       const mappedApplications = applications.map((app) => ({
         id: app.id,
         sefId: app.applicationUser[0].user.sef_id,
@@ -191,6 +200,7 @@ export class ApplicationMediator {
         cycleId: app.applicationCycle[0]?.cycleId,
         // paid: app.paid === true ? 'Yes' : app.paid === false ? 'No' : '-',
         paid: app.paid,
+        sectionName: app.applicationSection?.section?.name,
       }));
 
       mappedApplications.sort(
@@ -653,7 +663,7 @@ export class ApplicationMediator {
 
   editFCSApplications = async (data: EditFCSApplicationsDto) => {
     return catcher(async () => {
-      const { ids, paid, isEligible } = data;
+      const { ids, paid, isEligible, sectionId } = data;
       const idsArray = Array.isArray(ids) ? ids : [ids];
 
       if (idsArray.length > 1) {
@@ -667,15 +677,23 @@ export class ApplicationMediator {
 
         await Application.update({ id: In(idsArray) }, updateData);
 
+        if (sectionId !== undefined) {
+          await ApplicationSection.update(
+            { application_new_id: In(idsArray) },
+            { section_id: sectionId }
+          );
+        }
+
         const updatedApplications = await this.applicationsService.findMany(
           { id: In(idsArray) },
-          []
+          ['applicationSection']
         );
 
         const updatedPayload = updatedApplications.map(app => ({
           id: app.id,
           paid: app.paid ,
           eligible: app.is_eligible,
+          sectionId: app.applicationSection?.section.name
         }));
 
         return {
@@ -684,9 +702,10 @@ export class ApplicationMediator {
         };
       }
 
-      const application = await this.applicationsService.findOne({ id: idsArray[0] });
+      const application = await this.applicationsService.findOne({ id: idsArray[0] }, ['applicationSection']);
       throwNotFound({ entity: 'application', errorCheck: !application });
-
+      console.log("🚀 ~ ApplicationMediator ~ returncatcher ~ application:", application)
+      
       const updateData: any = {};
       if (isEligible !== undefined) {
         updateData.is_eligible = isEligible;
@@ -697,12 +716,20 @@ export class ApplicationMediator {
 
       await this.applicationsService.update({ id: idsArray[0] }, updateData);
 
+      if (sectionId !== undefined) {
+        await ApplicationSection.update(
+          { application_new_id: idsArray[0] },
+          { section_id: sectionId }
+        );
+      }
+
       return {
         message: 'Application updated successfully',
         updatedPayload: {
           id: idsArray[0],
           paid: paid,
           eligible: isEligible,
+          sectionId: sectionId
         }
       };
     });

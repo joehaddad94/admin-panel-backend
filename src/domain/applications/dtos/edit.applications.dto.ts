@@ -97,4 +97,8 @@ export class EditFCSApplicationsDto {
   @ApiProperty({ required: false })
   @IsOptional()
   paid?: boolean;
+
+  @ApiProperty({ required: false })
+  @IsOptional()
+  sectionId?: number;
 }

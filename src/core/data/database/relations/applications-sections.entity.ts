@@ -23,13 +23,13 @@ export class ApplicationSection extends BaseEntity {
   @OneToOne(
     () => Application,
     (application) => application.applicationSection,
-    { eager: true },
+
   )
   @JoinColumn({ name: 'application_new_id' })
   application: Application;
 
   @OneToOne(() => Sections, (section) => section.applicationSection, {
-    eager: false,
+    eager: true,
   })
   @JoinColumn({ name: 'section_id' })
   section: Sections;
