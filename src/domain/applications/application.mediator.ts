@@ -128,7 +128,7 @@ export class ApplicationMediator {
         whichSocial: app.applicationInfo[0].info.which_social,
         termsConditions: app.applicationInfo[0].info.terms_conditions,
         degreeType: app.applicationInfo[0].info.degree_type,
-        status: app.applicationInfo[0].info.status,
+        educationStatus: app.applicationInfo[0].info.status,
         institution: app.applicationInfo[0].info.institution,
         fieldOfStudy: app.applicationInfo[0].info.field_of_study,
         majorTitle: app.applicationInfo[0].info.major_title,
@@ -1291,17 +1291,17 @@ export class ApplicationMediator {
         const email: string = application.applicationUser[0]?.user?.email;
         return uniqueEmails.includes(email);
       });
-
+      
       const templateName = 'FCS/schedule-confirmation.hbs';
       const subject = 'SE Factory | Schedule Confirmation';
-
+      
       const templateVariables = {
         bootcampStartDate: formatReadableDate(currentCycle.decisionDateCycle.decisionDate.date_2),
         classDivisionForm: currentCycle.decisionDateCycle.decisionDate.link_2,
       };
-
+      
       let mailerResponse: any = { foundEmails: [], notFoundEmails: [] };
-
+      
       if (applicationsToEmail.length > 0) {
         const response = await this.mailService.sendEmails(
           applicationsToEmail.map((app) => app.applicationUser[0]?.user?.email),
@@ -1309,12 +1309,12 @@ export class ApplicationMediator {
           subject,
           templateVariables,
         );
-
+        
         mailerResponse = response;
       }
 
-      const sentEmailSet = new Set(mailerResponse.foundEmails);
-
+      const sentEmailSet = new Set(mailerResponse.foundEmails.map(item => item.email));
+      
       for (const app of applicationsToEmail) {
         const email = app.applicationUser[0]?.user?.email;
         if (sentEmailSet.has(email)) {
@@ -1325,8 +1325,6 @@ export class ApplicationMediator {
           (app as any).passed_exam_email_sent = 'Yes';
           (app as any).passed_screening = app.passed_screening === true ? 'Yes' : 'No';
           (app as any).screening_email_sent = app.screening_email_sent === true ? 'Yes' : 'No';
-          (app as any).app_status = app.status;
-          delete (app as any).status;
         } else {
           await this.applicationsService.update(
             { id: app.id },
@@ -1335,8 +1333,6 @@ export class ApplicationMediator {
           (app as any).passed_exam_email_sent = 'No';
           (app as any).passed_screening = app.passed_screening === true ? 'Yes' : 'No';
           (app as any).screening_email_sent = app.screening_email_sent === true ? 'Yes' : 'No';
-          (app as any).app_status = app.status;
-          delete (app as any).status;
         }
       }
 
