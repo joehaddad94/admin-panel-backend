@@ -101,4 +101,9 @@ export class EditFCSApplicationsDto {
   @ApiProperty({ required: false })
   @IsOptional()
   sectionId?: number;
+
+  @ApiProperty({ required: false })
+  @IsOptional()
+  @IsNumber({}, { message: 'Cycle Id must be a number' })
+  inputCycleId: number;
 }

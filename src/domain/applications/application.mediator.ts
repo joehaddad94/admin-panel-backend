@@ -98,7 +98,6 @@ export class ApplicationMediator {
         }, 
         options
       );
-      console.log("🚀 ~ ApplicationMediator ~ returncatcher ~ application:", JSON.stringify(application, null, 2))
       const [applications, total] = await this.applicationsService.findAndCount(
         whereConditions,
         options,
@@ -663,7 +662,7 @@ export class ApplicationMediator {
 
   editFCSApplications = async (data: EditFCSApplicationsDto) => {
     return catcher(async () => {
-      const { ids, paid, isEligible, sectionId } = data;
+      const { ids, paid, isEligible, sectionId, inputCycleId } = data;
       const idsArray = Array.isArray(ids) ? ids : [ids];
 
       if (idsArray.length > 1) {
@@ -679,38 +678,52 @@ export class ApplicationMediator {
           await Application.update({ id: In(idsArray) }, updateData);
         }
 
-        if (sectionId !== undefined) {
-          // Handle each application's section relationship
+        
+        if (sectionId !== undefined || inputCycleId !== undefined) {
           for (const appId of idsArray) {
-            const existingSection = await ApplicationSection.findOne({
-              where: { application_new_id: appId }
-            });
-
-            if (existingSection) {
-              await ApplicationSection.update(
-                { application_new_id: appId },
-                { section_id: sectionId }
+            // Handle cycle update if needed
+            if (inputCycleId !== undefined) {
+              const result = await ApplicationCycle.update(
+                { applicationId: appId },
+                { cycleId: inputCycleId }
               );
-            } else {
-              const newSection = ApplicationSection.create({
-                application_new_id: appId,
-                section_id: sectionId
+              console.log("🚀 ~ editFCSApplications ~ cycle update result:", JSON.stringify(result, null, 2))
+            }
+
+            // Handle section update if needed
+            if (sectionId !== undefined) {
+              const existingSection = await ApplicationSection.findOne({
+                where: { application_new_id: appId }
               });
-              await newSection.save();
+
+              if (existingSection) {
+                await ApplicationSection.update(
+                  { application_new_id: appId },
+                  { section_id: sectionId }
+                );
+              } else {
+                const newSection = ApplicationSection.create({
+                  application_new_id: appId,
+                  section_id: sectionId
+                });
+                await newSection.save();
+              }
             }
           }
         }
 
+
         const updatedApplications = await this.applicationsService.findMany(
           { id: In(idsArray) },
-          ['applicationSection']
+          ['applicationSection', 'applicationCycle']
         );
 
         const updatedPayload = updatedApplications.map(app => ({
           id: app.id,
           paid: app.paid,
           eligible: app.is_eligible,
-          sectionName: app.applicationSection?.section.name
+          sectionName: app.applicationSection?.section.name,
+          cycleId: app.applicationCycle?.[0]?.cycleId
         }));
 
         return {
