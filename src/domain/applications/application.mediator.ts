@@ -675,13 +675,30 @@ export class ApplicationMediator {
           updateData.paid = paid;
         }
 
-        await Application.update({ id: In(idsArray) }, updateData);
+        if(isEligible !== undefined || paid !== undefined) {
+          await Application.update({ id: In(idsArray) }, updateData);
+        }
 
         if (sectionId !== undefined) {
-          await ApplicationSection.update(
-            { application_new_id: In(idsArray) },
-            { section_id: sectionId }
-          );
+          // Handle each application's section relationship
+          for (const appId of idsArray) {
+            const existingSection = await ApplicationSection.findOne({
+              where: { application_new_id: appId }
+            });
+
+            if (existingSection) {
+              await ApplicationSection.update(
+                { application_new_id: appId },
+                { section_id: sectionId }
+              );
+            } else {
+              const newSection = ApplicationSection.create({
+                application_new_id: appId,
+                section_id: sectionId
+              });
+              await newSection.save();
+            }
+          }
         }
 
         const updatedApplications = await this.applicationsService.findMany(
@@ -691,9 +708,9 @@ export class ApplicationMediator {
 
         const updatedPayload = updatedApplications.map(app => ({
           id: app.id,
-          paid: app.paid ,
+          paid: app.paid,
           eligible: app.is_eligible,
-          sectionId: app.applicationSection?.section.name
+          sectionName: app.applicationSection?.section.name
         }));
 
         return {
@@ -704,7 +721,6 @@ export class ApplicationMediator {
 
       const application = await this.applicationsService.findOne({ id: idsArray[0] }, ['applicationSection']);
       throwNotFound({ entity: 'application', errorCheck: !application });
-      console.log("🚀 ~ ApplicationMediator ~ returncatcher ~ application:", application)
       
       const updateData: any = {};
       if (isEligible !== undefined) {
@@ -717,10 +733,23 @@ export class ApplicationMediator {
       await this.applicationsService.update({ id: idsArray[0] }, updateData);
 
       if (sectionId !== undefined) {
-        await ApplicationSection.update(
-          { application_new_id: idsArray[0] },
-          { section_id: sectionId }
-        );
+        
+        const existingSection = await ApplicationSection.findOne({
+          where: { application_new_id: idsArray[0] }
+        });
+
+        if (existingSection) {
+          await ApplicationSection.update(
+            { application_new_id: idsArray[0] },
+            { section_id: sectionId }
+          );
+        } else {
+          const newSection = ApplicationSection.create({
+            application_new_id: idsArray[0],
+            section_id: sectionId
+          });
+          await newSection.save();
+        }
       }
 
       return {
