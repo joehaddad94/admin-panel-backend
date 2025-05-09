@@ -18,9 +18,7 @@ import {
 import { convertToCamelCase } from 'src/core/helpers/camelCase';
 import { validateThresholdEntity } from 'src/core/helpers/validateThresholds';
 import { Status } from 'src/core/data/types/applications/applications.types';
-import {
-  formatReadableDate,
-} from 'src/core/helpers/formatDate';
+import { formatReadableDate } from 'src/core/helpers/formatDate';
 import {
   calculatePassedExam,
   calculatePassedInterview,
@@ -53,11 +51,11 @@ export class ApplicationMediator {
         cycleId,
         useAllCycles,
       } = filtersDto;
-      
+
       const currentPage = dtoPage ?? page;
       const currentPageSize = dtoPageSize ?? pageSize;
       let latestCycle;
-      
+
       const options: GlobalEntities[] = [
         'applicationInfo',
         'applicationProgram',
@@ -66,16 +64,16 @@ export class ApplicationMediator {
         'applicationProgram',
         'applicationSection',
       ];
-      
+
       const whereConditions: any = {};
-      
+
       if (programId) {
         if (!whereConditions.applicationProgram) {
           whereConditions.applicationProgram = {};
         }
         whereConditions.applicationProgram.programId = programId;
       }
-      
+
       if (cycleId) {
         if (!whereConditions.applicationCycle) {
           whereConditions.applicationCycle = {};
@@ -90,14 +88,6 @@ export class ApplicationMediator {
           whereConditions.applicationCycle.cycleId = latestCycle.id;
         }
       }
-
-      const application = await this.applicationsService.findOne(
-        { 
-          ...whereConditions,
-          applicationUser: { user: { email: 'joe@sefactory.io' } }
-        }, 
-        options
-      );
       const [applications, total] = await this.applicationsService.findAndCount(
         whereConditions,
         options,
@@ -105,12 +95,12 @@ export class ApplicationMediator {
         (currentPage - 1) * currentPageSize,
         currentPageSize,
       );
-      
+
       throwNotFound({
         entity: 'applications',
         errorCheck: !applications,
       });
-      
+
       const mappedApplications = applications.map((app) => ({
         id: app.id,
         sefId: app.applicationUser[0].user.sef_id,
@@ -156,13 +146,14 @@ export class ApplicationMediator {
             ? 'No'
             : '-',
         applicationDate: new Date(app.created_at),
-        eligible: app.applicationProgram[0].program.abbreviation === 'FCS' 
-          ? app.is_eligible 
-          : app.is_eligible === true
+        eligible:
+          app.applicationProgram[0].program.abbreviation === 'FCS'
+            ? app.is_eligible
+            : app.is_eligible === true
             ? 'Yes'
             : app.is_eligible === false
-              ? 'No'
-              : '-',
+            ? 'No'
+            : '-',
         passedScreeningDate: new Date(app.passed_screening_date),
         examScore: app.exam_score,
         passedExam:
@@ -475,7 +466,8 @@ export class ApplicationMediator {
       }
 
       const updatedData: any = {
-        is_eligible: isEligible !== undefined ? isEligible : application.is_eligible,
+        is_eligible:
+          isEligible !== undefined ? isEligible : application.is_eligible,
         exam_score:
           examScore !== undefined ? examScore : application.exam_score,
         tech_interview_score:
@@ -674,67 +666,89 @@ export class ApplicationMediator {
           updateData.paid = paid;
         }
 
-        if(isEligible !== undefined || paid !== undefined) {
+        if (isEligible !== undefined || paid !== undefined) {
           await Application.update({ id: In(idsArray) }, updateData);
         }
 
-        
         if (sectionId !== undefined || inputCycleId !== undefined) {
           for (const appId of idsArray) {
             // Handle cycle update if needed
             if (inputCycleId !== undefined) {
               const result = await ApplicationCycle.update(
                 { applicationId: appId },
-                { cycleId: inputCycleId }
+                { cycleId: inputCycleId },
               );
-              console.log("🚀 ~ editFCSApplications ~ cycle update result:", JSON.stringify(result, null, 2))
+              console.log(
+                '🚀 ~ editFCSApplications ~ cycle update result:',
+                JSON.stringify(result, null, 2),
+              );
             }
 
             // Handle section update if needed
             if (sectionId !== undefined) {
-              const existingSection = await ApplicationSection.findOne({
-                where: { application_new_id: appId }
-              });
-
-              if (existingSection) {
-                await ApplicationSection.update(
-                  { application_new_id: appId },
-                  { section_id: sectionId }
-                );
-              } else {
-                const newSection = ApplicationSection.create({
-                  application_new_id: appId,
-                  section_id: sectionId
+              try {
+                const existingSection = await ApplicationSection.findOne({
+                  where: { application_new_id: appId },
                 });
-                await newSection.save();
+
+                if (existingSection) {
+                  await ApplicationSection.update(
+                    { id: existingSection.id },
+                    { section_id: sectionId },
+                  );
+                } else {
+                  const newSection = ApplicationSection.create({
+                    application_new_id: appId,
+                    section_id: sectionId,
+                  });
+                  await newSection.save();
+                }
+              } catch (error) {
+                if (error.code === '23505') {
+                  // PostgreSQL unique violation error code
+                  // If there's a unique constraint violation, try to update the existing record
+                  const existingSection = await ApplicationSection.findOne({
+                    where: { section_id: sectionId },
+                  });
+                  if (existingSection) {
+                    await ApplicationSection.update(
+                      { id: existingSection.id },
+                      { application_new_id: appId },
+                    );
+                  }
+                } else {
+                  throw error;
+                }
               }
             }
           }
         }
 
-
         const updatedApplications = await this.applicationsService.findMany(
           { id: In(idsArray) },
-          ['applicationSection', 'applicationCycle']
+          ['applicationSection', 'applicationCycle'],
         );
 
-        const updatedPayload = updatedApplications.map(app => ({
+        const updatedPayload = updatedApplications.map((app) => ({
           id: app.id,
           paid: app.paid,
           eligible: app.is_eligible,
           sectionName: app.applicationSection?.section.name,
-          cycleId: app.applicationCycle?.[0]?.cycleId
+          cycleId: app.applicationCycle?.[0]?.cycleId,
         }));
 
         return {
           message: 'Applications updated successfully',
-          updatedPayload
+          updatedPayload,
         };
       }
 
-      const application = await this.applicationsService.findOne({ id: idsArray[0] }, ['applicationSection']);
+      const application = await this.applicationsService.findOne(
+        { id: idsArray[0] },
+        ['applicationSection'],
+      );
       throwNotFound({ entity: 'application', errorCheck: !application });
-      
+
       const updateData: any = {};
       if (isEligible !== undefined) {
         updateData.is_eligible = isEligible;
@@ -746,22 +760,37 @@ export class ApplicationMediator {
       await this.applicationsService.update({ id: idsArray[0] }, updateData);
 
       if (sectionId !== undefined) {
-        
-        const existingSection = await ApplicationSection.findOne({
-          where: { application_new_id: idsArray[0] }
-        });
-
-        if (existingSection) {
-          await ApplicationSection.update(
-            { application_new_id: idsArray[0] },
-            { section_id: sectionId }
-          );
-        } else {
-          const newSection = ApplicationSection.create({
-            application_new_id: idsArray[0],
-            section_id: sectionId
+        try {
+          const existingSection = await ApplicationSection.findOne({
+            where: { application_new_id: idsArray[0] },
           });
-          await newSection.save();
+
+          if (existingSection) {
+            await ApplicationSection.update(
+              { id: existingSection.id },
+              { section_id: sectionId },
+            );
+          } else {
+            const newSection = ApplicationSection.create({
+              application_new_id: idsArray[0],
+              section_id: sectionId,
+            });
+            await newSection.save();
+          }
+        } catch (error) {
+          if (error.code === '23505') {
+            const existingSection = await ApplicationSection.findOne({
+              where: { section_id: sectionId },
+            });
+            if (existingSection) {
+              await ApplicationSection.update(
+                { id: existingSection.id },
+                { application_new_id: idsArray[0] },
+              );
+            }
+          } else {
+            throw error;
+          }
         }
       }
 
@@ -771,8 +800,8 @@ export class ApplicationMediator {
           id: idsArray[0],
           paid: paid,
           eligible: isEligible,
-          sectionId: sectionId
-        }
+          sectionId: sectionId,
+        },
       };
     });
   };
@@ -780,9 +809,9 @@ export class ApplicationMediator {
   sendPostScreeningEmails = async (data: SendingEmailsDto) => {
     return catcher(async () => {
       const { cycleId, emails } = data;
-      
+
       const cyclesWhereConditions = cycleId ? { id: cycleId } : {};
-      
+
       const currentCycle = await this.cyclesService.findOne(
         cyclesWhereConditions,
         ['decisionDateCycle', 'cycleProgram'],
@@ -796,11 +825,17 @@ export class ApplicationMediator {
       const programConfig = programConfigs[programAbbr];
 
       if (!programConfig) {
-        throwError(`No configuration found for program: ${programAbbr}`, HttpStatus.BAD_REQUEST);
+        throwError(
+          `No configuration found for program: ${programAbbr}`,
+          HttpStatus.BAD_REQUEST,
+        );
       }
 
       if (!currentCycle.decisionDateCycle?.decisionDate) {
-        throwError('Decision date not found for this cycle', HttpStatus.BAD_REQUEST);
+        throwError(
+          'Decision date not found for this cycle',
+          HttpStatus.BAD_REQUEST,
+        );
       }
 
       const decisionDate = currentCycle.decisionDateCycle.decisionDate;
@@ -887,7 +922,8 @@ export class ApplicationMediator {
       let mailerResponseIneligible: any;
 
       if (eligibleEmailsToSend.length > 0) {
-        const templateVariables = programConfig.getTemplateVariables(decisionDate);
+        const templateVariables =
+          programConfig.getTemplateVariables(decisionDate);
 
         mailerResponseEligible = await this.mailService.sendEmails(
           eligibleEmailsToSend,
@@ -1316,7 +1352,7 @@ export class ApplicationMediator {
       applications: camelCaseApplications,
     };
   };
-  
+
   sendScheduleConfirmationEmails = async (data: SendingEmailsDto) => {
     return catcher(async () => {
       const { cycleId, emails } = data;
@@ -1342,7 +1378,7 @@ export class ApplicationMediator {
         {
           field: currentCycle.decisionDateCycle.decisionDate.link_2,
           message: 'Class Division Form should be provided.',
-        }   
+        },
       ];
 
       requiredFields.forEach(({ field, message }) => {
@@ -1350,7 +1386,7 @@ export class ApplicationMediator {
           throwError(message, HttpStatus.BAD_REQUEST);
         }
       });
-      
+
       const applicationsByIds = await this.applicationsService.findMany(
         { id: In(applicationIds) },
         ['applicationUser', 'applicationInfo'],
@@ -1360,17 +1396,19 @@ export class ApplicationMediator {
         const email: string = application.applicationUser[0]?.user?.email;
         return uniqueEmails.includes(email);
       });
-      
+
       const templateName = 'FCS/schedule-confirmation.hbs';
       const subject = 'SE Factory | Schedule Confirmation';
-      
+
       const templateVariables = {
-        bootcampStartDate: formatReadableDate(currentCycle.decisionDateCycle.decisionDate.date_2),
+        bootcampStartDate: formatReadableDate(
+          currentCycle.decisionDateCycle.decisionDate.date_2,
+        ),
         classDivisionForm: currentCycle.decisionDateCycle.decisionDate.link_2,
       };
-      
+
       let mailerResponse: any = { foundEmails: [], notFoundEmails: [] };
-      
+
       if (applicationsToEmail.length > 0) {
         const response = await this.mailService.sendEmails(
           applicationsToEmail.map((app) => app.applicationUser[0]?.user?.email),
@@ -1378,12 +1416,14 @@ export class ApplicationMediator {
           subject,
           templateVariables,
         );
-        
+
         mailerResponse = response;
       }
 
-      const sentEmailSet = new Set(mailerResponse.foundEmails.map(item => item.email));
-      
+      const sentEmailSet = new Set(
+        mailerResponse.foundEmails.map((item) => item.email),
+      );
+
       for (const app of applicationsToEmail) {
         const email = app.applicationUser[0]?.user?.email;
         if (sentEmailSet.has(email)) {
@@ -1392,23 +1432,28 @@ export class ApplicationMediator {
             { passed_exam_email_sent: true },
           );
           (app as any).passed_exam_email_sent = 'Yes';
-          (app as any).passed_screening = app.passed_screening === true ? 'Yes' : 'No';
-          (app as any).screening_email_sent = app.screening_email_sent === true ? 'Yes' : 'No';
+          (app as any).passed_screening =
+            app.passed_screening === true ? 'Yes' : 'No';
+          (app as any).screening_email_sent =
+            app.screening_email_sent === true ? 'Yes' : 'No';
         } else {
           await this.applicationsService.update(
             { id: app.id },
             { passed_exam_email_sent: false },
           );
           (app as any).passed_exam_email_sent = 'No';
-          (app as any).passed_screening = app.passed_screening === true ? 'Yes' : 'No';
-          (app as any).screening_email_sent = app.screening_email_sent === true ? 'Yes' : 'No';
+          (app as any).passed_screening =
+            app.passed_screening === true ? 'Yes' : 'No';
+          (app as any).screening_email_sent =
+            app.screening_email_sent === true ? 'Yes' : 'No';
         }
       }
 
       const camelCaseApplications = convertToCamelCase(applicationsToEmail);
 
       return {
-        message: 'Schedule confirmation emails have been processed. Check the status for details.',
+        message:
+          'Schedule confirmation emails have been processed. Check the status for details.',
         foundEmails: mailerResponse.foundEmails,
         notFoundEmails: mailerResponse.notFoundEmails,
         applications: camelCaseApplications,
@@ -1432,8 +1477,7 @@ export class ApplicationMediator {
 
     const requiredFields = [
       {
-        field:
-          currentCycle.decisionDateCycle.decisionDate.link_3,
+        field: currentCycle.decisionDateCycle.decisionDate.link_3,
         message: 'Status Confirmation Form should be provided.',
       },
       {
@@ -1483,8 +1527,7 @@ export class ApplicationMediator {
             subject = 'SE Factory Acceptance';
             templateVariables = {
               statusConfirmationForm:
-                currentCycle.decisionDateCycle.decisionDate
-                  .link_3,
+                currentCycle.decisionDateCycle.decisionDate.link_3,
               orientationDate: formatReadableDate(
                 currentCycle.decisionDateCycle.decisionDate.date_1,
               ),
