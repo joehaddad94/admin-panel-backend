@@ -188,6 +188,7 @@ export class ApplicationMediator {
         remarks: app.remarks,
         extras: app.extras,
         cycleId: app.applicationCycle[0]?.cycleId,
+        cycleName: app.applicationCycle[0]?.cycle?.name,
         // paid: app.paid === true ? 'Yes' : app.paid === false ? 'No' : '-',
         paid: app.paid,
         sectionName: app.applicationSection?.section?.name,
@@ -794,6 +795,13 @@ export class ApplicationMediator {
         }
       }
 
+      if (inputCycleId !== undefined) {
+        await ApplicationCycle.update(
+          { applicationId: idsArray[0] },
+          { cycleId: inputCycleId },
+        );
+      }
+
       return {
         message: 'Application updated successfully',
         updatedPayload: {
@@ -801,6 +809,7 @@ export class ApplicationMediator {
           paid: paid,
           eligible: isEligible,
           sectionId: sectionId,
+          cycleId: inputCycleId,
         },
       };
     });
