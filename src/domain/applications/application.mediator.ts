@@ -679,10 +679,6 @@ export class ApplicationMediator {
                 { applicationId: appId },
                 { cycleId: inputCycleId },
               );
-              console.log(
-                '🚀 ~ editFCSApplications ~ cycle update result:',
-                JSON.stringify(result, null, 2),
-              );
             }
 
             // Handle section update if needed
@@ -734,8 +730,8 @@ export class ApplicationMediator {
           id: app.id,
           paid: app.paid,
           eligible: app.is_eligible,
-          sectionName: app.applicationSection?.section.name,
-          cycleId: app.applicationCycle?.[0]?.cycleId,
+          sectionName: app.applicationSection?.section?.name || null,
+          cycleId: app.applicationCycle?.[0]?.cycleId || null,
         }));
 
         return {
@@ -796,7 +792,7 @@ export class ApplicationMediator {
       }
 
       if (inputCycleId !== undefined) {
-        await ApplicationCycle.update(
+        const result = await ApplicationCycle.update(
           { applicationId: idsArray[0] },
           { cycleId: inputCycleId },
         );
