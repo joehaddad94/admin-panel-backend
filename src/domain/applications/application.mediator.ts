@@ -761,18 +761,24 @@ export class ApplicationMediator {
           const existingSection = await ApplicationSection.findOne({
             where: { application_new_id: idsArray[0] },
           });
-
+          
           if (existingSection) {
             await ApplicationSection.update(
               { id: existingSection.id },
               { section_id: sectionId },
             );
           } else {
+            const enrollementStatus = Status.ENROLLED;
             const newSection = ApplicationSection.create({
               application_new_id: idsArray[0],
               section_id: sectionId,
             });
             await newSection.save();
+
+            await Application.update(
+              { id: idsArray[0] },
+              { status: enrollementStatus },
+            );
           }
         } catch (error) {
           if (error.code === '23505') {
@@ -792,7 +798,7 @@ export class ApplicationMediator {
       }
 
       if (inputCycleId !== undefined) {
-        const result = await ApplicationCycle.update(
+        await ApplicationCycle.update(
           { applicationId: idsArray[0] },
           { cycleId: inputCycleId },
         );
