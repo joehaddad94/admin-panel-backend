@@ -655,7 +655,14 @@ export class ApplicationMediator {
 
   editFCSApplications = async (data: EditFCSApplicationsDto) => {
     return catcher(async () => {
-      const { ids, paid, isEligible, sectionId, inputCycleId } = data;
+      const {
+        ids,
+        paid,
+        isEligible,
+        sectionId,
+        inputCycleId,
+        applicationStatus,
+      } = data;
       const idsArray = Array.isArray(ids) ? ids : [ids];
 
       if (idsArray.length > 1) {
@@ -666,8 +673,15 @@ export class ApplicationMediator {
         if (paid !== undefined) {
           updateData.paid = paid;
         }
+        if (applicationStatus !== undefined) {
+          updateData.status = applicationStatus;
+        }
 
-        if (isEligible !== undefined || paid !== undefined) {
+        if (
+          isEligible !== undefined ||
+          paid !== undefined ||
+          applicationStatus !== undefined
+        ) {
           await Application.update({ id: In(idsArray) }, updateData);
         }
 
@@ -675,7 +689,7 @@ export class ApplicationMediator {
           for (const appId of idsArray) {
             // Handle cycle update if needed
             if (inputCycleId !== undefined) {
-              const result = await ApplicationCycle.update(
+              await ApplicationCycle.update(
                 { applicationId: appId },
                 { cycleId: inputCycleId },
               );
@@ -694,11 +708,17 @@ export class ApplicationMediator {
                     { section_id: sectionId },
                   );
                 } else {
+                  const applicationStatus = Status.ACCEPTED;
                   const newSection = ApplicationSection.create({
                     application_new_id: appId,
                     section_id: sectionId,
                   });
                   await newSection.save();
+
+                  await Application.update(
+                    { id: appId },
+                    { status: applicationStatus },
+                  );
                 }
               } catch (error) {
                 if (error.code === '23505') {
@@ -732,6 +752,7 @@ export class ApplicationMediator {
           eligible: app.is_eligible,
           sectionName: app.applicationSection?.section?.name || null,
           cycleId: app.applicationCycle?.[0]?.cycleId || null,
+          applicationStatus: app.status,
         }));
 
         return {
@@ -753,6 +774,9 @@ export class ApplicationMediator {
       if (paid !== undefined) {
         updateData.paid = paid;
       }
+      if (applicationStatus !== undefined) {
+        updateData.status = applicationStatus;
+      }
 
       await this.applicationsService.update({ id: idsArray[0] }, updateData);
 
@@ -761,14 +785,14 @@ export class ApplicationMediator {
           const existingSection = await ApplicationSection.findOne({
             where: { application_new_id: idsArray[0] },
           });
-          
+
           if (existingSection) {
             await ApplicationSection.update(
               { id: existingSection.id },
               { section_id: sectionId },
             );
           } else {
-            const enrollementStatus = Status.ENROLLED;
+            const applicationStatus = Status.ACCEPTED;
             const newSection = ApplicationSection.create({
               application_new_id: idsArray[0],
               section_id: sectionId,
@@ -777,7 +801,7 @@ export class ApplicationMediator {
 
             await Application.update(
               { id: idsArray[0] },
-              { status: enrollementStatus },
+              { status: applicationStatus },
             );
           }
         } catch (error) {
@@ -812,6 +836,7 @@ export class ApplicationMediator {
           eligible: isEligible,
           sectionId: sectionId,
           cycleId: inputCycleId,
+          applicationStatus: applicationStatus,
         },
       };
     });
