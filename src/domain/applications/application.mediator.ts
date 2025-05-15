@@ -27,8 +27,9 @@ import { In } from 'typeorm';
 import { InterviewScoresDto } from './dtos/interview.scores.dto';
 import { ApplicationCycle } from 'src/core/data/database/relations/application-cycle.entity';
 import { Application } from 'src/core/data/database/entities/application.entity';
-import { programConfigs } from './configs/program.configs';
+import { programConfigs } from './configs/interview.email.configs';
 import { ApplicationSection } from 'src/core/data/database/relations/applications-sections.entity';
+import { statusEmailConfigs } from './configs/status.email.configs';
 
 @Injectable()
 export class ApplicationMediator {
@@ -1504,30 +1505,35 @@ export class ApplicationMediator {
 
     const currentCycle = await this.cyclesService.findOne(
       cyclesWhereConditions,
-      ['decisionDateCycle'],
+      ['decisionDateCycle', 'cycleProgram'],
     );
 
-    if (!currentCycle) {
-      throwError('Cycle not found.', HttpStatus.BAD_REQUEST);
+    if (!currentCycle?.cycleProgram?.program?.abbreviation) {
+      throwError('Program not found for this cycle', HttpStatus.BAD_REQUEST);
     }
 
-    const requiredFields = [
-      {
-        field: currentCycle.decisionDateCycle.decisionDate.link_3,
-        message: 'Status Confirmation Form should be provided.',
-      },
-      {
-        field: currentCycle.decisionDateCycle.decisionDate.date_1,
-        message: 'Orientation Date should be provided.',
-      },
-      {
-        field: currentCycle.decisionDateCycle.decisionDate.date_2,
-        message: 'Class Debut Date should be provided.',
-      },
-    ];
+    const programAbbr = currentCycle.cycleProgram.program.abbreviation;
+    const programConfig = statusEmailConfigs[programAbbr];
 
-    requiredFields.forEach(({ field, message }) => {
-      if (field === null) {
+    if (!programConfig) {
+      throwError(
+        `No configuration found for program: ${programAbbr}`,
+        HttpStatus.BAD_REQUEST,
+      );
+    }
+
+    if (!currentCycle.decisionDateCycle?.decisionDate) {
+      throwError(
+        'Decision date not found for this cycle',
+        HttpStatus.BAD_REQUEST,
+      );
+    }
+
+    const decisionDate = currentCycle.decisionDateCycle.decisionDate;
+
+    // Validate required fields
+    programConfig.requiredFields.forEach(({ field, message }) => {
+      if (!decisionDate[field]) {
         throwError(message, HttpStatus.BAD_REQUEST);
       }
     });
@@ -1553,53 +1559,17 @@ export class ApplicationMediator {
     const emailsToSend = applicationsToEmail
       .map((application) => {
         const email: string = application.applicationUser[0]?.user?.email;
-        let templateName: string;
-        let subject: string;
-        let templateVariables = {};
+        const templateConfig = programConfig.templates[application.status];
 
-        switch (application.status) {
-          case Status.ACCEPTED:
-            templateName = 'FSE/passedInterview.hbs';
-            subject = 'SE Factory Acceptance';
-            templateVariables = {
-              statusConfirmationForm:
-                currentCycle.decisionDateCycle.decisionDate.link_3,
-              orientationDate: formatReadableDate(
-                currentCycle.decisionDateCycle.decisionDate.date_1,
-              ),
-              classDebutDate: formatReadableDate(
-                currentCycle.decisionDateCycle.decisionDate.date_2,
-              ),
-              submissionConfirmationDate: formatReadableDate(
-                new Date(
-                  new Date(
-                    currentCycle.decisionDateCycle.decisionDate.date_1,
-                  ).setDate(
-                    new Date(
-                      currentCycle.decisionDateCycle.decisionDate.date_1,
-                    ).getDate() - 3,
-                  ),
-                ),
-              ),
-            };
-            break;
-          case Status.REJECTED:
-            templateName = 'FSE/failedInterview.hbs';
-            subject = 'SE Factory Application Status';
-            break;
-          case Status.WAITING_LIST:
-            templateName = 'FSE/waitingList.hbs';
-            subject = 'SE Factory Application Status';
-            break;
-          default:
-            return null;
+        if (!templateConfig) {
+          return null;
         }
 
         return {
           email,
-          templateName,
-          subject,
-          templateVariables,
+          templateName: templateConfig.name,
+          subject: templateConfig.subject,
+          templateVariables: programConfig.getTemplateVariables(decisionDate),
         };
       })
       .filter((item) => item !== null);
