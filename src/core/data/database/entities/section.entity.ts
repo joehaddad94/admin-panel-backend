@@ -18,6 +18,19 @@ export class Sections extends BaseEntity {
   name: string;
 
   @Column({
+    type: 'varchar',
+    length: 255,
+    nullable: true,
+  })
+  days: string; 
+
+  @Column({ type: 'time without time zone', nullable: true })
+  course_time_start: Date;
+
+  @Column({ type: 'time without time zone', nullable: true })
+  course_time_end: Date;
+
+  @Column({
     type: 'timestamp without time zone',
     nullable: true,
   })

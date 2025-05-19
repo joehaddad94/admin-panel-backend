@@ -8,6 +8,7 @@ import { In } from 'typeorm';
 import { CreateEditSectionDto } from './dtos/createEditSection.dtos';
 import { Sections } from 'src/core/data/database/entities/section.entity';
 import { SectionCycle } from 'src/core/data/database/relations/section-cycle.entity';
+import { formatTime } from 'src/core/helpers/formatDate';
 
 @Injectable()
 export class SectionMediator {
@@ -41,6 +42,8 @@ export class SectionMediator {
       let sections = found.map((section) => ({
         ...section,
         cycleName: section.sectionCycle?.cycle?.name,
+        course_time_start: formatTime(section.course_time_start),
+        course_time_end: formatTime(section.course_time_end),
       }));
 
       sections = convertToCamelCase(sections);
@@ -50,7 +53,7 @@ export class SectionMediator {
 
   createEditSection = async (data: CreateEditSectionDto) => {
     return catcher(async () => {
-      const { sectionId, sectionName, cycleId } = data;
+      const { sectionId, sectionName, cycleId, courseTimeStart, courseTimeEnd } = data;
 
       let section: Sections;
       let savedSection: Sections;
@@ -66,6 +69,8 @@ export class SectionMediator {
         }
 
         if (sectionName) section.name = sectionName;
+        if (courseTimeStart) section.course_time_start = courseTimeStart;
+        if (courseTimeEnd) section.course_time_end = courseTimeEnd;
         section.updated_at = new Date();
 
         if (section.sectionCycle) {
@@ -95,6 +100,8 @@ export class SectionMediator {
 
         section = this.sectionService.create({
           name: sectionName,
+          course_time_start: courseTimeStart,
+          course_time_end: courseTimeEnd,
           sectionCycle: sectionCycle,
           created_at: new Date(),
           updated_at: new Date(),
