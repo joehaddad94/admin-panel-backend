@@ -53,7 +53,7 @@ export class SectionMediator {
 
   createEditSection = async (data: CreateEditSectionDto) => {
     return catcher(async () => {
-      const { sectionId, sectionName, cycleId, courseTimeStart, courseTimeEnd } = data;
+      const { sectionId, sectionName, cycleId, days, courseTimeStart, courseTimeEnd } = data;
 
       let section: Sections;
       let savedSection: Sections;
@@ -71,8 +71,9 @@ export class SectionMediator {
         if (sectionName) section.name = sectionName;
         if (courseTimeStart) section.course_time_start = courseTimeStart;
         if (courseTimeEnd) section.course_time_end = courseTimeEnd;
+        if (days) section.days = days;
         section.updated_at = new Date();
-
+        
         if (section.sectionCycle) {
           await SectionCycle.update(
             { id: section.sectionCycle.id },
@@ -100,6 +101,7 @@ export class SectionMediator {
 
         section = this.sectionService.create({
           name: sectionName,
+          days: days,
           course_time_start: courseTimeStart,
           course_time_end: courseTimeEnd,
           sectionCycle: sectionCycle,

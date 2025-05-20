@@ -19,6 +19,11 @@ export class CreateEditSectionDto {
 
   @ApiProperty()
   @IsOptional()
+  @IsString()
+  days?: string;
+  
+  @ApiProperty()
+  @IsOptional()
   courseTimeStart?: Date;
 
   @ApiProperty()
