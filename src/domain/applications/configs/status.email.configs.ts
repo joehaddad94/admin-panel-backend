@@ -1,5 +1,16 @@
-import { formatReadableDate } from 'src/core/helpers/formatDate';
+import { formatReadableDate, formatTime } from 'src/core/helpers/formatDate';
 import { Status } from 'src/core/data/types/applications/applications.types';
+
+const formatSectionDays = (days: string): string => {
+  switch (days) {
+    case 'MWF':
+      return 'Every Monday, Wednesday & Friday';
+    case 'TTH':
+      return 'Every Tuesday & Thursday';
+    case 'SS':
+      return 'Every Saturday & Sunday';
+  }
+};
 
 export interface StatusEmailConfig {
   requiredFields: {
@@ -9,10 +20,11 @@ export interface StatusEmailConfig {
   templates: {
     [key in Status]?: {
       name: string;
-      subject: string;
+      subject?: string;
+      getSubject?: (sectionName: string) => string;
     };
   };
-  getTemplateVariables: (decisionDate: any) => Record<string, any>;
+  getTemplateVariables: (decisionDate: any, section?: any) => Record<string, any>;
 }
 
 export const statusEmailConfigs: Record<string, StatusEmailConfig> = {
@@ -62,42 +74,25 @@ export const statusEmailConfigs: Record<string, StatusEmailConfig> = {
     requiredFields: [
       {
         field: 'link_3',
-        message: 'Status Confirmation Form should be provided.',
+        message: 'Orientation Meet Link should be provided.',
       },
       {
         field: 'date_1',
         message: 'Orientation Date should be provided.',
       },
-      {
-        field: 'date_2',
-        message: 'Class Debut Date should be provided.',
-      },
     ],
     templates: {
       [Status.ACCEPTED]: {
-        name: 'FCS/passedInterview.hbs',
-        subject: 'SE Factory FCS Acceptance',
-      },
-      [Status.REJECTED]: {
-        name: 'FCS/failedInterview.hbs',
-        subject: 'SE Factory FCS Application Status',
-      },
-      [Status.WAITING_LIST]: {
-        name: 'FCS/waitingList.hbs',
-        subject: 'SE Factory FCS Application Status',
-      },
+        name: 'FCS/status-mail.hbs',
+        getSubject: (sectionName: string) => `${sectionName.substring(0, 6)} Bootcamp Debut`,
+      }
     },
-    getTemplateVariables: (decisionDate) => ({
-      statusConfirmationForm: decisionDate.link_3,
+    getTemplateVariables: (decisionDate, section) => ({
       orientationDate: formatReadableDate(decisionDate.date_1),
-      classDebutDate: formatReadableDate(decisionDate.date_2),
-      submissionConfirmationDate: formatReadableDate(
-        new Date(
-          new Date(decisionDate.date_1).setDate(
-            new Date(decisionDate.date_1).getDate() - 3,
-          ),
-        ),
-      ),
+      orientationMeetLink: decisionDate.link_3,
+      sectionDays: formatSectionDays(section?.days),
+      courseTimeStart: formatTime(section?.course_time_start),
+      courseTimeEnd: formatTime(section?.course_time_end),
     }),
   },
 }; 

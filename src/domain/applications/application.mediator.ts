@@ -1548,7 +1548,7 @@ export class ApplicationMediator {
 
     const applicationsByCycle = await this.applicationsService.findMany(
       applicationWhereConditions,
-      ['applicationUser'],
+      ['applicationUser', 'applicationSection'],
     );
 
     const applicationsToEmail = applicationsByCycle.filter((application) => {
@@ -1560,6 +1560,7 @@ export class ApplicationMediator {
       .map((application) => {
         const email: string = application.applicationUser[0]?.user?.email;
         const templateConfig = programConfig.templates[application.status];
+        const sectionName = application.applicationSection?.section?.name || '';
 
         if (!templateConfig) {
           return null;
@@ -1568,8 +1569,10 @@ export class ApplicationMediator {
         return {
           email,
           templateName: templateConfig.name,
-          subject: templateConfig.subject,
-          templateVariables: programConfig.getTemplateVariables(decisionDate),
+          subject: templateConfig.getSubject 
+            ? templateConfig.getSubject(sectionName)
+            : templateConfig.subject,
+          templateVariables: programConfig.getTemplateVariables(decisionDate, application.applicationSection?.section),
         };
       })
       .filter((item) => item !== null);
