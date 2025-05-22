@@ -22,7 +22,7 @@ export class Sections extends BaseEntity {
     length: 255,
     nullable: true,
   })
-  days: string; 
+  days: string;
 
   @Column({ type: 'time without time zone', nullable: true })
   course_time_start: Date;
@@ -41,9 +41,6 @@ export class Sections extends BaseEntity {
     nullable: true,
   })
   updated_at: Date;
-
-  @Column({ type: 'timestamp without time zone', nullable: true })
-  published_at: Date;
 
   @Column({ type: 'int', nullable: true })
   created_by_id: number;

@@ -11,6 +11,7 @@ import { JwtStrategy } from '../auth/jwt.strategy';
 import { AuthModule } from '../auth';
 import { MailModule } from '../mail/mail.module';
 import { ProgramModule } from '../programs/program.module';
+import { InformationModule } from '../information/information.module';
 
 @Module({
   imports: [
@@ -19,6 +20,7 @@ import { ProgramModule } from '../programs/program.module';
     AuthModule,
     MailModule,
     ProgramModule,
+    InformationModule,
   ],
   controllers: [ApplicationController],
   providers: [

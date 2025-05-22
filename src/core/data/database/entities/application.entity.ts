@@ -28,9 +28,6 @@ export class Application extends BaseEntity {
   @Column({ type: 'timestamp without time zone', nullable: true })
   updated_at: Date;
 
-  @Column({ type: 'timestamp without time zone', nullable: true })
-  published_at: Date;
-
   @Column({ type: 'int', nullable: true })
   created_by_id: number;
 

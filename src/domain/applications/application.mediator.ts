@@ -35,6 +35,7 @@ import { ProgramService } from '../programs/program.service';
 import { ApplicationUser } from 'src/core/data/database/relations/application-user.entity';
 import { ApplicationInfo } from 'src/core/data/database/relations/application-info.entity';
 import { ApplicationProgram } from 'src/core/data/database/relations/application-program.entity';
+import { InformationService } from '../information/information.service';
 
 @Injectable()
 export class ApplicationMediator {
@@ -43,6 +44,7 @@ export class ApplicationMediator {
     private readonly cyclesService: CycleService,
     private readonly mailService: MailService,
     private readonly programsService: ProgramService,
+    private readonly infoService: InformationService,
   ) {}
 
   findApplications = async (
@@ -103,6 +105,10 @@ export class ApplicationMediator {
         currentPageSize,
       );
 
+      console.log(
+        '🚀 ~ ApplicationMediator ~ returncatcher ~ applications:',
+        JSON.stringify(applications, null, 2),
+      );
       throwNotFound({
         entity: 'applications',
         errorCheck: !applications,
@@ -198,8 +204,8 @@ export class ApplicationMediator {
         cycleName: app.applicationCycle[0]?.cycle?.name,
         paid: app.paid,
         sectionName: app.applicationSection?.section?.name,
-        userId: app.applicationUser[0].user.id,
-        infoId: app.applicationInfo[0].id,
+        userId: app.applicationUser[0].user_id,
+        infoId: app.applicationInfo[0].info_id,
         fcsGraduate:
           app.fcs_graduate === true
             ? 'Yes'
@@ -1658,7 +1664,20 @@ export class ApplicationMediator {
 
       const newFSEApplications = await Promise.all(
         selectedApplicationsIds.map(async (applicationIds) => {
-          const application = this.applicationsService.create({
+          // First verify the info exists
+          const info = await this.infoService.findOne({
+            id: applicationIds.infoId,
+          });
+
+          if (!info) {
+            throwError(
+              `Info with ID ${applicationIds.infoId} not found`,
+              HttpStatus.BAD_REQUEST,
+            );
+          }
+
+          // Create and save the application
+          const application = (await this.applicationsService.save({
             is_eligible: true,
             passed_screening: true,
             passed_screening_date: new Date(),
@@ -1666,46 +1685,30 @@ export class ApplicationMediator {
             passed_exam_date: new Date(),
             screening_email_sent: true,
             fcs_graduate: true,
-          });
-          console.log(
-            '🚀 ~ ApplicationMediator ~ selectedApplicationsIds.map ~ application:',
-            application,
-          );
+            created_at: new Date(),
+            updated_at: new Date(),
+          })) as Application;
 
-          const user = await ApplicationUser.create({
+          // Create and save relationships
+          await ApplicationUser.create({
             application_new_id: application.id,
             user_id: applicationIds.userId,
-          });
-          console.log(
-            '🚀 ~ ApplicationMediator ~ selectedApplicationsIds.map ~ user:',
-            user,
-          );
+          }).save();
 
-          const info = await ApplicationInfo.create({
+          await ApplicationInfo.create({
             application_new_id: application.id,
             info_id: applicationIds.infoId,
-          });
-          console.log(
-            '🚀 ~ ApplicationMediator ~ selectedApplicationsIds.map ~ info:',
-            info,
-          );
-          const program = await ApplicationProgram.create({
+          }).save();
+
+          await ApplicationProgram.create({
             applicationId: application.id,
             programId: programId,
-          });
-          console.log(
-            '🚀 ~ ApplicationMediator ~ selectedApplicationsIds.map ~ program:',
-            program,
-          );
+          }).save();
 
-          const cycle = await ApplicationCycle.create({
+          await ApplicationCycle.create({
             applicationId: application.id,
             cycleId: targetedFSECycleId,
-          });
-          console.log(
-            '🚀 ~ ApplicationMediator ~ selectedApplicationsIds.map ~ cycle:',
-            cycle,
-          );
+          }).save();
 
           return application;
         }),
