@@ -90,6 +90,9 @@ export class Application extends BaseEntity {
   @Column({ type: 'boolean', nullable: true })
   paid: boolean;
 
+  @Column({ type: 'boolean', nullable: true })
+  fcs_graduate: boolean;
+
   @OneToMany(
     () => ApplicationInfo,
     (applicationInfo) => applicationInfo.application,

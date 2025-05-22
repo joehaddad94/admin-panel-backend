@@ -10,6 +10,7 @@ import AuthMiddleware from 'src/core/settings/middlewares/auth.middleware';
 import { JwtStrategy } from '../auth/jwt.strategy';
 import { AuthModule } from '../auth';
 import { MailModule } from '../mail/mail.module';
+import { ProgramModule } from '../programs/program.module';
 
 @Module({
   imports: [
@@ -17,6 +18,7 @@ import { MailModule } from '../mail/mail.module';
     CycleModule,
     AuthModule,
     MailModule,
+    ProgramModule,
   ],
   controllers: [ApplicationController],
   providers: [

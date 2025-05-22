@@ -30,6 +30,11 @@ import { Application } from 'src/core/data/database/entities/application.entity'
 import { programConfigs } from './configs/interview.email.configs';
 import { ApplicationSection } from 'src/core/data/database/relations/applications-sections.entity';
 import { statusEmailConfigs } from './configs/status.email.configs';
+import { ApplyToFSEDto } from './dtos/apply.fse.dto';
+import { ProgramService } from '../programs/program.service';
+import { ApplicationUser } from 'src/core/data/database/relations/application-user.entity';
+import { ApplicationInfo } from 'src/core/data/database/relations/application-info.entity';
+import { ApplicationProgram } from 'src/core/data/database/relations/application-program.entity';
 
 @Injectable()
 export class ApplicationMediator {
@@ -37,6 +42,7 @@ export class ApplicationMediator {
     private readonly applicationsService: ApplicationService,
     private readonly cyclesService: CycleService,
     private readonly mailService: MailService,
+    private readonly programsService: ProgramService,
   ) {}
 
   findApplications = async (
@@ -190,9 +196,16 @@ export class ApplicationMediator {
         extras: app.extras,
         cycleId: app.applicationCycle[0]?.cycleId,
         cycleName: app.applicationCycle[0]?.cycle?.name,
-        // paid: app.paid === true ? 'Yes' : app.paid === false ? 'No' : '-',
         paid: app.paid,
         sectionName: app.applicationSection?.section?.name,
+        userId: app.applicationUser[0].user.id,
+        infoId: app.applicationInfo[0].id,
+        fcsGraduate:
+          app.fcs_graduate === true
+            ? 'Yes'
+            : app.fcs_graduate === false
+            ? 'No'
+            : '-',
       }));
 
       mappedApplications.sort(
@@ -349,6 +362,8 @@ export class ApplicationMediator {
         remarks: app.remarks,
         extras: app.extras,
         paid: app.paid === true ? 'Yes' : app.paid === false ? 'No' : '-',
+        userId: app.applicationUser[0].user.id,
+        infoId: app.applicationInfo[0].id,
       }));
 
       mappedApplications.sort(
@@ -1569,10 +1584,13 @@ export class ApplicationMediator {
         return {
           email,
           templateName: templateConfig.name,
-          subject: templateConfig.getSubject 
+          subject: templateConfig.getSubject
             ? templateConfig.getSubject(sectionName)
             : templateConfig.subject,
-          templateVariables: programConfig.getTemplateVariables(decisionDate, application.applicationSection?.section),
+          templateVariables: programConfig.getTemplateVariables(
+            decisionDate,
+            application.applicationSection?.section,
+          ),
         };
       })
       .filter((item) => item !== null);
@@ -1621,5 +1639,82 @@ export class ApplicationMediator {
       notFoundEmails: mailerResponse.notFoundEmails,
       applications: camelCaseApplications,
     };
+  };
+
+  applyToFSE = async (data: ApplyToFSEDto) => {
+    return catcher(async () => {
+      const { selectedApplicationsIds, targetedFSECycleId } = data;
+
+      let programId: number;
+      const program = await this.programsService.findOne({
+        abbreviation: 'FSE',
+      });
+
+      if (!program) {
+        throwError('Program not found', HttpStatus.BAD_REQUEST);
+      }
+
+      programId = program.id;
+
+      const newFSEApplications = await Promise.all(
+        selectedApplicationsIds.map(async (applicationIds) => {
+          const application = this.applicationsService.create({
+            is_eligible: true,
+            passed_screening: true,
+            passed_screening_date: new Date(),
+            passed_exam: true,
+            passed_exam_date: new Date(),
+            screening_email_sent: true,
+            fcs_graduate: true,
+          });
+          console.log(
+            '🚀 ~ ApplicationMediator ~ selectedApplicationsIds.map ~ application:',
+            application,
+          );
+
+          const user = await ApplicationUser.create({
+            application_new_id: application.id,
+            user_id: applicationIds.userId,
+          });
+          console.log(
+            '🚀 ~ ApplicationMediator ~ selectedApplicationsIds.map ~ user:',
+            user,
+          );
+
+          const info = await ApplicationInfo.create({
+            application_new_id: application.id,
+            info_id: applicationIds.infoId,
+          });
+          console.log(
+            '🚀 ~ ApplicationMediator ~ selectedApplicationsIds.map ~ info:',
+            info,
+          );
+          const program = await ApplicationProgram.create({
+            applicationId: application.id,
+            programId: programId,
+          });
+          console.log(
+            '🚀 ~ ApplicationMediator ~ selectedApplicationsIds.map ~ program:',
+            program,
+          );
+
+          const cycle = await ApplicationCycle.create({
+            applicationId: application.id,
+            cycleId: targetedFSECycleId,
+          });
+          console.log(
+            '🚀 ~ ApplicationMediator ~ selectedApplicationsIds.map ~ cycle:',
+            cycle,
+          );
+
+          return application;
+        }),
+      );
+
+      return {
+        message: 'Applications created successfully',
+        applications: newFSEApplications,
+      };
+    });
   };
 }

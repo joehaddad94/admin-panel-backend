@@ -16,6 +16,7 @@ import {
   EditFCSApplicationsDto,
 } from './dtos/edit.applications.dto';
 import { InterviewScoresDto } from './dtos/interview.scores.dto';
+import { ApplyToFSEDto } from './dtos/apply.fse.dto';
 
 @ApiTags('applications')
 @Controller('applications')
@@ -86,5 +87,11 @@ export class ApplicationController {
   @UsePipes(new ValidationPipe({ whitelist: true }))
   sendScheduleConfirmationEmails(@Body() data: SendingEmailsDto) {
     return this.mediator.sendScheduleConfirmationEmails(data);
+  }
+
+  @Post('apply-to-fse')
+  @UsePipes(new ValidationPipe({ whitelist: true }))
+  applyToFSE(@Body() data: ApplyToFSEDto) {
+    return this.mediator.applyToFSE(data);
   }
 }
