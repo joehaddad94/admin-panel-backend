@@ -17,6 +17,7 @@ import {
 } from './dtos/edit.applications.dto';
 import { InterviewScoresDto } from './dtos/interview.scores.dto';
 import { ApplyToFSEDto } from './dtos/apply.fse.dto';
+import { ImportFCSDto } from './dtos/Import.fcs.data.dto';
 
 @ApiTags('applications')
 @Controller('applications')
@@ -93,5 +94,11 @@ export class ApplicationController {
   @UsePipes(new ValidationPipe({ whitelist: true }))
   applyToFSE(@Body() data: ApplyToFSEDto) {
     return this.mediator.applyToFSE(data);
+  }
+
+  @Post('import-fcs-data')
+  @UsePipes(new ValidationPipe({ whitelist: true }))
+  importFCSData(@Body() data: ImportFCSDto) {
+    return this.mediator.importFCSData(data);
   }
 }

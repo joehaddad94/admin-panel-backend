@@ -36,6 +36,7 @@ import { ApplicationUser } from 'src/core/data/database/relations/application-us
 import { ApplicationInfo } from 'src/core/data/database/relations/application-info.entity';
 import { ApplicationProgram } from 'src/core/data/database/relations/application-program.entity';
 import { InformationService } from '../information/information.service';
+import { ImportFCSDto } from './dtos/Import.fcs.data.dto';
 
 @Injectable()
 export class ApplicationMediator {
@@ -105,10 +106,6 @@ export class ApplicationMediator {
         currentPageSize,
       );
 
-      console.log(
-        '🚀 ~ ApplicationMediator ~ returncatcher ~ applications:',
-        JSON.stringify(applications, null, 2),
-      );
       throwNotFound({
         entity: 'applications',
         errorCheck: !applications,
@@ -1718,6 +1715,20 @@ export class ApplicationMediator {
         message: 'Applications created successfully',
         applications: newFSEApplications,
       };
+    });
+  };
+
+  importFCSData = async (data: ImportFCSDto) => {
+    return catcher(async () => {
+      const { cycleId, importType, data: importData } = data;
+      console.log("🚀 ~ ApplicationMediator ~ returncatcher ~ data:", data)
+      
+      const applications = await this.applicationsService.findMany({
+        applicationCycle: { cycleId },
+      }, ['applicationCycle', 'applicationSection', 'applicationInfo']);
+      
+      console.log("🚀 ~ ApplicationMediator ~ returncatcher ~ applications:", JSON.stringify(applications, null, 2))
+      
     });
   };
 }
