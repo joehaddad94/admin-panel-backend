@@ -37,6 +37,7 @@ import { ApplicationInfo } from 'src/core/data/database/relations/application-in
 import { ApplicationProgram } from 'src/core/data/database/relations/application-program.entity';
 import { InformationService } from '../information/information.service';
 import { ImportFCSDto } from './dtos/Import.fcs.data.dto';
+import { SectionService } from '../sections/section.service';
 
 @Injectable()
 export class ApplicationMediator {
@@ -46,6 +47,7 @@ export class ApplicationMediator {
     private readonly mailService: MailService,
     private readonly programsService: ProgramService,
     private readonly infoService: InformationService,
+    private readonly sectionsService: SectionService,
   ) {}
 
   findApplications = async (
@@ -1721,14 +1723,155 @@ export class ApplicationMediator {
   importFCSData = async (data: ImportFCSDto) => {
     return catcher(async () => {
       const { cycleId, importType, data: importData } = data;
-      console.log("🚀 ~ ApplicationMediator ~ returncatcher ~ data:", data)
       
       const applications = await this.applicationsService.findMany({
         applicationCycle: { cycleId },
       }, ['applicationCycle', 'applicationSection', 'applicationInfo']);
       
-      console.log("🚀 ~ ApplicationMediator ~ returncatcher ~ applications:", JSON.stringify(applications, null, 2))
+      function normalizePhone(phone: string): string {
+        return phone.replace(/[^0-9]/g, '').replace(/^0+/, '');
+      }
       
+      switch (importType) {
+        case "paid":
+          const updatedApplications = [];
+          const unmatchedEntries = [];
+          
+          for (const entry of importData) {
+            const phoneNumber = String(entry.phone);
+            const paidStatus = entry.paid;
+            const normalizedPhone = normalizePhone(phoneNumber);
+            
+            const application = applications.find(app => {
+              const dbPhone = normalizePhone(app.applicationInfo?.[0]?.info?.mobile || '');
+              return dbPhone === normalizedPhone;
+            });
+            
+            if (application) {
+              const isPaid = Boolean(paidStatus);
+              
+              await this.applicationsService.update(
+                { id: application.id },
+                { paid: isPaid }
+              );
+              updatedApplications.push({
+                id: application.id,
+                phoneNumber,
+                paid: isPaid,
+                firstName: application.applicationInfo[0]?.info?.first_name,
+                lastName: application.applicationInfo[0]?.info?.last_name
+              });
+            } else {
+        
+              unmatchedEntries.push({
+                phoneNumber,
+                paid: Boolean(paidStatus),
+                reason: 'No matching application found with this phone number'
+              });
+            }
+          }
+
+          const response: any = {
+            message: 'Payment status import completed',
+            summary: {
+              totalProcessed: Array.isArray(importData) ? importData.length : Object.keys(importData).length,
+              successfulUpdates: updatedApplications.length,
+              failedUpdates: unmatchedEntries.length
+            },
+            updatedData: updatedApplications,
+            failedUpdates: unmatchedEntries
+          };
+
+          if (unmatchedEntries.length > 0) {
+            const headers = ['Phone Number', 'Paid Status', 'Reason', 'Import Date'];
+            const rows = unmatchedEntries.map(entry => [
+              entry.phoneNumber,
+              entry.paid ? 'Yes' : 'No',
+              entry.reason,
+              new Date().toISOString()
+            ]);
+            response.failedAttemptsCSV = [
+              headers.join(','),
+              ...rows.map(row => row.join(','))
+            ].join('\n');
+          }
+          
+          
+          return response;
+          
+        case "sections":
+          const updatedSections = [];
+          const unmatchedSectionEntries = [];
+
+          // Fetch all sections from the DB (assuming you have a Section entity/service)
+          const allSections = await this.sectionsService.findMany({}); // Adjust as needed
+
+          for (const entry of importData) {
+            const email = String(entry.email).trim().toLowerCase();
+            const sectionName = String(entry.section).trim().toLowerCase();
+
+            // Find application by email
+            const application = applications.find(app =>
+              (app.applicationInfo?.[0]?.info?.email || '').trim().toLowerCase() === email
+            );
+
+            // Find section by name
+            const section = allSections.find(sec =>
+              (sec.name || '').trim().toLowerCase() === sectionName
+            );
+
+            if (application && section) {
+              // Update applicationSection table
+              await ApplicationSection.update(
+                { application_new_id: application.id },
+                { section_id: section.id }
+              );
+              updatedSections.push({
+                applicationId: application.id,
+                email,
+                sectionName: section.name
+              });
+            } else {
+              unmatchedSectionEntries.push({
+                email,
+                sectionName,
+                reason: !application
+                  ? 'No matching application found with this email'
+                  : 'No matching section found with this section name'
+              });
+            }
+          }
+
+          const sectionResponse: any = {
+            message: 'Section import completed',
+            summary: {
+              totalProcessed: Array.isArray(importData) ? importData.length : Object.keys(importData).length,
+              successfulUpdates: updatedSections.length,
+              failedUpdates: unmatchedSectionEntries.length
+            },
+            updatedData: updatedSections,
+            failedUpdates: unmatchedSectionEntries
+          };
+
+          if (unmatchedSectionEntries.length > 0) {
+            const headers = ['Email', 'Section Name', 'Reason', 'Import Date'];
+            const rows = unmatchedSectionEntries.map(entry => [
+              entry.email,
+              entry.sectionName,
+              entry.reason,
+              new Date().toISOString()
+            ]);
+            sectionResponse.failedAttemptsCSV = [
+              headers.join(','),
+              ...rows.map(row => row.join(','))
+            ].join('\n');
+          }
+
+          return sectionResponse;
+          
+        case "applicationStatus":
+          break;
+      }
     });
   };
 }

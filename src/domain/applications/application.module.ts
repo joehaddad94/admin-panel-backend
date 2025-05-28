@@ -12,7 +12,7 @@ import { AuthModule } from '../auth';
 import { MailModule } from '../mail/mail.module';
 import { ProgramModule } from '../programs/program.module';
 import { InformationModule } from '../information/information.module';
-
+import { SectionModule } from '../sections/section.module';
 @Module({
   imports: [
     TypeOrmModule.forFeature([Application, ApplicationRepository]),
@@ -21,6 +21,7 @@ import { InformationModule } from '../information/information.module';
     MailModule,
     ProgramModule,
     InformationModule,
+    SectionModule,
   ],
   controllers: [ApplicationController],
   providers: [
