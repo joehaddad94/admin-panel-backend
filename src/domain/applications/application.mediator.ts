@@ -121,6 +121,7 @@ export class ApplicationMediator {
         firstName: app.applicationInfo[0].info.first_name,
         middleName: app.applicationInfo[0].info.middle_name,
         lastName: app.applicationInfo[0].info.last_name,
+        fullName: `${app.applicationInfo[0].info.first_name} ${app.applicationInfo[0].info.last_name}`,
         motherMaidenFirst: app.applicationInfo[0].info.mother_maiden_first,
         motherMaidenLast: app.applicationInfo[0].info.mother_maiden_last,
         gender: app.applicationInfo[0].info.gender,
@@ -1870,7 +1871,66 @@ export class ApplicationMediator {
           return sectionResponse;
           
         case "applicationStatus":
-          break;
+          const updatedStatuses = [];
+          const unmatchedStatusEntries = [];
+
+          for (const entry of importData) {
+            const email = String(entry.email).trim().toLowerCase();
+            const status = String(entry.status).trim().toUpperCase();
+
+            // Find application by email
+            const application = applications.find(app =>
+              (app.applicationInfo?.[0]?.info?.email || '').trim().toLowerCase() === email
+            );
+
+            if (application) {
+              // Update application status
+              await this.applicationsService.update(
+                { id: application.id },
+                { status }
+              );
+              updatedStatuses.push({
+                id: application.id,
+                email,
+                status,
+                firstName: application.applicationInfo[0]?.info?.first_name,
+                lastName: application.applicationInfo[0]?.info?.last_name
+              });
+            } else {
+              unmatchedStatusEntries.push({
+                email,
+                status,
+                reason: 'No matching application found with this email'
+              });
+            }
+          }
+
+          const statusResponse: any = {
+            message: 'Application status import completed',
+            summary: {
+              totalProcessed: Array.isArray(importData) ? importData.length : Object.keys(importData).length,
+              successfulUpdates: updatedStatuses.length,
+              failedUpdates: unmatchedStatusEntries.length
+            },
+            updatedData: updatedStatuses,
+            failedUpdates: unmatchedStatusEntries
+          };
+
+          if (unmatchedStatusEntries.length > 0) {
+            const headers = ['Email', 'Status', 'Reason', 'Import Date'];
+            const rows = unmatchedStatusEntries.map(entry => [
+              entry.email,
+              entry.status,
+              entry.reason,
+              new Date().toISOString()
+            ]);
+            statusResponse.failedAttemptsCSV = [
+              headers.join(','),
+              ...rows.map(row => row.join(','))
+            ].join('\n');
+          }
+
+          return statusResponse;
       }
     });
   };
