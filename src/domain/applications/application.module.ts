@@ -10,13 +10,18 @@ import AuthMiddleware from 'src/core/settings/middlewares/auth.middleware';
 import { JwtStrategy } from '../auth/jwt.strategy';
 import { AuthModule } from '../auth';
 import { MailModule } from '../mail/mail.module';
-
+import { ProgramModule } from '../programs/program.module';
+import { InformationModule } from '../information/information.module';
+import { SectionModule } from '../sections/section.module';
 @Module({
   imports: [
     TypeOrmModule.forFeature([Application, ApplicationRepository]),
     CycleModule,
     AuthModule,
     MailModule,
+    ProgramModule,
+    InformationModule,
+    SectionModule,
   ],
   controllers: [ApplicationController],
   providers: [

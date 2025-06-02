@@ -24,6 +24,8 @@ import { CycleModule } from './domain/cycles/cycle.module';
 import { DecisionDateModule } from './domain/decisionDates/decision-date.module';
 import { ThresholdModule } from './domain/thresholds/threshold.module';
 import { HealthCheckModule } from './domain/healthCheck/health.module';
+import { Sections } from './core/data/database/entities/section.entity';
+import { SectionModule } from './domain/sections/section.module';
 import { MicrocampModule } from './domain/microcamp/microcamp.module';
 import { MicrocampApplicationModule } from './domain/microcampApplications/microcamp-applications.module';
 
@@ -58,6 +60,7 @@ import { MicrocampApplicationModule } from './domain/microcampApplications/micro
     DecisionDateModule,
     ThresholdModule,
     HealthCheckModule,
+    SectionModule,
     MicrocampModule,
     MicrocampApplicationModule,
   ],

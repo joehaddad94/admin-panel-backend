@@ -14,7 +14,7 @@ export class DecisionDates extends BaseEntity {
   id: number;
 
   @Column({ type: 'timestamp without time zone', nullable: true })
-  exam_date: Date;
+  date_time_1: Date;
 
   @Column({
     type: 'timestamp without time zone',
@@ -38,22 +38,22 @@ export class DecisionDates extends BaseEntity {
   updated_by_id: number;
 
   @Column({ type: 'varchar', length: 255, nullable: true })
-  interview_meet_link: string;
+  link_1: string;
 
   @Column({ type: 'varchar', length: 255, nullable: true })
-  info_session_recorded_link: string;
+  link_2: string;
 
   @Column({ type: 'varchar', length: 255, nullable: true })
-  exam_link: string;
+  link_4: string;
 
   @Column({ type: 'varchar', length: 255, nullable: true })
-  status_confirmation_form: string;
+  link_3: string;
 
   @Column({ type: 'timestamp without time zone', nullable: true })
-  orientation_date: Date;
+  date_1: Date;
 
   @Column({ type: 'timestamp without time zone', nullable: true })
-  class_debut_date: Date;
+  date_2: Date;
 
   @OneToOne(
     () => DecisionDateCycle,
