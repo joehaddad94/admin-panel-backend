@@ -27,6 +27,7 @@ import { HealthCheckModule } from './domain/healthCheck/health.module';
 import { SectionModule } from './domain/sections/section.module';
 import { MicrocampModule } from './domain/microcamp/microcamp.module';
 import { MicrocampApplicationModule } from './domain/microcampApplications/microcamp-applications.module';
+import { StatisticsModule } from './domain/statistics/statistics.module';
 
 @Module({
   imports: [
@@ -62,6 +63,7 @@ import { MicrocampApplicationModule } from './domain/microcampApplications/micro
     SectionModule,
     MicrocampModule,
     MicrocampApplicationModule,
+    StatisticsModule,
   ],
   controllers: [AppController],
   providers: [AppService],
