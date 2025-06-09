@@ -7,7 +7,7 @@ import { StatisticsQueryDto } from './dtos/statistics.dto';
 export class StatisticsMediator {
   constructor(private readonly statisticsService: StatisticsService) {}
 
-  async getStatistics(query: StatisticsQueryDto) {
+  async getApplicationStatusChart(query: StatisticsQueryDto) {
     return catcher(async () => {
       const applicationStatusCounts =
         await this.statisticsService.getApplicationStatusCounts(query);
