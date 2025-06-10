@@ -15,7 +15,7 @@ export const sendBulkEmails = async (
       const result = await mailerService.sendMail({
         from: '"SE Factory" <noreply@example.com>',
         to: 'selection@sefactory.io',
-        cc: 'charbeld@sefactory.io',
+        cc: 'charbeld@sefactory.io, imadh@sefactory.io',
         bcc: emails.map(({ email }) => email),
         subject,
         template,
@@ -37,7 +37,7 @@ export const sendBulkEmails = async (
       const result = await mailerService.sendMail({
         from: '"SE Factory" <noreply@example.com>',
         to: email,
-        cc: 'charbeld@sefactory.io',
+        cc: 'charbeld@sefactory.io, imadh@sefactory.io',
         subject,
         template,
         context: {
