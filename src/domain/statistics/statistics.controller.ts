@@ -17,10 +17,9 @@ export class StatisticsController {
   @Get()
   @UsePipes(new ValidationPipe({ transform: true }))
   async getStatistics(@Query() query: StatisticsQueryDto) {
-    const applicationsStatusChart =
-      await this.mediator.getApplicationStatusChart(query);
+    const statistics = await this.mediator.getStatistics(query);
     return {
-      ...applicationsStatusChart,
+      ...statistics,
     };
   }
 }
