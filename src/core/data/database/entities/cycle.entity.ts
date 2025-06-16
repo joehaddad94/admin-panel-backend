@@ -10,6 +10,7 @@ import { CycleProgram } from '../relations/cycle-program.entity';
 import { DecisionDateCycle } from '../relations/decisionDate-cycle.entity';
 import { ApplicationCycle } from '../relations/application-cycle.entity';
 import { ThresholdCycle } from '../relations/cycle-threshold.entity';
+import { SectionCycle } from '../relations/section-cycle.entity';
 
 @Entity('cycles')
 export class Cycles extends BaseEntity {
@@ -34,9 +35,6 @@ export class Cycles extends BaseEntity {
   })
   updated_at: Date;
 
-  @Column({ type: 'timestamp without time zone', nullable: true })
-  published_at: Date;
-
   @Column({ type: 'int', nullable: true })
   created_by_id: number;
 
@@ -60,4 +58,7 @@ export class Cycles extends BaseEntity {
 
   @OneToOne(() => ThresholdCycle, (thresholdCycle) => thresholdCycle.cycle)
   thresholdCycle: ThresholdCycle;
+
+  @OneToOne(() => SectionCycle, (sectionCycle) => sectionCycle.cycle)
+  sectionCycle: SectionCycle;
 }

@@ -86,3 +86,31 @@ function getOrdinalSuffix(day: number): string {
       return 'th';
   }
 }
+
+export function formatTime(time: Date | string | null): string {
+  if (!time) return '-';
+  
+  if (typeof time === 'string') {
+    // Handle time string in format "HH:mm" or "HH:mm:ss"
+    const [hours, minutes] = time.split(':');
+    const hour = parseInt(hours);
+    const ampm = hour >= 12 ? 'PM' : 'AM';
+    const hour12 = hour % 12 || 12;
+    return `${hour12}:${minutes.padStart(2, '0')} ${ampm}`;
+  }
+
+  if (time instanceof Date && !isNaN(time.getTime())) {
+    const timeZone = 'Asia/Beirut';
+    const timeOptions: Intl.DateTimeFormatOptions = {
+      hour: 'numeric',
+      minute: 'numeric',
+      hour12: true,
+      timeZone,
+    };
+
+    const result = new Intl.DateTimeFormat('en-US', timeOptions).format(time);
+    return result.replace(/^0/, '');
+  }
+
+  return '-';
+}
