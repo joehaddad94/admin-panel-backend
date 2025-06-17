@@ -19,10 +19,7 @@ export class StatisticsService {
   async getApplicationStatusCounts(
     params: StatisticsQueryDto = {},
   ): Promise<ApplicationStatusCount[]> {
-    const {
-      programId = 12,
-      cycleId = 84,
-    } = params;
+    const { programId, cycleId } = params;
 
     const query = `
       SELECT c.name AS cycle_name, app.status, COUNT(*) AS count
@@ -44,10 +41,7 @@ export class StatisticsService {
   async getFailedInterviewPercentage(
     params: StatisticsQueryDto = {},
   ): Promise<{ failed_interview_percentage: number }> {
-    const {
-      programId = 12,
-      cycleId = 84,
-    } = params;
+    const { programId, cycleId } = params;
 
     const query = `
       SELECT 
@@ -67,17 +61,12 @@ export class StatisticsService {
     return result[0];
   }
 
-  async getExamPassStatistics(
-    params: StatisticsQueryDto = {},
-  ): Promise<{
+  async getExamPassStatistics(params: StatisticsQueryDto = {}): Promise<{
     passed_exam_count: number;
     total_exam_count: number;
     passed_exam_percentage: number;
   }> {
-    const {
-      programId = 12,
-      cycleId = 84,
-    } = params;
+    const { programId, cycleId } = params;
 
     const query = `
       SELECT 
@@ -109,20 +98,17 @@ export class StatisticsService {
     exam_emails_sent: number;
     exam_emails_pending: number;
   }> {
-    const {
-      programId = 12,
-      cycleId = 84,
-    } = params;
+    const { programId, cycleId } = params;
 
     const query = `
       SELECT 
-        COUNT(*) FILTER (WHERE app.passed_exam = true) as total_interviews,
-        COUNT(*) FILTER (WHERE app.passed_exam = true AND app.passed_interview IS NOT NULL) as completed_interviews,
+        COUNT(*) FILTER (WHERE app.passed_exam = true AND app.passed_exam_email_sent = true) as total_interviews,
+        COUNT(*) FILTER (WHERE app.passed_interview IS NOT NULL) as completed_interviews,
         COUNT(*) FILTER (WHERE app.passed_exam = true AND app.passed_exam_email_sent = true) as exam_emails_sent,
-        COUNT(*) FILTER (WHERE app.passed_exam = true AND app.passed_exam_email_sent IS NOT true) as exam_emails_pending,
+        COUNT(*) FILTER (WHERE app.passed_exam = true AND app.passed_exam_email_sent IS NOT true) as exam_emails_to_send,
         ROUND(
-          100.0 * COUNT(*) FILTER (WHERE app.passed_exam = true AND app.passed_interview IS NOT NULL) / 
-          NULLIF(COUNT(*) FILTER (WHERE app.passed_exam = true), 0),
+          100.0 * COUNT(*) FILTER (WHERE app.passed_interview IS NOT NULL) / 
+          NULLIF(COUNT(*) FILTER (WHERE app.passed_exam = true AND app.passed_exam_email_sent = true), 0),
           2
         ) as interview_completion_percentage
       FROM application_news app
@@ -134,10 +120,10 @@ export class StatisticsService {
 
     const result = await this.dataSource.query(query, [cycleId, programId]);
     const stats = result[0];
-    
+
     // Calculate interviews_left after getting the results
     stats.interviews_left = stats.total_interviews - stats.completed_interviews;
-    
+
     return stats;
   }
 
@@ -147,10 +133,7 @@ export class StatisticsService {
     total_applications: number;
     selection_completion_percentage: number;
   }> {
-    const {
-      programId = 12,
-      cycleId = 84,
-    } = params;
+    const { programId, cycleId } = params;
 
     const query = `
       SELECT 
@@ -171,17 +154,12 @@ export class StatisticsService {
     return result[0];
   }
 
-  async getSelectionTimeline(
-    params: StatisticsQueryDto = {},
-  ): Promise<{
+  async getSelectionTimeline(params: StatisticsQueryDto = {}): Promise<{
     first_exam_date: Date | null;
     last_interview_date: Date | null;
     selection_duration_days: number | null;
   }> {
-    const {
-      programId = 12,
-      cycleId = 84,
-    } = params;
+    const { programId, cycleId } = params;
 
     const query = `
   SELECT 
@@ -201,7 +179,6 @@ export class StatisticsService {
     AND app.passed_interview = true;
 `;
 
-  
     const result = await this.dataSource.query(query, [cycleId, programId]);
     return result[0];
   }
