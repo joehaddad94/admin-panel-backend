@@ -183,23 +183,6 @@ export class StatisticsService {
     return result[0];
   }
 
-  private async getFCSSelectionTimeline(
-    params: StatisticsQueryDto = {},
-  ): Promise<{
-    first_exam_date: Date | null;
-    last_interview_date: Date | null;
-    selection_duration_days: number | null;
-  }> {
-    // FCS doesn't have exams or interviews, so return null
-    return {
-      first_exam_date: null,
-      last_interview_date: null,
-      selection_duration_days: null,
-    };
-  }
-
-  // New FCS-specific statistics functions
-
   async getFCSEligibilityStatistics(params: StatisticsQueryDto = {}): Promise<{
     total_applications: number;
     eligible_count: number;
@@ -296,40 +279,44 @@ export class StatisticsService {
   }> {
     const { programId, cycleId } = params;
 
-    const query = `
+    // Get the section distribution for accepted applications only
+    // Use a subquery to get only one section assignment per application
+    const distributionQuery = `
       SELECT 
-        s.name as section_name,
-        COUNT(*) as count,
-        ROUND(
-          100.0 * COUNT(*) / 
-          NULLIF(COUNT(*) OVER(), 0),
-          2
-        ) as percentage
-      FROM application_news app
-      JOIN application_news_cycle_id_links cycle_link ON app.id = cycle_link.application_new_id
-      JOIN application_news_program_id_links program_link ON app.id = program_link.application_new_id
-      LEFT JOIN application_news_section_id_links section_link ON app.id = section_link.application_new_id
-      LEFT JOIN sections s ON section_link.section_id = s.id
-      WHERE cycle_link.cycle_id = $1
-        AND program_link.program_id = $2
-        AND app.status = 'Accepted'
+        COALESCE(s.name, 'Unassigned') as section_name,
+        COUNT(*) as count
+      FROM (
+        SELECT DISTINCT app.id, 
+               (SELECT section_link.section_id 
+                FROM application_news_section_id_links section_link 
+                WHERE section_link.application_new_id = app.id 
+                LIMIT 1) as section_id
+        FROM application_news app
+        JOIN application_news_cycle_id_links cycle_link ON app.id = cycle_link.application_new_id
+        JOIN application_news_program_id_links program_link ON app.id = program_link.application_new_id
+        WHERE cycle_link.cycle_id = $1
+          AND program_link.program_id = $2
+          AND app.status = 'Accepted'
+      ) app_sections
+      LEFT JOIN sections s ON app_sections.section_id = s.id
       GROUP BY s.name
       ORDER BY count DESC;
     `;
 
-    const result = await this.dataSource.query(query, [cycleId, programId]);
+    const result = await this.dataSource.query(distributionQuery, [cycleId, programId]);
 
-    const totalEnrolled = result.reduce(
+    // Calculate total from the distribution results to ensure consistency
+    const totalAccepted = result.reduce(
       (sum, row) => sum + parseInt(row.count),
       0,
     );
 
     return {
-      total_enrolled: totalEnrolled,
+      total_enrolled: totalAccepted,
       section_distribution: result.map((row) => ({
-        section_name: row.section_name || 'Unassigned',
+        section_name: row.section_name,
         count: parseInt(row.count),
-        percentage: parseFloat(row.percentage),
+        percentage: totalAccepted > 0 ? parseFloat(((parseInt(row.count) / totalAccepted) * 100).toFixed(2)) : 0,
       })),
     };
   }
@@ -351,27 +338,7 @@ export class StatisticsService {
         COUNT(*) as total_applications,
         COUNT(*) FILTER (WHERE app.screening_email_sent = true) as screening_emails_sent,
         COUNT(*) FILTER (WHERE app.passed_exam_email_sent = true) as schedule_emails_sent,
-        COUNT(*) FILTER (WHERE app.status_email_sent = true) as status_emails_sent,
-        ROUND(
-          100.0 * COUNT(*) FILTER (WHERE app.screening_email_sent = true) / 
-          NULLIF(COUNT(*), 0),
-          2
-        ) as screening_email_percentage,
-        ROUND(
-          100.0 * COUNT(*) FILTER (WHERE app.passed_exam_email_sent = true) / 
-          NULLIF(COUNT(*), 0),
-          2
-        ) as schedule_email_percentage,
-        ROUND(
-          100.0 * COUNT(*) FILTER (WHERE app.status_email_sent = true) / 
-          NULLIF(COUNT(*), 0),
-          2
-        ) as status_email_percentage,
-        COUNT(*) FILTER (
-          WHERE app.screening_email_sent = false 
-          OR app.passed_exam_email_sent = false 
-          OR app.status_email_sent = false
-        ) as emails_pending
+        COUNT(*) FILTER (WHERE app.status_email_sent = true) as status_emails_sent
       FROM application_news app
       JOIN application_news_cycle_id_links cycle_link ON app.id = cycle_link.application_new_id
       JOIN application_news_program_id_links program_link ON app.id = program_link.application_new_id
@@ -383,94 +350,33 @@ export class StatisticsService {
     return result[0];
   }
 
-  async getFCSApplicationTimeline(params: StatisticsQueryDto = {}): Promise<{
-    first_application_date: string | null;
-    last_application_date: string | null;
-    application_duration_days: number | null;
-    average_applications_per_day: number;
-    peak_application_day: string | null;
-    peak_application_count: number;
-  }> {
-    const { programId, cycleId } = params;
-
-    const query = `
-      SELECT 
-        TO_CHAR(MIN(app.created_at), 'FMMonth DD, YYYY') AS first_application_date,
-        TO_CHAR(MAX(app.created_at), 'FMMonth DD, YYYY') AS last_application_date,
-        CASE 
-          WHEN MIN(app.created_at) IS NOT NULL AND MAX(app.created_at) IS NOT NULL 
-          THEN (MAX(app.created_at) - MIN(app.created_at))
-          ELSE NULL 
-        END AS application_duration_days,
-        ROUND(
-          COUNT(*) / 
-          NULLIF(EXTRACT(DAY FROM (MAX(app.created_at) - MIN(app.created_at))), 0),
-          2
-        ) as average_applications_per_day,
-        TO_CHAR(app.created_at::date, 'FMMonth DD, YYYY') as application_date,
-        COUNT(*) as daily_count
-      FROM application_news app
-      JOIN application_news_cycle_id_links cycle_link ON app.id = cycle_link.application_new_id
-      JOIN application_news_program_id_links program_link ON app.id = program_link.application_new_id
-      WHERE cycle_link.cycle_id = $1
-        AND program_link.program_id = $2
-      GROUP BY app.created_at::date
-      ORDER BY daily_count DESC
-      LIMIT 1;
-    `;
-
-    const result = await this.dataSource.query(query, [cycleId, programId]);
-
-    if (result.length === 0) {
-      return {
-        first_application_date: null,
-        last_application_date: null,
-        application_duration_days: null,
-        average_applications_per_day: 0,
-        peak_application_day: null,
-        peak_application_count: 0,
-      };
-    }
-
-    return {
-      first_application_date: result[0].first_application_date,
-      last_application_date: result[0].last_application_date,
-      application_duration_days: result[0].application_duration_days,
-      average_applications_per_day:
-        parseFloat(result[0].average_applications_per_day) || 0,
-      peak_application_day: result[0].application_date,
-      peak_application_count: parseInt(result[0].daily_count),
-    };
-  }
-
-  private async getStandardSelectionTimeline(
-    params: StatisticsQueryDto = {},
-  ): Promise<{
-    first_exam_date: Date | null;
-    last_interview_date: Date | null;
+  async getFCSSelectionTimeline(params: StatisticsQueryDto = {}): Promise<{
+    first_screening_date: string | null;
+    last_acceptance_date: string | null;
     selection_duration_days: number | null;
   }> {
     const { programId, cycleId } = params;
 
     const query = `
-  SELECT 
-    TO_CHAR(MIN(app.passed_exam_date), 'FMMonth DD, YYYY') AS first_exam_date,
-    TO_CHAR(MAX(app.passed_interview_date), 'FMMonth DD, YYYY') AS last_interview_date,
-    CASE 
-      WHEN MIN(app.passed_exam_date) IS NOT NULL AND MAX(app.passed_interview_date) IS NOT NULL 
-      THEN (MAX(app.passed_interview_date) - MIN(app.passed_exam_date))
-      ELSE NULL 
-    END AS selection_duration_days
-  FROM application_news app
-  JOIN application_news_cycle_id_links cycle_link ON app.id = cycle_link.application_new_id
-  JOIN application_news_program_id_links program_link ON app.id = program_link.application_new_id
-  WHERE cycle_link.cycle_id = $1
-    AND program_link.program_id = $2
-    AND app.passed_exam = true
-    AND app.passed_interview = true;
-`;
+      SELECT 
+        TO_CHAR(MIN(app.passed_screening_date), 'FMMonth DD, YYYY') AS first_screening_date,
+        TO_CHAR(MAX(app.updated_at), 'FMMonth DD, YYYY') AS last_acceptance_date,
+        CASE 
+          WHEN MIN(app.passed_screening_date) IS NOT NULL AND MAX(app.updated_at) IS NOT NULL 
+          THEN (MAX(app.updated_at) - MIN(app.passed_screening_date))
+          ELSE NULL 
+        END AS selection_duration_days
+      FROM application_news app
+      JOIN application_news_cycle_id_links cycle_link ON app.id = cycle_link.application_new_id
+      JOIN application_news_program_id_links program_link ON app.id = program_link.application_new_id
+      WHERE cycle_link.cycle_id = $1
+        AND program_link.program_id = $2
+        AND app.screening_email_sent = true
+        AND app.status = 'Accepted';
+    `;
 
     const result = await this.dataSource.query(query, [cycleId, programId]);
     return result[0];
   }
+
 }

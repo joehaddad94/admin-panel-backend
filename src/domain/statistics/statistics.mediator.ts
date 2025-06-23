@@ -36,8 +36,8 @@ export class StatisticsMediator {
           await this.statisticsService.getFCSSectionDistribution(query);
         const emailStatistics =
           await this.statisticsService.getFCSEmailStatistics(query);
-        const applicationTimeline =
-          await this.statisticsService.getFCSApplicationTimeline(query);
+        const selectionTimeline =
+          await this.statisticsService.getFCSSelectionTimeline(query);
 
         return {
           data: {
@@ -47,7 +47,7 @@ export class StatisticsMediator {
             paymentStatistics,
             sectionDistribution,
             emailStatistics,
-            applicationTimeline,
+            selectionTimeline,
           },
         };
       } else {
