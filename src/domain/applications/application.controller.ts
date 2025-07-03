@@ -13,8 +13,11 @@ import { ExamScoresDto } from './dtos/exam.scores.dto';
 import {
   EditApplicationDto,
   EditApplicationsDto,
+  EditFCSApplicationsDto,
 } from './dtos/edit.applications.dto';
 import { InterviewScoresDto } from './dtos/interview.scores.dto';
+import { ApplyToFSEDto } from './dtos/apply.fse.dto';
+import { ImportFCSDto } from './dtos/Import.fcs.data.dto';
 
 @ApiTags('applications')
 @Controller('applications')
@@ -37,6 +40,12 @@ export class ApplicationController {
   @UsePipes(new ValidationPipe({ whitelist: true }))
   editApplication(@Body() data: EditApplicationDto) {
     return this.mediator.editApplication(data);
+  }
+
+  @Post('edit-fcs-applications')
+  @UsePipes(new ValidationPipe({ whitelist: true }))
+  editFCSApplications(@Body() data: EditFCSApplicationsDto) {
+    return this.mediator.editFCSApplications(data);
   }
 
   @Post('edit-applications')
@@ -73,5 +82,23 @@ export class ApplicationController {
   @UsePipes(new ValidationPipe({ whitelist: true }))
   sendStatusEmails(@Body() data: SendingEmailsDto) {
     return this.mediator.sendStatusEmail(data);
+  }
+
+  @Post('send-schedule-emails')
+  @UsePipes(new ValidationPipe({ whitelist: true }))
+  sendScheduleConfirmationEmails(@Body() data: SendingEmailsDto) {
+    return this.mediator.sendScheduleConfirmationEmails(data);
+  }
+
+  @Post('apply-to-fse')
+  @UsePipes(new ValidationPipe({ whitelist: true }))
+  applyToFSE(@Body() data: ApplyToFSEDto) {
+    return this.mediator.applyToFSE(data);
+  }
+
+  @Post('import-fcs-data')
+  @UsePipes(new ValidationPipe({ whitelist: true }))
+  importFCSData(@Body() data: ImportFCSDto) {
+    return this.mediator.importFCSData(data);
   }
 }

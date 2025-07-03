@@ -11,26 +11,33 @@ on:
 jobs:
   redeploy:
     runs-on: ubuntu-latest
-#     steps:
-#       - name: Checkout code
-#         uses: actions/checkout@v3
+    steps:
+      - name: Deploy to EC2
+        uses: appleboy/ssh-action@v0.1.7
+        with:
+          host: ${{ secrets.EC2_IP_DEV }}
+          username: ubuntu
+          key: ${{ secrets.EC2_SSH_PRIVATE_KEY_DEV }}
+          port: 22
+          script: |
+            echo "Starting deployment process..."
+            
+            echo "Updating package list..."
+            sudo apt-get update
 
-#       - name: redeploy
-#         uses: appleboy/ssh-action@v0.1.7
-#         with:
-#           host: ${{ secrets.EC2_IP }}
-#           username: ubuntu
-#           key: ${{ secrets.EC2_SSH_PRIVATE_KEY }}
-#           port: 22
-#           script: |
-#             echo "Updating package list..."
-#             sudo apt-get update
+            echo "Installing npm if not already installed..."
+            sudo apt-get install -y npm
 
-#             echo "Installing npm..."
-#             sudo apt-get install -y npm
-
-#             cd /home/ubuntu/sef-admin-panel-server
-#             /usr/bin/npm run redeploy:dev
+            echo "Navigating to project directory..."
+            cd /home/ubuntu/sef-admin-panel-server
+            
+            echo "Pulling latest changes from development branch..."
+            git pull origin development
+            
+            echo "Running redeploy script..."
+            /usr/bin/npm run redeploy:dev
+            
+            echo "Deployment completed successfully!"
 
 #!/bin/bash
 

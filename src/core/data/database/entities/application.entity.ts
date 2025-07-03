@@ -4,6 +4,7 @@ import {
   Column,
   Entity,
   OneToMany,
+  OneToOne,
   PrimaryGeneratedColumn,
 } from 'typeorm';
 import { ApplicationInfo } from '../relations/application-info.entity';
@@ -11,6 +12,7 @@ import { ApplicationProgram } from '../relations/application-program.entity';
 import { ApplicationUser } from '../relations/application-user.entity';
 import { ApplicationCycle } from '../relations/application-cycle.entity';
 import { Status } from '../../types/applications/applications.types';
+import { ApplicationSection } from '../relations/applications-sections.entity';
 
 @Entity('application_news')
 export class Application extends BaseEntity {
@@ -25,9 +27,6 @@ export class Application extends BaseEntity {
 
   @Column({ type: 'timestamp without time zone', nullable: true })
   updated_at: Date;
-
-  @Column({ type: 'timestamp without time zone', nullable: true })
-  published_at: Date;
 
   @Column({ type: 'int', nullable: true })
   created_by_id: number;
@@ -85,6 +84,12 @@ export class Application extends BaseEntity {
   @Column({ type: 'boolean', nullable: true })
   status_email_sent: boolean;
 
+  @Column({ type: 'boolean', nullable: true })
+  paid: boolean;
+
+  @Column({ type: 'boolean', nullable: true })
+  fcs_graduate: boolean;
+
   @OneToMany(
     () => ApplicationInfo,
     (applicationInfo) => applicationInfo.application,
@@ -110,4 +115,11 @@ export class Application extends BaseEntity {
     { nullable: true },
   )
   applicationCycle: ApplicationCycle[];
+
+  @OneToOne(
+    () => ApplicationSection,
+    (applicationSection) => applicationSection.application,
+    { nullable: true },
+  )
+  applicationSection: ApplicationSection;
 }

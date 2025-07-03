@@ -10,9 +10,6 @@ import { MailController } from './mail.controller';
   imports: [
     MailerModule.forRootAsync({
       useFactory: async () => {
-        console.log('SMTP User:', process.env.SMTP_USER);
-        console.log('SMTP Pass:', process.env.SMTP_PASS);
-
         return {
           transport: {
             service: 'gmail',

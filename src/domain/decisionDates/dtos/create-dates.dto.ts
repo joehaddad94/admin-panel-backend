@@ -1,7 +1,6 @@
 /* eslint-disable camelcase */
 import { ApiProperty } from '@nestjs/swagger';
 import {
-  IsDateString,
   IsNotEmpty,
   IsNumber,
   IsOptional,
@@ -10,31 +9,31 @@ import {
 export class CreateEditDecisionDateDto {
   @ApiProperty()
   @IsOptional()
-  examDate?: Date;
+  dateTime1?: Date;
 
   @ApiProperty()
   @IsOptional()
-  interviewMeetLink?: string;
+  link1?: string;
 
   @ApiProperty()
   @IsOptional()
-  examLink?: string;
+  link4?: string;
 
   @ApiProperty()
   @IsOptional()
-  statusConfirmationForm?: string;
+  link3?: string;
 
   @ApiProperty()
   @IsOptional()
-  infoSessionRecordedLink?: string;
+  link2?: string;
 
   @ApiProperty()
   @IsOptional()
-  orientationDate?: Date;
+  date1?: Date;
 
   @ApiProperty()
   @IsOptional()
-  classDebutDate?: Date;
+  date2?: Date;
 
   @ApiProperty()
   @IsNotEmpty({ message: 'cycleId must be provided' })
