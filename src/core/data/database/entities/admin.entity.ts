@@ -24,7 +24,7 @@ export class Admin extends BaseEntity {
   @Column({ nullable: true })
   is_active: boolean;
 
-  @Column({ nullable: true })
+  @Column({ nullable: true, unique: true })
   reset_token: string;
 
   @Column({ type: 'timestamp', nullable: true })
