@@ -38,20 +38,20 @@ export class PerformanceInterceptor implements NestInterceptor {
         const endMemory = process.memoryUsage();
         const executionTime = endTime - startTime;
 
-                 const metric: PerformanceMetrics = {
-           method,
-           url,
-           executionTime,
-           memoryUsage: {
-             rss: endMemory.rss - startMemory.rss,
-             heapTotal: endMemory.heapTotal - startMemory.heapTotal,
-             heapUsed: endMemory.heapUsed - startMemory.heapUsed,
-             external: endMemory.external - startMemory.external,
-             arrayBuffers: endMemory.arrayBuffers - startMemory.arrayBuffers,
-           },
-           timestamp: new Date(),
-           statusCode: response.statusCode,
-         };
+        const metric: PerformanceMetrics = {
+          method,
+          url,
+          executionTime,
+          memoryUsage: {
+            rss: endMemory.rss - startMemory.rss,
+            heapTotal: endMemory.heapTotal - startMemory.heapTotal,
+            heapUsed: endMemory.heapUsed - startMemory.heapUsed,
+            external: endMemory.external - startMemory.external,
+            arrayBuffers: endMemory.arrayBuffers - startMemory.arrayBuffers,
+          },
+          timestamp: new Date(),
+          statusCode: response.statusCode,
+        };
 
         this.metrics.push(metric);
 
@@ -63,7 +63,7 @@ export class PerformanceInterceptor implements NestInterceptor {
         }
 
         // Log performance metrics in development
-        if (process.env.NODE_ENV === 'development') {
+        if (process.env.NODE_ENV === 'develop') {
           this.logger.debug(
             `Performance: ${method} ${url} - ${executionTime}ms - Memory: ${Math.round(
               metric.memoryUsage.heapUsed / 1024 / 1024,
@@ -76,21 +76,21 @@ export class PerformanceInterceptor implements NestInterceptor {
         const endMemory = process.memoryUsage();
         const executionTime = endTime - startTime;
 
-                 const metric: PerformanceMetrics = {
-           method,
-           url,
-           executionTime,
-           memoryUsage: {
-             rss: endMemory.rss - startMemory.rss,
-             heapTotal: endMemory.heapTotal - startMemory.heapTotal,
-             heapUsed: endMemory.heapUsed - startMemory.heapUsed,
-             external: endMemory.external - startMemory.external,
-             arrayBuffers: endMemory.arrayBuffers - startMemory.arrayBuffers,
-           },
-           timestamp: new Date(),
-           statusCode: response.statusCode,
-           error: error.message,
-         };
+        const metric: PerformanceMetrics = {
+          method,
+          url,
+          executionTime,
+          memoryUsage: {
+            rss: endMemory.rss - startMemory.rss,
+            heapTotal: endMemory.heapTotal - startMemory.heapTotal,
+            heapUsed: endMemory.heapUsed - startMemory.heapUsed,
+            external: endMemory.external - startMemory.external,
+            arrayBuffers: endMemory.arrayBuffers - startMemory.arrayBuffers,
+          },
+          timestamp: new Date(),
+          statusCode: response.statusCode,
+          error: error.message,
+        };
 
         this.metrics.push(metric);
 
@@ -112,9 +112,7 @@ export class PerformanceInterceptor implements NestInterceptor {
   getAggregatedMetrics() {
     const now = new Date();
     const oneHourAgo = new Date(now.getTime() - 60 * 60 * 1000);
-    const recentMetrics = this.metrics.filter(
-      (m) => m.timestamp > oneHourAgo,
-    );
+    const recentMetrics = this.metrics.filter((m) => m.timestamp > oneHourAgo);
 
     if (recentMetrics.length === 0) {
       return {
@@ -130,8 +128,9 @@ export class PerformanceInterceptor implements NestInterceptor {
     const averageResponseTime =
       recentMetrics.reduce((sum, m) => sum + m.executionTime, 0) /
       totalRequests;
-    const slowRequests = recentMetrics.filter((m) => m.executionTime > 1000)
-      .length;
+    const slowRequests = recentMetrics.filter(
+      (m) => m.executionTime > 1000,
+    ).length;
     const errorRate =
       (recentMetrics.filter((m) => m.error).length / totalRequests) * 100;
 
@@ -158,4 +157,4 @@ export class PerformanceInterceptor implements NestInterceptor {
     const cutoff = new Date(Date.now() - hoursToKeep * 60 * 60 * 1000);
     this.metrics = this.metrics.filter((m) => m.timestamp > cutoff);
   }
-} 
+}
