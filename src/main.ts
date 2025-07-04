@@ -1,6 +1,7 @@
 import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app.module';
 import { initOpenApi } from './core/config/documentation/swagger';
+import { PerformanceInterceptor } from './core/interceptors/performance.interceptor';
 
 async function bootstrap() {
   try {
@@ -26,6 +27,10 @@ async function bootstrap() {
     );
 
     initOpenApi(app);
+
+    // Apply performance interceptor globally
+    const performanceInterceptor = app.get(PerformanceInterceptor);
+    app.useGlobalInterceptors(performanceInterceptor);
 
     await app.listen(port);
     console.log('Connected to the database successfully.');

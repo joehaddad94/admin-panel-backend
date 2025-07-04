@@ -11,7 +11,7 @@ class AuthMiddleware implements NestMiddleware {
     private readonly adminService: AuthService,
   ) {}
 
-  use(req: Request, res: Response, next: NextFunction) {
+  async use(req: Request, res: Response, next: NextFunction) {
     const authHeader = req.headers.authorization;
 
     throwUnauthorized({
@@ -30,7 +30,39 @@ class AuthMiddleware implements NestMiddleware {
     try {
       const payload = this.jwtService.verify(token);
 
-      const admin = this.adminService.findOne({ id: payload.sub });
+      // Properly await the database query
+      const admin = await this.adminService.findOne(
+        { id: payload.sub },
+        undefined,
+        {
+          id: true,
+          email: true,
+          name: true,
+          is_active: true,
+          login_attempts: true
+        }
+      );
+
+      // Check if admin exists
+      if (!admin) {
+        throwUnauthorized({
+          errorCheck: true,
+        });
+      }
+
+      // Check if account is locked
+      if (!admin.is_active) {
+        throwUnauthorized({
+          errorCheck: true,
+        });
+      }
+
+      // Check if login attempts are exhausted
+      if (admin.login_attempts <= 0) {
+        throwUnauthorized({
+          errorCheck: true,
+        });
+      }
 
       req['admin'] = admin;
 

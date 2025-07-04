@@ -8,6 +8,7 @@ import { Admin } from '../../core/data/database';
 import { AuthRepository } from './auth.repository';
 import { MailService } from '../mail/mail.service';
 import { UserModule } from '../users/user.module';
+import { JwtAuthGuard } from './jwt-auth.guard';
 
 @Module({
   imports: [TypeOrmModule.forFeature([Admin]), UserModule],
@@ -18,7 +19,8 @@ import { UserModule } from '../users/user.module';
     AuthRepository,
     JwtStrategy,
     MailService,
+    JwtAuthGuard,
   ],
-  exports: [AuthService],
+  exports: [AuthService, JwtAuthGuard],
 })
 export class AuthModule {}

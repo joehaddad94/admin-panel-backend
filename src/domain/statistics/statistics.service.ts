@@ -131,7 +131,7 @@ export class StatisticsService {
     params: StatisticsQueryDto = {},
   ): Promise<{
     total_applications: number;
-    selection_completion_percentage: number;
+    accepted_percentage: number;
   }> {
     const { programId, cycleId } = params;
 
@@ -142,7 +142,7 @@ export class StatisticsService {
           100.0 * COUNT(*) FILTER (WHERE app.status = 'Accepted') / 
           NULLIF(COUNT(*), 0),
           2
-        ) as selection_completion_percentage
+        ) as accepted_percentage
       FROM application_news app
       JOIN application_news_cycle_id_links cycle_link ON app.id = cycle_link.application_new_id
       JOIN application_news_program_id_links program_link ON app.id = program_link.application_new_id
@@ -303,7 +303,10 @@ export class StatisticsService {
       ORDER BY count DESC;
     `;
 
-    const result = await this.dataSource.query(distributionQuery, [cycleId, programId]);
+    const result = await this.dataSource.query(distributionQuery, [
+      cycleId,
+      programId,
+    ]);
 
     // Calculate total from the distribution results to ensure consistency
     const totalAccepted = result.reduce(
@@ -316,7 +319,12 @@ export class StatisticsService {
       section_distribution: result.map((row) => ({
         section_name: row.section_name,
         count: parseInt(row.count),
-        percentage: totalAccepted > 0 ? parseFloat(((parseInt(row.count) / totalAccepted) * 100).toFixed(2)) : 0,
+        percentage:
+          totalAccepted > 0
+            ? parseFloat(
+                ((parseInt(row.count) / totalAccepted) * 100).toFixed(2),
+              )
+            : 0,
       })),
     };
   }
@@ -378,5 +386,4 @@ export class StatisticsService {
     const result = await this.dataSource.query(query, [cycleId, programId]);
     return result[0];
   }
-
 }

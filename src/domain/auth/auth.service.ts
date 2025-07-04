@@ -10,6 +10,8 @@ import { throwBadRequest } from 'src/core/settings/base/errors/errors';
 
 @Injectable()
 export class AuthService extends BaseService<AuthRepository, Admin> {
+  private failedLoginCache = new Map<string, { attempts: number; lastAttempt: number }>();
+
   constructor(
     private readonly authRepository: AuthRepository,
     private readonly jwtService: JwtService,
@@ -18,7 +20,7 @@ export class AuthService extends BaseService<AuthRepository, Admin> {
   }
 
   hashPassword = async (password: string) => {
-    const salt = await bcrypt.genSalt(10);
+    const salt = await bcrypt.genSalt(8); // Reduced from 10 to 8
     const hashedPassword = await bcrypt.hash(password, salt);
 
     return hashedPassword;
@@ -124,5 +126,32 @@ export class AuthService extends BaseService<AuthRepository, Admin> {
   async resetLoginAttempts(admin: Admin) {
     admin.login_attempts = 5;
     await admin.save();
+    // Clear from cache on successful login
+    this.failedLoginCache.delete(admin.email);
+  }
+
+  // Cache failed login attempts to reduce database writes
+  recordFailedLoginAttempt(email: string): number {
+    const now = Date.now();
+    const cacheEntry = this.failedLoginCache.get(email);
+    
+    if (cacheEntry) {
+      cacheEntry.attempts += 1;
+      cacheEntry.lastAttempt = now;
+    } else {
+      this.failedLoginCache.set(email, { attempts: 1, lastAttempt: now });
+    }
+    
+    return this.failedLoginCache.get(email)!.attempts;
+  }
+
+  // Clean up old cache entries (call this periodically)
+  cleanupFailedLoginCache() {
+    const oneHourAgo = Date.now() - 60 * 60 * 1000;
+    for (const [email, entry] of this.failedLoginCache.entries()) {
+      if (entry.lastAttempt < oneHourAgo) {
+        this.failedLoginCache.delete(email);
+      }
+    }
   }
 }
