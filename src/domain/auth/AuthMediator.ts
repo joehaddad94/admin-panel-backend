@@ -28,18 +28,14 @@ export class AuthMediator {
       });
 
       // Get admin with only necessary fields
-      const admin = await this.service.findOne(
-        { email },
-        undefined,
-        {
-          id: true,
-          email: true,
-          password: true,
-          name: true,
-          login_attempts: true,
-          is_active: true
-        }
-      );
+      const admin = await this.service.findOne({ email }, undefined, {
+        id: true,
+        email: true,
+        password: true,
+        name: true,
+        login_attempts: true,
+        is_active: true,
+      });
 
       throwBadRequest({
         message: 'Admin not found',
@@ -70,10 +66,12 @@ export class AuthMediator {
       if (!passwordIsValid) {
         // Use cache for failed attempts to reduce database writes
         const failedAttempts = this.service.recordFailedLoginAttempt(email);
-        
+
         if (failedAttempts >= 5) {
           // Only update database when we need to lock the account
-          const accountLocked = await this.service.decrementLoginAttempts(admin);
+          const accountLocked = await this.service.decrementLoginAttempts(
+            admin,
+          );
           throwBadRequest({
             message: accountLocked
               ? 'Account locked due to multiple failed login attempts'
