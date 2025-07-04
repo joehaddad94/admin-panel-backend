@@ -279,8 +279,6 @@ export class StatisticsService {
   }> {
     const { programId, cycleId } = params;
 
-    // Get the section distribution for accepted applications only
-    // Use a subquery to get only one section assignment per application
     const distributionQuery = `
       SELECT 
         COALESCE(s.name, 'Unassigned') as section_name,
@@ -303,9 +301,11 @@ export class StatisticsService {
       ORDER BY count DESC;
     `;
 
-    const result = await this.dataSource.query(distributionQuery, [cycleId, programId]);
+    const result = await this.dataSource.query(distributionQuery, [
+      cycleId,
+      programId,
+    ]);
 
-    // Calculate total from the distribution results to ensure consistency
     const totalAccepted = result.reduce(
       (sum, row) => sum + parseInt(row.count),
       0,
@@ -316,7 +316,12 @@ export class StatisticsService {
       section_distribution: result.map((row) => ({
         section_name: row.section_name,
         count: parseInt(row.count),
-        percentage: totalAccepted > 0 ? parseFloat(((parseInt(row.count) / totalAccepted) * 100).toFixed(2)) : 0,
+        percentage:
+          totalAccepted > 0
+            ? parseFloat(
+                ((parseInt(row.count) / totalAccepted) * 100).toFixed(2),
+              )
+            : 0,
       })),
     };
   }
@@ -378,5 +383,4 @@ export class StatisticsService {
     const result = await this.dataSource.query(query, [cycleId, programId]);
     return result[0];
   }
-
 }

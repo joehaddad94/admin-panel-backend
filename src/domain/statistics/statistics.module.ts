@@ -8,5 +8,6 @@ import { ProgramModule } from '../programs/program.module';
   imports: [ProgramModule],
   controllers: [StatisticsController],
   providers: [StatisticsMediator, StatisticsService],
+  exports: [StatisticsService, StatisticsMediator],
 })
 export class StatisticsModule {}

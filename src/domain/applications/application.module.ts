@@ -13,6 +13,8 @@ import { MailModule } from '../mail/mail.module';
 import { ProgramModule } from '../programs/program.module';
 import { InformationModule } from '../information/information.module';
 import { SectionModule } from '../sections/section.module';
+import { StatisticsModule } from '../statistics/statistics.module';
+
 @Module({
   imports: [
     TypeOrmModule.forFeature([Application, ApplicationRepository]),
@@ -22,6 +24,7 @@ import { SectionModule } from '../sections/section.module';
     ProgramModule,
     InformationModule,
     SectionModule,
+    StatisticsModule,
   ],
   controllers: [ApplicationController],
   providers: [
