@@ -6,6 +6,8 @@ import { ProgramService } from '../programs/program.service';
 
 @Injectable()
 export class StatisticsMediator {
+  private statisticsCache = new Map<string, { data: any; timestamp: number }>();
+
   constructor(
     private readonly statisticsService: StatisticsService,
     private readonly programService: ProgramService,
@@ -13,6 +15,17 @@ export class StatisticsMediator {
 
   async getStatistics(query: StatisticsQueryDto) {
     return catcher(async () => {
+      const startTime = Date.now();
+
+      // Check cache first
+      const cacheKey = `statistics_${query.programId}_${query.cycleId}`;
+      const cached = this.statisticsCache.get(cacheKey);
+      const now = Date.now();
+
+      if (cached && now - cached.timestamp < 1 * 60 * 1000) {
+        return cached.data;
+      }
+
       const program = await this.programService.findOne({
         id: query.programId,
       });
@@ -24,22 +37,25 @@ export class StatisticsMediator {
       const programAbbreviation = program.abbreviation;
 
       if (programAbbreviation === 'FCS') {
-        const applicationStatusCounts =
-          await this.statisticsService.getApplicationStatusCounts(query);
-        const eligibilityStatistics =
-          await this.statisticsService.getFCSEligibilityStatistics(query);
-        const screeningStatistics =
-          await this.statisticsService.getFCSScreeningStatistics(query);
-        const paymentStatistics =
-          await this.statisticsService.getFCSPaymentStatistics(query);
-        const sectionDistribution =
-          await this.statisticsService.getFCSSectionDistribution(query);
-        const emailStatistics =
-          await this.statisticsService.getFCSEmailStatistics(query);
-        const selectionTimeline =
-          await this.statisticsService.getFCSSelectionTimeline(query);
+        const [
+          applicationStatusCounts,
+          eligibilityStatistics,
+          screeningStatistics,
+          paymentStatistics,
+          sectionDistribution,
+          emailStatistics,
+          selectionTimeline,
+        ] = await Promise.all([
+          this.statisticsService.getApplicationStatusCounts(query),
+          this.statisticsService.getFCSEligibilityStatistics(query),
+          this.statisticsService.getFCSScreeningStatistics(query),
+          this.statisticsService.getFCSPaymentStatistics(query),
+          this.statisticsService.getFCSSectionDistribution(query),
+          this.statisticsService.getFCSEmailStatistics(query),
+          this.statisticsService.getFCSSelectionTimeline(query),
+        ]);
 
-        return {
+        const result = {
           data: {
             applicationStatusCounts,
             eligibilityStatistics,
@@ -50,21 +66,34 @@ export class StatisticsMediator {
             selectionTimeline,
           },
         };
-      } else {
-        const applicationStatusCounts =
-          await this.statisticsService.getApplicationStatusCounts(query);
-        const failedInterviewPercentage =
-          await this.statisticsService.getFailedInterviewPercentage(query);
-        const passedExamPercentage =
-          await this.statisticsService.getExamPassStatistics(query);
-        const passedInterviewPercentage =
-          await this.statisticsService.getInterviewProgressStatistics(query);
-        const applicationSelectionStatistics =
-          await this.statisticsService.getApplicationSelectionStatistics(query);
-        const selectionTimeline =
-          await this.statisticsService.getSelectionTimeline(query);
 
-        return {
+        const executionTime = Date.now() - startTime;
+        console.log(
+          `FCS Statistics performance: ${executionTime}ms for programId=${query.programId}, cycleId=${query.cycleId}`,
+        );
+
+        // Cache the result
+        this.statisticsCache.set(cacheKey, { data: result, timestamp: now });
+
+        return result;
+      } else {
+        const [
+          applicationStatusCounts,
+          failedInterviewPercentage,
+          passedExamPercentage,
+          passedInterviewPercentage,
+          applicationSelectionStatistics,
+          selectionTimeline,
+        ] = await Promise.all([
+          this.statisticsService.getApplicationStatusCounts(query),
+          this.statisticsService.getFailedInterviewPercentage(query),
+          this.statisticsService.getExamPassStatistics(query),
+          this.statisticsService.getInterviewProgressStatistics(query),
+          this.statisticsService.getApplicationSelectionStatistics(query),
+          this.statisticsService.getSelectionTimeline(query),
+        ]);
+
+        const result = {
           data: {
             applicationStatusCounts,
             failedInterviewPercentage,
@@ -74,6 +103,16 @@ export class StatisticsMediator {
             selectionTimeline,
           },
         };
+
+        const executionTime = Date.now() - startTime;
+        console.log(
+          `FSE Statistics performance: ${executionTime}ms for programId=${query.programId}, cycleId=${query.cycleId}`,
+        );
+
+        // Cache the result
+        this.statisticsCache.set(cacheKey, { data: result, timestamp: now });
+
+        return result;
       }
     });
   }

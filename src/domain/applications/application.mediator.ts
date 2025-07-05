@@ -33,6 +33,7 @@ import { statusEmailConfigs } from './configs/status.email.configs';
 import { ApplyToFSEDto } from './dtos/apply.fse.dto';
 import { ProgramService } from '../programs/program.service';
 import { ApplicationUser } from 'src/core/data/database/relations/application-user.entity';
+import { StatisticsMediator } from '../statistics/statistics.mediator';
 import { ApplicationInfo } from 'src/core/data/database/relations/application-info.entity';
 import { ApplicationProgram } from 'src/core/data/database/relations/application-program.entity';
 import { InformationService } from '../information/information.service';
@@ -48,6 +49,7 @@ export class ApplicationMediator {
     private readonly programsService: ProgramService,
     private readonly infoService: InformationService,
     private readonly sectionsService: SectionService,
+    private readonly statisticsMediator: StatisticsMediator,
   ) {}
 
   findApplications = async (
@@ -1724,50 +1726,54 @@ export class ApplicationMediator {
   importFCSData = async (data: ImportFCSDto) => {
     return catcher(async () => {
       const { cycleId, importType, data: importData } = data;
-      
-      const applications = await this.applicationsService.findMany({
-        applicationCycle: { cycleId },
-      }, ['applicationCycle', 'applicationSection', 'applicationInfo']);
-      
+
+      const applications = await this.applicationsService.findMany(
+        {
+          applicationCycle: { cycleId },
+        },
+        ['applicationCycle', 'applicationSection', 'applicationInfo'],
+      );
+
       function normalizePhone(phone: string): string {
         return phone.replace(/[^0-9]/g, '').replace(/^0+/, '');
       }
-      
+
       switch (importType) {
-        case "paid":
+        case 'paid':
           const updatedApplications = [];
           const unmatchedEntries = [];
-          
+
           for (const entry of importData) {
             const phoneNumber = String(entry.phone);
             const paidStatus = entry.paid;
             const normalizedPhone = normalizePhone(phoneNumber);
-            
-            const application = applications.find(app => {
-              const dbPhone = normalizePhone(app.applicationInfo?.[0]?.info?.mobile || '');
+
+            const application = applications.find((app) => {
+              const dbPhone = normalizePhone(
+                app.applicationInfo?.[0]?.info?.mobile || '',
+              );
               return dbPhone === normalizedPhone;
             });
-            
+
             if (application) {
               const isPaid = Boolean(paidStatus);
-              
+
               await this.applicationsService.update(
                 { id: application.id },
-                { paid: isPaid }
+                { paid: isPaid },
               );
               updatedApplications.push({
                 id: application.id,
                 phoneNumber,
                 paid: isPaid,
                 firstName: application.applicationInfo[0]?.info?.first_name,
-                lastName: application.applicationInfo[0]?.info?.last_name
+                lastName: application.applicationInfo[0]?.info?.last_name,
               });
             } else {
-        
               unmatchedEntries.push({
                 phoneNumber,
                 paid: Boolean(paidStatus),
-                reason: 'No matching application found with this phone number'
+                reason: 'No matching application found with this phone number',
               });
             }
           }
@@ -1775,32 +1781,38 @@ export class ApplicationMediator {
           const response: any = {
             message: 'Payment status import completed',
             summary: {
-              totalProcessed: Array.isArray(importData) ? importData.length : Object.keys(importData).length,
+              totalProcessed: Array.isArray(importData)
+                ? importData.length
+                : Object.keys(importData).length,
               successfulUpdates: updatedApplications.length,
-              failedUpdates: unmatchedEntries.length
+              failedUpdates: unmatchedEntries.length,
             },
             updatedData: updatedApplications,
-            failedUpdates: unmatchedEntries
+            failedUpdates: unmatchedEntries,
           };
 
           if (unmatchedEntries.length > 0) {
-            const headers = ['Phone Number', 'Paid Status', 'Reason', 'Import Date'];
-            const rows = unmatchedEntries.map(entry => [
+            const headers = [
+              'Phone Number',
+              'Paid Status',
+              'Reason',
+              'Import Date',
+            ];
+            const rows = unmatchedEntries.map((entry) => [
               entry.phoneNumber,
               entry.paid ? 'Yes' : 'No',
               entry.reason,
-              new Date().toISOString()
+              new Date().toISOString(),
             ]);
             response.failedAttemptsCSV = [
               headers.join(','),
-              ...rows.map(row => row.join(','))
+              ...rows.map((row) => row.join(',')),
             ].join('\n');
           }
-          
-          
+
           return response;
-          
-        case "sections":
+
+        case 'sections':
           const updatedSections = [];
           const unmatchedSectionEntries = [];
 
@@ -1812,25 +1824,28 @@ export class ApplicationMediator {
             const sectionName = String(entry.section).trim().toLowerCase();
 
             // Find application by email
-            const application = applications.find(app =>
-              (app.applicationInfo?.[0]?.info?.email || '').trim().toLowerCase() === email
+            const application = applications.find(
+              (app) =>
+                (app.applicationInfo?.[0]?.info?.email || '')
+                  .trim()
+                  .toLowerCase() === email,
             );
 
             // Find section by name
-            const section = allSections.find(sec =>
-              (sec.name || '').trim().toLowerCase() === sectionName
+            const section = allSections.find(
+              (sec) => (sec.name || '').trim().toLowerCase() === sectionName,
             );
 
             if (application && section) {
               // Update applicationSection table
               await ApplicationSection.update(
                 { application_new_id: application.id },
-                { section_id: section.id }
+                { section_id: section.id },
               );
               updatedSections.push({
                 applicationId: application.id,
                 email,
-                sectionName: section.name
+                sectionName: section.name,
               });
             } else {
               unmatchedSectionEntries.push({
@@ -1838,7 +1853,7 @@ export class ApplicationMediator {
                 sectionName,
                 reason: !application
                   ? 'No matching application found with this email'
-                  : 'No matching section found with this section name'
+                  : 'No matching section found with this section name',
               });
             }
           }
@@ -1846,31 +1861,33 @@ export class ApplicationMediator {
           const sectionResponse: any = {
             message: 'Section import completed',
             summary: {
-              totalProcessed: Array.isArray(importData) ? importData.length : Object.keys(importData).length,
+              totalProcessed: Array.isArray(importData)
+                ? importData.length
+                : Object.keys(importData).length,
               successfulUpdates: updatedSections.length,
-              failedUpdates: unmatchedSectionEntries.length
+              failedUpdates: unmatchedSectionEntries.length,
             },
             updatedData: updatedSections,
-            failedUpdates: unmatchedSectionEntries
+            failedUpdates: unmatchedSectionEntries,
           };
 
           if (unmatchedSectionEntries.length > 0) {
             const headers = ['Email', 'Section Name', 'Reason', 'Import Date'];
-            const rows = unmatchedSectionEntries.map(entry => [
+            const rows = unmatchedSectionEntries.map((entry) => [
               entry.email,
               entry.sectionName,
               entry.reason,
-              new Date().toISOString()
+              new Date().toISOString(),
             ]);
             sectionResponse.failedAttemptsCSV = [
               headers.join(','),
-              ...rows.map(row => row.join(','))
+              ...rows.map((row) => row.join(',')),
             ].join('\n');
           }
 
           return sectionResponse;
-          
-        case "applicationStatus":
+
+        case 'applicationStatus':
           const updatedStatuses = [];
           const unmatchedStatusEntries = [];
 
@@ -1879,28 +1896,31 @@ export class ApplicationMediator {
             const status = String(entry.status).trim().toUpperCase();
 
             // Find application by email
-            const application = applications.find(app =>
-              (app.applicationInfo?.[0]?.info?.email || '').trim().toLowerCase() === email
+            const application = applications.find(
+              (app) =>
+                (app.applicationInfo?.[0]?.info?.email || '')
+                  .trim()
+                  .toLowerCase() === email,
             );
 
             if (application) {
               // Update application status
               await this.applicationsService.update(
                 { id: application.id },
-                { status }
+                { status },
               );
               updatedStatuses.push({
                 id: application.id,
                 email,
                 status,
                 firstName: application.applicationInfo[0]?.info?.first_name,
-                lastName: application.applicationInfo[0]?.info?.last_name
+                lastName: application.applicationInfo[0]?.info?.last_name,
               });
             } else {
               unmatchedStatusEntries.push({
                 email,
                 status,
-                reason: 'No matching application found with this email'
+                reason: 'No matching application found with this email',
               });
             }
           }
@@ -1908,25 +1928,27 @@ export class ApplicationMediator {
           const statusResponse: any = {
             message: 'Application status import completed',
             summary: {
-              totalProcessed: Array.isArray(importData) ? importData.length : Object.keys(importData).length,
+              totalProcessed: Array.isArray(importData)
+                ? importData.length
+                : Object.keys(importData).length,
               successfulUpdates: updatedStatuses.length,
-              failedUpdates: unmatchedStatusEntries.length
+              failedUpdates: unmatchedStatusEntries.length,
             },
             updatedData: updatedStatuses,
-            failedUpdates: unmatchedStatusEntries
+            failedUpdates: unmatchedStatusEntries,
           };
 
           if (unmatchedStatusEntries.length > 0) {
             const headers = ['Email', 'Status', 'Reason', 'Import Date'];
-            const rows = unmatchedStatusEntries.map(entry => [
+            const rows = unmatchedStatusEntries.map((entry) => [
               entry.email,
               entry.status,
               entry.reason,
-              new Date().toISOString()
+              new Date().toISOString(),
             ]);
             statusResponse.failedAttemptsCSV = [
               headers.join(','),
-              ...rows.map(row => row.join(','))
+              ...rows.map((row) => row.join(',')),
             ].join('\n');
           }
 

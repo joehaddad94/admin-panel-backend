@@ -5,11 +5,15 @@ import {
   JoinColumn,
   ManyToOne,
   PrimaryGeneratedColumn,
+  Index,
 } from 'typeorm';
 import { Application } from '../entities/application.entity';
 import { Cycles } from '../entities/cycle.entity';
 
 @Entity('application_news_cycle_id_links')
+@Index(['applicationId']) // For joining with applications
+@Index(['cycleId']) // For filtering by cycle
+@Index(['cycleId', 'applicationId']) // Composite index for common queries
 export class ApplicationCycle extends BaseEntity {
   @PrimaryGeneratedColumn()
   id: number;

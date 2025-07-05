@@ -6,6 +6,7 @@ import {
   OneToMany,
   OneToOne,
   PrimaryGeneratedColumn,
+  Index,
 } from 'typeorm';
 import { ApplicationInfo } from '../relations/application-info.entity';
 import { ApplicationProgram } from '../relations/application-program.entity';
@@ -15,6 +16,16 @@ import { Status } from '../../types/applications/applications.types';
 import { ApplicationSection } from '../relations/applications-sections.entity';
 
 @Entity('application_news')
+@Index(['status']) // For status filtering
+@Index(['passed_exam']) // For exam statistics
+@Index(['passed_interview']) // For interview statistics
+@Index(['is_eligible']) // For FCS eligibility
+@Index(['paid']) // For FCS payment statistics
+@Index(['screening_email_sent']) // For FCS screening
+@Index(['passed_exam_email_sent']) // For exam email tracking
+@Index(['status_email_sent']) // For FCS status emails
+@Index(['passed_exam_date']) // For timeline queries
+@Index(['passed_interview_date']) // For timeline queries
 export class Application extends BaseEntity {
   @PrimaryGeneratedColumn()
   id: number;
