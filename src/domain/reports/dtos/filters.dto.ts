@@ -1,6 +1,6 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { ReportType } from './report-type.enum';
-import { IsNumber, IsOptional } from 'class-validator';
+import { IsNumber, IsOptional, IsString } from 'class-validator';
 
 export class FiltersDto {
   @ApiProperty()
@@ -44,4 +44,9 @@ export class FiltersDto {
   @ApiProperty()
   @IsOptional()
   microcampId?: number;
+
+  @ApiProperty({ description: 'Search term for filtering applications by name, email, or other fields' })
+  @IsString()
+  @IsOptional()
+  search?: string;
 }

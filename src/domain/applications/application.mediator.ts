@@ -64,6 +64,7 @@ export class ApplicationMediator {
         pageSize: dtoPageSize,
         cycleId,
         useAllCycles,
+        search,
       } = filtersDto;
 
       const currentPage = dtoPage ?? page;
@@ -115,7 +116,7 @@ export class ApplicationMediator {
         errorCheck: !applications,
       });
 
-      const mappedApplications = applications.map((app) => ({
+      let mappedApplications = applications.map((app) => ({
         id: app.id,
         sefId: app.applicationUser[0].user.sef_id,
         username: app.applicationUser[0].user.username,
@@ -197,6 +198,20 @@ export class ApplicationMediator {
             : '-',
       }));
 
+      // Apply search filter if search parameter is provided
+      if (search && search.trim()) {
+        const searchTerm = search.toLowerCase().trim();
+        mappedApplications = mappedApplications.filter((app) => {
+          return (
+            app.fullName?.toLowerCase().includes(searchTerm) ||
+            app.email?.toLowerCase().includes(searchTerm) ||
+            app.username?.toLowerCase().includes(searchTerm) ||
+            app.sefId?.toLowerCase().includes(searchTerm) ||
+            app.applicationStatus?.toLowerCase().includes(searchTerm)
+          );
+        });
+      }
+
       mappedApplications.sort(
         (a, b) =>
           new Date(a.applicationDate).getTime() -
@@ -205,7 +220,7 @@ export class ApplicationMediator {
 
       return {
         applications: mappedApplications,
-        total,
+        total: search ? mappedApplications.length : total,
         page: currentPage,
         pageSize: currentPageSize,
         latestCycle,
