@@ -8,7 +8,15 @@ export class ProgramMediator {
   constructor(private readonly service: ProgramService) {}
   findPrograms = async () => {
     return catcher(async () => {
-      const found = await this.service.findMany({});
+      const found = await this.service.findMany(
+        {}, 
+        undefined, 
+        {
+          id: true,
+          program_name: true,
+          abbreviation: true,
+        }
+      );
 
       throwNotFound({
         entity: 'Program',
