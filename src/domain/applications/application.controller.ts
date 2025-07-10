@@ -26,7 +26,7 @@ export class ApplicationController {
 
   @Post()
   @UsePipes(new ValidationPipe({ whitelist: true }))
-  getApplicationsByProgamId(@Body() filtersDto: FiltersDto) {
+  findApplications(@Body() filtersDto: FiltersDto) {
     return this.mediator.findApplications(filtersDto);
   }
 
