@@ -16,6 +16,7 @@ import { Status } from '../../types/applications/applications.types';
 import { ApplicationSection } from '../relations/applications-sections.entity';
 
 @Entity('application_news')
+@Index(['id'])
 @Index(['status']) // For status filtering
 @Index(['passed_exam']) // For exam statistics
 @Index(['passed_interview']) // For interview statistics

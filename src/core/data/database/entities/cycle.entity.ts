@@ -5,6 +5,7 @@ import {
   Entity,
   OneToOne,
   PrimaryGeneratedColumn,
+  Index,
 } from 'typeorm';
 import { CycleProgram } from '../relations/cycle-program.entity';
 import { DecisionDateCycle } from '../relations/decisionDate-cycle.entity';
@@ -13,6 +14,9 @@ import { ThresholdCycle } from '../relations/cycle-threshold.entity';
 import { SectionCycle } from '../relations/section-cycle.entity';
 
 @Entity('cycles')
+@Index(['id'])
+@Index(['name'])
+@Index(['code'])
 export class Cycles extends BaseEntity {
   @PrimaryGeneratedColumn()
   id: number;
