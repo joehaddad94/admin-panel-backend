@@ -39,6 +39,7 @@ import { ApplicationProgram } from 'src/core/data/database/relations/application
 import { InformationService } from '../information/information.service';
 import { ImportFCSDto } from './dtos/Import.fcs.data.dto';
 import { SectionService } from '../sections/section.service';
+import { applyFilters, applySorting, ApplicationData } from '../../core/helpers/filter-sort.helper';
 
 @Injectable()
 export class ApplicationMediator {
@@ -64,7 +65,6 @@ export class ApplicationMediator {
         pageSize: dtoPageSize,
         cycleId,
         useAllCycles,
-        search,
       } = filtersDto;
 
       const currentPage = dtoPage ?? page;
@@ -116,19 +116,37 @@ export class ApplicationMediator {
         errorCheck: !applications,
       });
 
-      let mappedApplications = applications.map((app) => ({
+      const mappedApplications = applications.map((app) => ({
         id: app.id,
         sefId: app.applicationUser[0].user.sef_id,
         username: app.applicationUser[0].user.username,
         email: app.applicationUser[0].user.email,
         firstName: app.applicationInfo[0].info.first_name,
+        middleName: app.applicationInfo[0].info.middle_name,
         lastName: app.applicationInfo[0].info.last_name,
         fullName: `${app.applicationInfo[0].info.first_name} ${app.applicationInfo[0].info.last_name}`,
+        motherMaidenFirst: app.applicationInfo[0].info.mother_maiden_first,
+        motherMaidenLast: app.applicationInfo[0].info.mother_maiden_last,
+        gender: app.applicationInfo[0].info.gender,
         dob: app.applicationInfo[0].info.dob,
+        mobile: app.applicationInfo[0].info.mobile,
         countryOrigin: app.applicationInfo[0].info.country_origin,
         countryResidence: app.applicationInfo[0].info.country_residence,
         residencyStatus: app.applicationInfo[0].info.residency_status,
+        district: app.applicationInfo[0].info.district,
+        governate: app.applicationInfo[0].info.governate,
+        maritalStatus: app.applicationInfo[0].info.marital_status,
+        typeOfDisability: app.applicationInfo[0].info.type_of_disability,
+        disability: app.applicationInfo[0].info.disability,
+        employmentSituation: app.applicationInfo[0].info.employment_situation,
+        whichSocial: app.applicationInfo[0].info.which_social,
+        termsConditions: app.applicationInfo[0].info.terms_conditions,
+        degreeType: app.applicationInfo[0].info.degree_type,
         educationStatus: app.applicationInfo[0].info.status,
+        institution: app.applicationInfo[0].info.institution,
+        fieldOfStudy: app.applicationInfo[0].info.field_of_study,
+        majorTitle: app.applicationInfo[0].info.major_title,
+        infoCreatedAt: app.applicationInfo[0].info.created_at,
         programName: app.applicationProgram[0].program.program_name,
         program: app.applicationProgram[0].program.abbreviation,
         passedScreening:
@@ -184,6 +202,7 @@ export class ApplicationMediator {
             ? 'No'
             : '-',
         remarks: app.remarks,
+        extras: app.extras,
         cycleId: app.applicationCycle[0]?.cycleId,
         cycleName: app.applicationCycle[0]?.cycle?.name,
         paid: app.paid,
@@ -198,20 +217,6 @@ export class ApplicationMediator {
             : '-',
       }));
 
-      // Apply search filter if search parameter is provided
-      if (search && search.trim()) {
-        const searchTerm = search.toLowerCase().trim();
-        mappedApplications = mappedApplications.filter((app) => {
-          return (
-            app.fullName?.toLowerCase().includes(searchTerm) ||
-            app.email?.toLowerCase().includes(searchTerm) ||
-            app.username?.toLowerCase().includes(searchTerm) ||
-            app.sefId?.toLowerCase().includes(searchTerm) ||
-            app.applicationStatus?.toLowerCase().includes(searchTerm)
-          );
-        });
-      }
-
       mappedApplications.sort(
         (a, b) =>
           new Date(a.applicationDate).getTime() -
@@ -220,7 +225,7 @@ export class ApplicationMediator {
 
       return {
         applications: mappedApplications,
-        total: search ? mappedApplications.length : total,
+        total,
         page: currentPage,
         pageSize: currentPageSize,
         latestCycle,
@@ -1950,6 +1955,262 @@ export class ApplicationMediator {
 
           return statusResponse;
       }
+    });
+  };
+
+  findApplicationsNew = async (
+    filtersDto: FiltersDto,
+    page = 1,
+    pageSize = 10000000,
+  ) => {
+    return catcher(async () => {
+      const {
+        programId,
+        page: dtoPage,
+        pageSize: dtoPageSize,
+        cycleId,
+        useAllCycles,
+        search,
+        filters,
+        sort,
+      } = filtersDto;
+
+      const currentPage = dtoPage ?? page;
+      const currentPageSize = dtoPageSize ?? pageSize;
+      let latestCycle;
+
+      const options: GlobalEntities[] = [
+        'applicationInfo',
+        'applicationProgram',
+        'applicationUser',
+        'applicationCycle',
+        'applicationProgram',
+        'applicationSection',
+      ];
+
+      const whereConditions: any = {};
+
+      if (programId) {
+        if (!whereConditions.applicationProgram) {
+          whereConditions.applicationProgram = {};
+        }
+        whereConditions.applicationProgram.programId = programId;
+      }
+
+      if (cycleId) {
+        if (!whereConditions.applicationCycle) {
+          whereConditions.applicationCycle = {};
+        }
+        whereConditions.applicationCycle.cycleId = cycleId;
+      } else if (!useAllCycles) {
+        latestCycle = await this.applicationsService.getLatestCycle(programId);
+        if (latestCycle) {
+          if (!whereConditions.applicationCycle) {
+            whereConditions.applicationCycle = {};
+          }
+          whereConditions.applicationCycle.cycleId = latestCycle.id;
+        }
+      }
+
+      const needsFullData = (sort && sort.length > 0) || (filters && filters.length > 0) || (search && search.trim() !== '');
+      
+      console.log('🔍 Debug Info:', {
+        programId,
+        cycleId,
+        currentPage,
+        currentPageSize,
+        search,
+        filters: filters?.length || 0,
+        sort: sort?.length || 0,
+        needsFullData,
+        whereConditions
+      });
+      
+      let applications, total;
+      
+      if (needsFullData) {
+        console.log('📊 Fetching ALL data (no pagination)');
+        [applications, total] = await this.applicationsService.findAndCount(
+          whereConditions,
+          options,
+        );
+      } else {
+        console.log('📄 Fetching paginated data:', {
+          skip: (currentPage - 1) * currentPageSize,
+          take: currentPageSize
+        });
+        [applications, total] = await this.applicationsService.findAndCount(
+          whereConditions,
+          options,
+          undefined,
+          (currentPage - 1) * currentPageSize,
+          currentPageSize,
+        );
+      }
+      
+      console.log('📈 Database results:', {
+        applicationsCount: applications?.length || 0,
+        totalFromDB: total
+      });
+
+      throwNotFound({
+        entity: 'applications',
+        errorCheck: !applications,
+      });
+
+      let mappedApplications: ApplicationData[] = applications.map((app) => ({
+        id: app.id,
+        sefId: app.applicationUser[0].user.sef_id,
+        username: app.applicationUser[0].user.username,
+        email: app.applicationUser[0].user.email,
+        firstName: app.applicationInfo[0].info.first_name,
+        lastName: app.applicationInfo[0].info.last_name,
+        fullName: `${app.applicationInfo[0].info.first_name} ${app.applicationInfo[0].info.last_name}`,
+        dob: app.applicationInfo[0].info.dob,
+        countryOrigin: app.applicationInfo[0].info.country_origin,
+        countryResidence: app.applicationInfo[0].info.country_residence,
+        residencyStatus: app.applicationInfo[0].info.residency_status,
+        educationStatus: app.applicationInfo[0].info.status,
+        programName: app.applicationProgram[0].program.program_name,
+        program: app.applicationProgram[0].program.abbreviation,
+        passedScreening:
+          app.passed_screening === true
+            ? 'Yes'
+            : app.passed_screening === false
+            ? 'No'
+            : '-',
+        screeningEmailSent:
+          app.screening_email_sent === true
+            ? 'Yes'
+            : app.screening_email_sent === false
+            ? 'No'
+            : '-',
+        applicationDate: new Date(app.created_at),
+        eligible:
+          app.applicationProgram[0].program.abbreviation === 'FCS'
+            ? app.is_eligible
+            : app.is_eligible === true
+            ? 'Yes'
+            : app.is_eligible === false
+            ? 'No'
+            : '-',
+        passedScreeningDate: new Date(app.passed_screening_date),
+        examScore: app.exam_score,
+        passedExam:
+          app.passed_exam === true
+            ? 'Yes'
+            : app.passed_exam === false
+            ? 'No'
+            : '-',
+        passedExamDate: new Date(app.passed_exam_date),
+        passedExamEmailSent:
+          app.passed_exam_email_sent === true
+            ? 'Yes'
+            : app.passed_exam_email_sent === false
+            ? 'No'
+            : '-',
+        techInterviewScore: app.tech_interview_score,
+        softInterviewScore: app.soft_interview_score,
+        passedInterviewDate: new Date(app.passed_interview_date),
+        passedInterview:
+          app.passed_interview === true
+            ? 'Yes'
+            : app.passed_interview === false
+            ? 'No'
+            : '-',
+        applicationStatus: app.status,
+        statusEmailSent:
+          app.status_email_sent === true
+            ? 'Yes'
+            : app.status_email_sent === false
+            ? 'No'
+            : '-',
+        remarks: app.remarks,
+        cycleId: app.applicationCycle[0]?.cycleId,
+        cycleName: app.applicationCycle[0]?.cycle?.name,
+        paid: app.paid,
+        sectionName: app.applicationSection?.section?.name,
+        userId: app.applicationUser[0].user_id,
+        infoId: app.applicationInfo[0].info_id,
+        fcsGraduate:
+          app.fcs_graduate === true
+            ? 'Yes'
+            : app.fcs_graduate === false
+            ? 'No'
+            : '-',
+      }));
+      
+      console.log('🗺️ Mapped applications count:', mappedApplications.length);
+
+      if (search && search.trim()) {
+        console.log('🔍 Applying search filter with term:', search.trim());
+        const searchTerm = search.toLowerCase().trim();
+        mappedApplications = mappedApplications.filter((app) => {
+          return (
+            app.fullName?.toLowerCase().includes(searchTerm) ||
+            app.email?.toLowerCase().includes(searchTerm) ||
+            app.username?.toLowerCase().includes(searchTerm) ||
+            app.sefId?.toLowerCase().includes(searchTerm) ||
+            app.applicationStatus?.toLowerCase().includes(searchTerm)
+          );
+        });
+        console.log('🔍 After search filter:', mappedApplications.length);
+      }
+
+      if (filters && filters.length > 0) {
+        console.log('🎯 Applying filters:', filters.length);
+        mappedApplications = applyFilters(mappedApplications, filters);
+        console.log('🎯 After filters:', mappedApplications.length);
+      }
+
+      if (sort && sort.length > 0) {
+        console.log('📊 Applying sorting:', sort);
+        mappedApplications = applySorting(mappedApplications, sort);
+      } else {
+        console.log('📊 Applying default sorting by application date');
+        // Default sorting by application date if no sort criteria provided
+        mappedApplications.sort(
+          (a, b) =>
+            new Date(a.applicationDate).getTime() -
+            new Date(b.applicationDate).getTime(),
+        );
+      }
+
+      // Apply pagination only when we fetched all data
+      let finalApplications, finalTotal;
+      
+      if (needsFullData) {
+        // Apply pagination after sorting and filtering
+        const startIndex = (currentPage - 1) * currentPageSize;
+        const endIndex = startIndex + currentPageSize;
+        finalApplications = mappedApplications.slice(startIndex, endIndex);
+        finalTotal = mappedApplications.length;
+        
+        console.log('📄 Pagination details (full data):', {
+          startIndex,
+          endIndex,
+          totalMapped: mappedApplications.length,
+          paginatedCount: finalApplications.length,
+          needsFullData
+        });
+      } else {
+        // No pagination needed - we already have the correct page
+        finalApplications = mappedApplications;
+        finalTotal = total;
+        
+        console.log('📄 No pagination needed (already paginated from DB):', {
+          totalMapped: mappedApplications.length,
+          needsFullData
+        });
+      }
+
+      return {
+        applications: finalApplications,
+        total: finalTotal,
+        page: currentPage,
+        pageSize: currentPageSize,
+        latestCycle,
+      };
     });
   };
 }
