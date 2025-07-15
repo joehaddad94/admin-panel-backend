@@ -33,6 +33,7 @@ export class FilterDto {
   operator: FilterOperator;
 
   @ApiProperty({ description: 'Filter value' })
+  @IsOptional() // Ensure value is not stripped by ValidationPipe
   value: any;
 }
 

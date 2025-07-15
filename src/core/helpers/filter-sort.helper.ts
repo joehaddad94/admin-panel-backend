@@ -46,27 +46,51 @@ export function applyFilters(applications: ApplicationData[], filters: FilterDto
     return applications;
   }
 
-  return applications.filter(application => {
+  console.log('🔍 Filtering with filters:', JSON.stringify(filters, null, 2));
+  console.log('📊 Total applications before filtering:', applications.length);
+  
+  // Debug: Check first application's fullName
+  if (applications.length > 0) {
+    const firstApp = applications[0];
+    console.log('🔍 First application fullName:', firstApp.fullName);
+    console.log('🔍 First application keys:', Object.keys(firstApp));
+  }
+
+  const result = applications.filter(application => {
     return filters.every(filter => {
       const fieldValue = getNestedValue(application, filter.field);
       
+      console.log(`🔍 Filter: ${filter.field} ${filter.operator} "${filter.value}"`);
+      console.log(`📄 Field value: "${fieldValue}" (type: ${typeof fieldValue})`);
+      console.log(`🔍 Operator type: ${typeof filter.operator}, value: "${filter.operator}"`);
+      
       switch (filter.operator) {
         case FilterOperator.EQUALS:
-          return fieldValue === filter.value;
+          const equalsResult = fieldValue === filter.value;
+          console.log(`✅ EQUALS result: ${equalsResult}`);
+          return equalsResult;
         
         case FilterOperator.NOT_EQUALS:
-          return fieldValue !== filter.value;
+          const notEqualsResult = fieldValue !== filter.value;
+          console.log(`✅ NOT_EQUALS result: ${notEqualsResult}`);
+          return notEqualsResult;
         
         case FilterOperator.CONTAINS:
           if (typeof fieldValue === 'string') {
-            return fieldValue.toLowerCase().includes(String(filter.value).toLowerCase());
+            const containsResult = fieldValue.toLowerCase().includes(String(filter.value).toLowerCase());
+            console.log(`✅ CONTAINS result: ${containsResult} ("${fieldValue.toLowerCase()}" includes "${String(filter.value).toLowerCase()}")`);
+            return containsResult;
           }
+          console.log(`❌ CONTAINS failed: fieldValue is not string (${typeof fieldValue})`);
           return false;
         
         case FilterOperator.NOT_CONTAINS:
           if (typeof fieldValue === 'string') {
-            return !fieldValue.toLowerCase().includes(String(filter.value).toLowerCase());
+            const notContainsResult = !fieldValue.toLowerCase().includes(String(filter.value).toLowerCase());
+            console.log(`✅ NOT_CONTAINS result: ${notContainsResult}`);
+            return notContainsResult;
           }
+          console.log(`❌ NOT_CONTAINS failed: fieldValue is not string (${typeof fieldValue})`);
           return true;
         
         case FilterOperator.GREATER_THAN:
@@ -124,10 +148,14 @@ export function applyFilters(applications: ApplicationData[], filters: FilterDto
           return fieldValue !== null && fieldValue !== undefined;
         
         default:
+          console.log(`❌ Unknown operator: ${filter.operator}`);
           return true;
       }
     });
   });
+  
+  console.log('📊 Total applications after filtering:', result.length);
+  return result;
 }
 
 export function applySorting(applications: ApplicationData[], sortCriteria: SortDto[]): ApplicationData[] {

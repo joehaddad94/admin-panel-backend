@@ -33,6 +33,7 @@ export class ApplicationController {
   @Post('new')
   @UsePipes(new ValidationPipe({ whitelist: true }))
   findApplicationsNew(@Body() filtersDto: FiltersDto) {
+    console.log('🔍 Controller received body:', JSON.stringify(filtersDto, null, 2));
     return this.mediator.findApplicationsNew(filtersDto);
   }
 

@@ -1956,6 +1956,9 @@ export class ApplicationMediator {
         sort,
       } = filtersDto;
 
+      console.log('🔍 Received filtersDto:', JSON.stringify(filtersDto, null, 2));
+      console.log('🔍 Filters array:', JSON.stringify(filters, null, 2));
+
       const currentPage = dtoPage ?? page;
       const currentPageSize = dtoPageSize ?? pageSize;
       let latestCycle;
