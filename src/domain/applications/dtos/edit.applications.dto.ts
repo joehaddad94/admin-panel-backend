@@ -112,3 +112,28 @@ export class EditFCSApplicationsDto {
   @IsString({ message: 'Status must be a string' })
   applicationStatus?: string;
 }
+
+export class RowEditApplicationDto {
+  @ApiProperty()
+  @IsNotEmpty({ message: 'ID must be provided' })
+  ids: number[];
+
+  @ApiProperty({ required: false })
+  @IsOptional()
+  isEligible?: boolean;
+
+  @ApiProperty({ required: false })
+  @IsOptional()
+  paid?: boolean;
+
+  @ApiProperty({ required: false })
+  @IsOptional()
+  @IsNumber({}, { message: 'Cycle Id must be a number' })
+  inputCycleId: number;
+
+  @ApiProperty({ required: false })
+  @IsOptional()
+  @IsString({ message: 'Status must be a string' })
+  applicationStatus?: string;
+}
+

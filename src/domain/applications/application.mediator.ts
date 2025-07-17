@@ -14,6 +14,7 @@ import {
   EditApplicationDto,
   EditApplicationsDto,
   EditFCSApplicationsDto,
+  RowEditApplicationDto,
 } from './dtos/edit.applications.dto';
 import { convertToCamelCase } from 'src/core/helpers/camelCase';
 import { validateThresholdEntity } from 'src/core/helpers/validateThresholds';
@@ -847,6 +848,97 @@ export class ApplicationMediator {
           paid: paid,
           eligible: isEligible,
           sectionId: sectionId,
+          cycleId: inputCycleId,
+          applicationStatus: applicationStatus,
+        },
+      };
+    });
+  };
+
+  rowEditApplication = async (data: RowEditApplicationDto) => {
+    return catcher(async () => {
+      const { ids, isEligible, paid, inputCycleId, applicationStatus } = data;
+      const idsArray = Array.isArray(ids) ? ids : [ids];
+      
+      if (idsArray.length > 1) {
+        const updateData: any = {};
+        if (isEligible !== undefined) {
+          updateData.is_eligible = isEligible;
+        }
+        if (paid !== undefined) {
+          updateData.paid = paid;
+        }
+        if (applicationStatus !== undefined) {
+          updateData.status = applicationStatus;
+        }
+
+        if (
+          isEligible !== undefined ||
+          paid !== undefined ||
+          applicationStatus !== undefined
+        ) {
+          await Application.update({ id: In(idsArray) }, updateData);
+        }
+        
+        if (inputCycleId !== undefined) {
+          await ApplicationCycle.update(
+            { applicationId: In(idsArray) },
+            { cycleId: inputCycleId },
+          );
+        }
+
+        const updatedApplications = await this.applicationsService.findMany(
+          { id: In(idsArray) },
+          ['applicationSection', 'applicationCycle'],
+        );
+
+        const updatedPayload = updatedApplications.map((app) => ({
+          id: app.id,
+          paid: app.paid,
+          eligible: app.is_eligible,
+          sectionName: app.applicationSection?.section?.name || null,
+          cycleId: app.applicationCycle?.[0]?.cycleId || null,
+          applicationStatus: app.status,
+        }));
+  
+        return {
+          message: 'Applications updated successfully',
+          updatedPayload,
+        };
+      }
+      
+      const application = await this.applicationsService.findOne(
+        { id: idsArray[0] },
+        ['applicationSection'],
+      );
+      throwNotFound({ entity: 'application', errorCheck: !application });
+
+      const updateData: any = {};
+      if (isEligible !== undefined) {
+        updateData.is_eligible = isEligible;
+      }
+      if (paid !== undefined) {
+        updateData.paid = paid;
+      }
+      if (applicationStatus !== undefined) {
+        updateData.status = applicationStatus;
+      }
+
+      await this.applicationsService.update({ id: idsArray[0] }, updateData);
+
+      if (inputCycleId !== undefined) {
+        await ApplicationCycle.update(
+          { applicationId: idsArray[0] },
+          { cycleId: inputCycleId },
+        );
+      }
+
+      return {
+        message: 'Application updated successfully',
+        updatedPayload: {
+          id: idsArray[0],
+          paid: paid,
+          eligible: isEligible,
           cycleId: inputCycleId,
           applicationStatus: applicationStatus,
         },
