@@ -116,87 +116,93 @@ export class ApplicationMediator {
         errorCheck: !applications,
       });
 
-      let mappedApplications: ApplicationData[] = applications.map((app) => ({
-        id: app.id,
-        sefId: app.applicationUser[0].user.sef_id,
-        username: app.applicationUser[0].user.username,
-        email: app.applicationUser[0].user.email,
-        firstName: app.applicationInfo[0].info.first_name,
-        lastName: app.applicationInfo[0].info.last_name,
-        fullName: `${app.applicationInfo[0].info.first_name} ${app.applicationInfo[0].info.last_name}`,
-        dob: app.applicationInfo[0].info.dob,
-        countryOrigin: app.applicationInfo[0].info.country_origin,
-        countryResidence: app.applicationInfo[0].info.country_residence,
-        residencyStatus: app.applicationInfo[0].info.residency_status,
-        educationStatus: app.applicationInfo[0].info.status,
-        programName: app.applicationProgram[0].program.program_name,
-        program: app.applicationProgram[0].program.abbreviation,
-        passedScreening:
-          app.passed_screening === true
-            ? 'Yes'
-            : app.passed_screening === false
-            ? 'No'
-            : '-',
-        screeningEmailSent:
-          app.screening_email_sent === true
-            ? 'Yes'
-            : app.screening_email_sent === false
-            ? 'No'
-            : '-',
-        applicationDate: new Date(app.created_at),
-        eligible:
-          app.applicationProgram[0].program.abbreviation === 'FCS'
-            ? app.is_eligible
-            : app.is_eligible === true
-            ? 'Yes'
-            : app.is_eligible === false
-            ? 'No'
-            : '-',
-        passedScreeningDate: new Date(app.passed_screening_date),
-        examScore: app.exam_score,
-        passedExam:
-          app.passed_exam === true
-            ? 'Yes'
-            : app.passed_exam === false
-            ? 'No'
-            : '-',
-        passedExamDate: new Date(app.passed_exam_date),
-        passedExamEmailSent:
-          app.passed_exam_email_sent === true
-            ? 'Yes'
-            : app.passed_exam_email_sent === false
-            ? 'No'
-            : '-',
-        techInterviewScore: app.tech_interview_score,
-        softInterviewScore: app.soft_interview_score,
-        passedInterviewDate: new Date(app.passed_interview_date),
-        passedInterview:
-          app.passed_interview === true
-            ? 'Yes'
-            : app.passed_interview === false
-            ? 'No'
-            : '-',
-        applicationStatus: app.status,
-        statusEmailSent:
-          app.status_email_sent === true
-            ? 'Yes'
-            : app.status_email_sent === false
-            ? 'No'
-            : '-',
-        remarks: app.remarks,
-        cycleId: app.applicationCycle[0]?.cycleId,
-        cycleName: app.applicationCycle[0]?.cycle?.name,
-        paid: app.paid,
-        sectionName: app.applicationSection?.section?.name,
-        userId: app.applicationUser[0].user_id,
-        infoId: app.applicationInfo[0].info_id,
-        fcsGraduate:
-          app.fcs_graduate === true
-            ? 'Yes'
-            : app.fcs_graduate === false
-            ? 'No'
-            : '-',
-      }));
+      let mappedApplications: ApplicationData[] = applications.map((app) => {
+        const applicationInfo = app.applicationInfo?.[0]?.info;
+        const applicationUser = app.applicationUser?.[0]?.user;
+        const applicationProgram = app.applicationProgram?.[0]?.program;
+        
+        return {
+          id: app.id,
+          sefId: applicationUser?.sef_id,
+          username: applicationUser?.username,
+          email: applicationUser?.email,
+          firstName: applicationInfo?.first_name,
+          lastName: applicationInfo?.last_name,
+          fullName: applicationInfo ? `${applicationInfo.first_name || ''} ${applicationInfo.last_name || ''}`.trim() : '',
+          dob: applicationInfo?.dob,
+          countryOrigin: applicationInfo?.country_origin,
+          countryResidence: applicationInfo?.country_residence,
+          residencyStatus: applicationInfo?.residency_status,
+          educationStatus: applicationInfo?.status,
+          programName: applicationProgram?.program_name,
+          program: applicationProgram?.abbreviation,
+          passedScreening:
+            app.passed_screening === true
+              ? 'Yes'
+              : app.passed_screening === false
+              ? 'No'
+              : '-',
+          screeningEmailSent:
+            app.screening_email_sent === true
+              ? 'Yes'
+              : app.screening_email_sent === false
+              ? 'No'
+              : '-',
+          applicationDate: new Date(app.created_at),
+          eligible:
+            applicationProgram?.abbreviation === 'FCS'
+              ? app.is_eligible
+              : app.is_eligible === true
+              ? 'Yes'
+              : app.is_eligible === false
+              ? 'No'
+              : '-',
+          passedScreeningDate: new Date(app.passed_screening_date),
+          examScore: app.exam_score,
+          passedExam:
+            app.passed_exam === true
+              ? 'Yes'
+              : app.passed_exam === false
+              ? 'No'
+              : '-',
+          passedExamDate: new Date(app.passed_exam_date),
+          passedExamEmailSent:
+            app.passed_exam_email_sent === true
+              ? 'Yes'
+              : app.passed_exam_email_sent === false
+              ? 'No'
+              : '-',
+          techInterviewScore: app.tech_interview_score,
+          softInterviewScore: app.soft_interview_score,
+          passedInterviewDate: new Date(app.passed_interview_date),
+          passedInterview:
+            app.passed_interview === true
+              ? 'Yes'
+              : app.passed_interview === false
+              ? 'No'
+              : '-',
+          applicationStatus: app.status,
+          statusEmailSent:
+            app.status_email_sent === true
+              ? 'Yes'
+              : app.status_email_sent === false
+              ? 'No'
+              : '-',
+          remarks: app.remarks,
+          cycleId: app.applicationCycle?.[0]?.cycleId,
+          cycleName: app.applicationCycle?.[0]?.cycle?.name,
+          paid: app.paid,
+          sectionName: app.applicationSection?.section?.name,
+          userId: app.applicationUser?.[0]?.user_id,
+          infoId: app.applicationInfo?.[0]?.info_id,
+          fcsGraduate:
+            app.fcs_graduate === true
+              ? 'Yes'
+              : app.fcs_graduate === false
+              ? 'No'
+              : '-',
+        };
+      });
 
       mappedApplications.sort(
         (a, b) =>
@@ -2042,87 +2048,93 @@ export class ApplicationMediator {
         errorCheck: !applications,
       });
 
-      let mappedApplications: ApplicationData[] = applications.map((app) => ({
-        id: app.id,
-        sefId: app.applicationUser[0].user.sef_id,
-        username: app.applicationUser[0].user.username,
-        email: app.applicationUser[0].user.email,
-        firstName: app.applicationInfo[0].info.first_name,
-        lastName: app.applicationInfo[0].info.last_name,
-        fullName: `${app.applicationInfo[0].info.first_name} ${app.applicationInfo[0].info.last_name}`,
-        dob: app.applicationInfo[0].info.dob,
-        countryOrigin: app.applicationInfo[0].info.country_origin,
-        countryResidence: app.applicationInfo[0].info.country_residence,
-        residencyStatus: app.applicationInfo[0].info.residency_status,
-        educationStatus: app.applicationInfo[0].info.status,
-        programName: app.applicationProgram[0].program.program_name,
-        program: app.applicationProgram[0].program.abbreviation,
-        passedScreening:
-          app.passed_screening === true
-            ? 'Yes'
-            : app.passed_screening === false
-            ? 'No'
-            : '-',
-        screeningEmailSent:
-          app.screening_email_sent === true
-            ? 'Yes'
-            : app.screening_email_sent === false
-            ? 'No'
-            : '-',
-        applicationDate: new Date(app.created_at),
-        eligible:
-          app.applicationProgram[0].program.abbreviation === 'FCS'
-            ? app.is_eligible
-            : app.is_eligible === true
-            ? 'Yes'
-            : app.is_eligible === false
-            ? 'No'
-            : '-',
-        passedScreeningDate: new Date(app.passed_screening_date),
-        examScore: app.exam_score,
-        passedExam:
-          app.passed_exam === true
-            ? 'Yes'
-            : app.passed_exam === false
-            ? 'No'
-            : '-',
-        passedExamDate: new Date(app.passed_exam_date),
-        passedExamEmailSent:
-          app.passed_exam_email_sent === true
-            ? 'Yes'
-            : app.passed_exam_email_sent === false
-            ? 'No'
-            : '-',
-        techInterviewScore: app.tech_interview_score,
-        softInterviewScore: app.soft_interview_score,
-        passedInterviewDate: new Date(app.passed_interview_date),
-        passedInterview:
-          app.passed_interview === true
-            ? 'Yes'
-            : app.passed_interview === false
-            ? 'No'
-            : '-',
-        applicationStatus: app.status,
-        statusEmailSent:
-          app.status_email_sent === true
-            ? 'Yes'
-            : app.status_email_sent === false
-            ? 'No'
-            : '-',
-        remarks: app.remarks,
-        cycleId: app.applicationCycle[0]?.cycleId,
-        cycleName: app.applicationCycle[0]?.cycle?.name,
-        paid: app.paid,
-        sectionName: app.applicationSection?.section?.name,
-        userId: app.applicationUser[0].user_id,
-        infoId: app.applicationInfo[0].info_id,
-        fcsGraduate:
-          app.fcs_graduate === true
-            ? 'Yes'
-            : app.fcs_graduate === false
-            ? 'No'
-            : '-',
-      }));
+      let mappedApplications: ApplicationData[] = applications.map((app) => {
+        const applicationInfo = app.applicationInfo?.[0]?.info;
+        const applicationUser = app.applicationUser?.[0]?.user;
+        const applicationProgram = app.applicationProgram?.[0]?.program;
+        
+        return {
+          id: app.id,
+          sefId: applicationUser?.sef_id,
+          username: applicationUser?.username,
+          email: applicationUser?.email,
+          firstName: applicationInfo?.first_name,
+          lastName: applicationInfo?.last_name,
+          fullName: applicationInfo ? `${applicationInfo.first_name || ''} ${applicationInfo.last_name || ''}`.trim() : '',
+          dob: applicationInfo?.dob,
+          countryOrigin: applicationInfo?.country_origin,
+          countryResidence: applicationInfo?.country_residence,
+          residencyStatus: applicationInfo?.residency_status,
+          educationStatus: applicationInfo?.status,
+          programName: applicationProgram?.program_name,
+          program: applicationProgram?.abbreviation,
+          passedScreening:
+            app.passed_screening === true
+              ? 'Yes'
+              : app.passed_screening === false
+              ? 'No'
+              : '-',
+          screeningEmailSent:
+            app.screening_email_sent === true
+              ? 'Yes'
+              : app.screening_email_sent === false
+              ? 'No'
+              : '-',
+          applicationDate: new Date(app.created_at),
+          eligible:
+            applicationProgram?.abbreviation === 'FCS'
+              ? app.is_eligible
+              : app.is_eligible === true
+              ? 'Yes'
+              : app.is_eligible === false
+              ? 'No'
+              : '-',
+          passedScreeningDate: new Date(app.passed_screening_date),
+          examScore: app.exam_score,
+          passedExam:
+            app.passed_exam === true
+              ? 'Yes'
+              : app.passed_exam === false
+              ? 'No'
+              : '-',
+          passedExamDate: new Date(app.passed_exam_date),
+          passedExamEmailSent:
+            app.passed_exam_email_sent === true
+              ? 'Yes'
+              : app.passed_exam_email_sent === false
+              ? 'No'
+              : '-',
+          techInterviewScore: app.tech_interview_score,
+          softInterviewScore: app.soft_interview_score,
+          passedInterviewDate: new Date(app.passed_interview_date),
+          passedInterview:
+            app.passed_interview === true
+              ? 'Yes'
+              : app.passed_interview === false
+              ? 'No'
+              : '-',
+          applicationStatus: app.status,
+          statusEmailSent:
+            app.status_email_sent === true
+              ? 'Yes'
+              : app.status_email_sent === false
+              ? 'No'
+              : '-',
+          remarks: app.remarks,
+          cycleId: app.applicationCycle?.[0]?.cycleId,
+          cycleName: app.applicationCycle?.[0]?.cycle?.name,
+          paid: app.paid,
+          sectionName: app.applicationSection?.section?.name,
+          userId: app.applicationUser?.[0]?.user_id,
+          infoId: app.applicationInfo?.[0]?.info_id,
+          fcsGraduate:
+            app.fcs_graduate === true
+              ? 'Yes'
+              : app.fcs_graduate === false
+              ? 'No'
+              : '-',
+        };
+      });
       
       console.log('🗺️ Mapped applications count:', mappedApplications.length);
 
