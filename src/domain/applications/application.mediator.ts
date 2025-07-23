@@ -855,42 +855,63 @@ export class ApplicationMediator {
     });
   };
 
-  rowEditApplication = async (data: RowEditApplicationDto) => {
+    rowEditApplications = async (data: RowEditApplicationDto) => {
     return catcher(async () => {
       const { ids, isEligible, paid, inputCycleId, applicationStatus } = data;
       const idsArray = Array.isArray(ids) ? ids : [ids];
-      
+
+      console.log('🔧 rowEditApplications - Input data:', {
+        ids: idsArray,
+        isEligible,
+        paid,
+        inputCycleId,
+        applicationStatus
+      });
+
       if (idsArray.length > 1) {
+        console.log('📝 Processing multiple applications:', idsArray.length);
+        
         const updateData: any = {};
         if (isEligible !== undefined) {
           updateData.is_eligible = isEligible;
+          console.log('✅ Adding is_eligible to update:', isEligible);
         }
         if (paid !== undefined) {
           updateData.paid = paid;
+          console.log('✅ Adding paid to update:', paid);
         }
         if (applicationStatus !== undefined) {
           updateData.status = applicationStatus;
+          console.log('✅ Adding status to update:', applicationStatus);
         }
 
+        console.log('📊 Final updateData:', updateData);
+
         if (
-          isEligible !== undefined ||
-          paid !== undefined ||
-          applicationStatus !== undefined
+          (isEligible !== undefined && isEligible !== null) ||
+          (paid !== undefined && paid !== null) ||
+          (applicationStatus !== undefined && applicationStatus !== null)
         ) {
-          await Application.update({ id: In(idsArray) }, updateData);
+          console.log('🔄 Updating applications in database...');
+          const updateResult = await Application.update({ id: In(idsArray) }, updateData);
+          console.log('📈 Application update result:', updateResult);
         }
-        
+
         if (inputCycleId !== undefined) {
-          await ApplicationCycle.update(
+          console.log('🔄 Updating application cycles...');
+          const cycleUpdateResult = await ApplicationCycle.update(
             { applicationId: In(idsArray) },
             { cycleId: inputCycleId },
           );
+          console.log('📈 Cycle update result:', cycleUpdateResult);
         }
 
+        console.log('🔍 Fetching updated applications...');
         const updatedApplications = await this.applicationsService.findMany(
           { id: In(idsArray) },
           ['applicationSection', 'applicationCycle'],
         );
+        console.log('📋 Found updated applications:', updatedApplications.length);
 
         const updatedPayload = updatedApplications.map((app) => ({
           id: app.id,
@@ -900,38 +921,64 @@ export class ApplicationMediator {
           cycleId: app.applicationCycle?.[0]?.cycleId || null,
           applicationStatus: app.status,
         }));
-  
+
+        console.log('📤 Returning payload:', updatedPayload);
+
         return {
           message: 'Applications updated successfully',
           updatedPayload,
         };
       }
       
+      console.log('📝 Processing single application:', idsArray[0]);
+      
       const application = await this.applicationsService.findOne(
         { id: idsArray[0] },
         ['applicationSection'],
       );
+      console.log('🔍 Found application:', application ? 'Yes' : 'No');
       throwNotFound({ entity: 'application', errorCheck: !application });
 
       const updateData: any = {};
-      if (isEligible !== undefined) {
+      if (isEligible !== undefined && isEligible !== null) {
         updateData.is_eligible = isEligible;
+        console.log('✅ Adding is_eligible to update:', isEligible);
       }
-      if (paid !== undefined) {
+      if (paid !== undefined && paid !== null) {
         updateData.paid = paid;
+        console.log('✅ Adding paid to update:', paid);
       }
-      if (applicationStatus !== undefined) {
+      if (applicationStatus !== undefined && applicationStatus !== null) {
         updateData.status = applicationStatus;
+        console.log('✅ Adding status to update:', applicationStatus);
       }
 
-      await this.applicationsService.update({ id: idsArray[0] }, updateData);
+      console.log('📊 Final updateData for single app:', updateData);
+
+      console.log('🔄 Updating single application in database...');
+      const updateResult = await this.applicationsService.update({ id: idsArray[0] }, updateData);
+      console.log('📈 Single application update result:', updateResult);
+      
+      // Verify the update by fetching the application again
+      console.log('🔍 Verifying update by fetching application again...');
+      const verifyApplication = await this.applicationsService.findOne({ id: idsArray[0] });
+      console.log('📋 Application after update:', {
+        id: verifyApplication.id,
+        is_eligible: verifyApplication.is_eligible,
+        paid: verifyApplication.paid,
+        status: verifyApplication.status
+      });
 
       if (inputCycleId !== undefined) {
-        await ApplicationCycle.update(
+        console.log('🔄 Updating single application cycle...');
+        const cycleUpdateResult = await ApplicationCycle.update(
           { applicationId: idsArray[0] },
           { cycleId: inputCycleId },
         );
+        console.log('📈 Single cycle update result:', cycleUpdateResult);
       }
+
+      console.log('📤 Returning single application payload');
 
       return {
         message: 'Application updated successfully',
@@ -2054,9 +2101,6 @@ export class ApplicationMediator {
         sort,
       } = filtersDto;
 
-      console.log('🔍 Received filtersDto:', JSON.stringify(filtersDto, null, 2));
-      console.log('🔍 Filters array:', JSON.stringify(filters, null, 2));
-
       const currentPage = dtoPage ?? page;
       const currentPageSize = dtoPageSize ?? pageSize;
       let latestCycle;
@@ -2096,31 +2140,14 @@ export class ApplicationMediator {
 
       const needsFullData = (sort && sort.length > 0) || (filters && filters.length > 0) || (search && search.trim() !== '');
       
-      console.log('🔍 Debug Info:', {
-        programId,
-        cycleId,
-        currentPage,
-        currentPageSize,
-        search,
-        filters: filters?.length || 0,
-        sort: sort?.length || 0,
-        needsFullData,
-        whereConditions
-      });
-      
       let applications, total;
       
       if (needsFullData) {
-        console.log('📊 Fetching ALL data (no pagination)');
         [applications, total] = await this.applicationsService.findAndCount(
           whereConditions,
           options,
         );
       } else {
-        console.log('📄 Fetching paginated data:', {
-          skip: (currentPage - 1) * currentPageSize,
-          take: currentPageSize
-        });
         [applications, total] = await this.applicationsService.findAndCount(
           whereConditions,
           options,
@@ -2129,11 +2156,6 @@ export class ApplicationMediator {
           currentPageSize,
         );
       }
-      
-      console.log('📈 Database results:', {
-        applicationsCount: applications?.length || 0,
-        totalFromDB: total
-      });
 
       throwNotFound({
         entity: 'applications',
@@ -2227,11 +2249,8 @@ export class ApplicationMediator {
               : '-',
         };
       });
-      
-      console.log('🗺️ Mapped applications count:', mappedApplications.length);
 
       if (search && search.trim()) {
-        console.log('🔍 Applying search filter with term:', search.trim());
         const searchTerm = search.toLowerCase().trim();
         mappedApplications = mappedApplications.filter((app) => {
           return (
@@ -2242,20 +2261,15 @@ export class ApplicationMediator {
             app.applicationStatus?.toLowerCase().includes(searchTerm)
           );
         });
-        console.log('🔍 After search filter:', mappedApplications.length);
       }
 
       if (filters && filters.length > 0) {
-        console.log('🎯 Applying filters:', filters.length);
         mappedApplications = applyFilters(mappedApplications, filters);
-        console.log('🎯 After filters:', mappedApplications.length);
       }
 
       if (sort && sort.length > 0) {
-        console.log('📊 Applying sorting:', sort);
         mappedApplications = applySorting(mappedApplications, sort);
       } else {
-        console.log('📊 Applying default sorting by application date');
         // Default sorting by application date if no sort criteria provided
         mappedApplications.sort(
           (a, b) =>
@@ -2273,23 +2287,10 @@ export class ApplicationMediator {
         const endIndex = startIndex + currentPageSize;
         finalApplications = mappedApplications.slice(startIndex, endIndex);
         finalTotal = mappedApplications.length;
-        
-        console.log('📄 Pagination details (full data):', {
-          startIndex,
-          endIndex,
-          totalMapped: mappedApplications.length,
-          paginatedCount: finalApplications.length,
-          needsFullData
-        });
       } else {
         // No pagination needed - we already have the correct page
         finalApplications = mappedApplications;
         finalTotal = total;
-        
-        console.log('📄 No pagination needed (already paginated from DB):', {
-          totalMapped: mappedApplications.length,
-          needsFullData
-        });
       }
 
       return {

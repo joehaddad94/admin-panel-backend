@@ -14,6 +14,7 @@ import {
   EditApplicationDto,
   EditApplicationsDto,
   EditFCSApplicationsDto,
+  RowEditApplicationDto,
 } from './dtos/edit.applications.dto';
 import { InterviewScoresDto } from './dtos/interview.scores.dto';
 import { ApplyToFSEDto } from './dtos/apply.fse.dto';
@@ -47,6 +48,12 @@ export class ApplicationController {
   @UsePipes(new ValidationPipe({ whitelist: true }))
   editApplication(@Body() data: EditApplicationDto) {
     return this.mediator.editApplication(data);
+  }
+
+  @Post('row-edit-applications')
+  @UsePipes(new ValidationPipe({ whitelist: true }))
+  rowEditApplication(@Body() data: RowEditApplicationDto) {
+    return this.mediator.rowEditApplications(data);
   }
 
   @Post('edit-fcs-applications')
