@@ -23,6 +23,7 @@ import { formatReadableDate } from 'src/core/helpers/formatDate';
 import {
   calculatePassedExam,
   calculatePassedInterview,
+  calculatePassedInterviewOptimized,
 } from 'src/core/helpers/calculatePassingGrades';
 import { In } from 'typeorm';
 import { InterviewScoresDto } from './dtos/interview.scores.dto';
@@ -44,6 +45,9 @@ import { applyFilters, applySorting, ApplicationData } from '../../core/helpers/
 
 @Injectable()
 export class ApplicationMediator {
+  private cycleCache = new Map<string, { data: any; timestamp: number }>();
+  private readonly CACHE_DURATION = 60000; // 1 minute in milliseconds
+
   constructor(
     private readonly applicationsService: ApplicationService,
     private readonly cyclesService: CycleService,
@@ -53,6 +57,22 @@ export class ApplicationMediator {
     private readonly sectionsService: SectionService,
     private readonly statisticsMediator: StatisticsMediator,
   ) {}
+
+  private getCachedCycleData(cycleId: number): any | null {
+    const cacheKey = `cycle_${cycleId}`;
+    const cached = this.cycleCache.get(cacheKey);
+    
+    if (cached && (Date.now() - cached.timestamp) < this.CACHE_DURATION) {
+      return cached.data;
+    }
+    
+    return null;
+  }
+
+  private setCachedCycleData(cycleId: number, data: any): void {
+    const cacheKey = `cycle_${cycleId}`;
+    this.cycleCache.set(cacheKey, { data, timestamp: Date.now() });
+  }
 
   findApplications = async (
     filtersDto: FiltersDto,
@@ -855,20 +875,62 @@ export class ApplicationMediator {
     });
   };
 
-    rowEditApplications = async (data: RowEditApplicationsDto) => {
+  rowEditApplications = async (data: RowEditApplicationsDto) => {
     return catcher(async () => {
-      const { ids, isEligible, examScore, paid, inputCycleId, applicationStatus, cycleId } = data;
+      const { ids, isEligible, examScore, techInterviewScore, softInterviewScore, paid, inputCycleId, applicationStatus, cycleId } = data;
       const idsArray = Array.isArray(ids) ? ids : [ids];
 
       const updateData: any = {};
       let passedExam: boolean | undefined;
       let passedExamDate: Date | undefined;
+      let passedInterview: boolean | undefined;
+      let passedInterviewDate: Date | undefined;
+      let thresholdCycle: any = null;
+
+      const needsCycleData = (examScore !== undefined && examScore !== null) || 
+                           (techInterviewScore !== undefined && techInterviewScore !== null) ||
+                           (softInterviewScore !== undefined && softInterviewScore !== null);
       
       const hasApplicationUpdates = 
         (isEligible !== undefined && isEligible !== null) ||
         (paid !== undefined && paid !== null) ||
         (examScore !== undefined && examScore !== null) ||
+        (techInterviewScore !== undefined && techInterviewScore !== null) ||
+        (softInterviewScore !== undefined && softInterviewScore !== null) ||
         (applicationStatus !== undefined && applicationStatus !== null);
+
+      // Fetch cycle data once if needed
+      if (needsCycleData) {
+        if (!cycleId) {
+          throwError('Cycle ID is required when updating scores', HttpStatus.BAD_REQUEST);
+        }
+
+        // Try to get cached cycle data first
+        let cycle = this.getCachedCycleData(cycleId);
+        
+        if (!cycle) {
+          // Cache miss - fetch from database
+          const options: GlobalEntities[] = ['thresholdCycle'];
+          cycle = await this.cyclesService.findOne({ id: cycleId }, options);
+
+          if (!cycle) {
+            throwError('Cycle is not found', HttpStatus.BAD_REQUEST);
+          }
+
+          // Cache the cycle data for 1 minute
+          this.setCachedCycleData(cycleId, cycle);
+        }
+
+        thresholdCycle = cycle.thresholdCycle;
+        if (!thresholdCycle || !thresholdCycle.threshold) {
+          throwError(
+            'Please provide thresholds for this cycle',
+            HttpStatus.BAD_REQUEST,
+          );
+        } else {
+          validateThresholdEntity(thresholdCycle.threshold);
+        }
+      }
 
       if (isEligible !== undefined && isEligible !== null) {
         updateData.is_eligible = isEligible;
@@ -881,27 +943,6 @@ export class ApplicationMediator {
       }
 
       if (examScore !== undefined && examScore !== null) {
-        if (!cycleId) {
-          throwError('Cycle ID is required when updating exam score', HttpStatus.BAD_REQUEST);
-        }
-
-        const options: GlobalEntities[] = ['thresholdCycle'];
-        const cycle = await this.cyclesService.findOne({ id: cycleId }, options);
-
-        if (!cycle) {
-          throwError('Cycle is not found', HttpStatus.BAD_REQUEST);
-        }
-
-        const { thresholdCycle } = cycle;
-        if (!thresholdCycle || !thresholdCycle.threshold) {
-          throwError(
-            'Please provide thresholds for this cycle',
-            HttpStatus.BAD_REQUEST,
-          );
-        } else {
-          validateThresholdEntity(thresholdCycle.threshold);
-        }
-
         const result = calculatePassedExam(
           examScore,
           thresholdCycle.threshold.exam_passing_grade,
@@ -911,6 +952,39 @@ export class ApplicationMediator {
         updateData.exam_score = examScore;
         updateData.passed_exam = passedExam;
         updateData.passed_exam_date = new Date();
+      }
+
+      // Handle interview scores - can handle single scores by fetching missing score from DB
+      if ((techInterviewScore !== undefined && techInterviewScore !== null) || 
+          (softInterviewScore !== undefined && softInterviewScore !== null)) {
+        
+        // Update individual scores first
+        if (techInterviewScore !== undefined && techInterviewScore !== null) {
+          updateData.tech_interview_score = techInterviewScore;
+        }
+        if (softInterviewScore !== undefined && softInterviewScore !== null) {
+          updateData.soft_interview_score = softInterviewScore;
+        }
+
+        // Calculate passed interview using optimized function that fetches missing score from DB
+        for (const applicationId of idsArray) {
+          const result = await calculatePassedInterviewOptimized(
+            applicationId,
+            techInterviewScore,
+            softInterviewScore,
+            {
+              weightTech: thresholdCycle.threshold.weight_tech,
+              weightSoft: thresholdCycle.threshold.weight_soft,
+              primaryPassingGrade: thresholdCycle.threshold.primary_passing_grade,
+              secondaryPassingGrade: thresholdCycle.threshold.secondary_passing_grade,
+            }
+          );
+
+          passedInterview = result.passedInterview;
+          passedInterviewDate = result.passedInterviewDate;
+          updateData.passed_interview = passedInterview;
+          updateData.passed_interview_date = new Date();
+        }
       }
 
       if (hasApplicationUpdates) {
@@ -931,6 +1005,10 @@ export class ApplicationMediator {
           examScore: examScore !== undefined && examScore !== null ? examScore : undefined,
           passedExam: passedExam !== undefined && passedExam !== null ? passedExam === true ? 'Yes' : 'No' : undefined,
           passedExamDate: passedExamDate !== undefined && passedExamDate !== null ? passedExamDate : undefined,
+          techInterviewScore: techInterviewScore !== undefined && techInterviewScore !== null ? techInterviewScore : undefined,
+          softInterviewScore: softInterviewScore !== undefined && softInterviewScore !== null ? softInterviewScore : undefined,
+          passedInterview: passedInterview !== undefined && passedInterview !== null ? passedInterview === true ? 'Yes' : 'No' : undefined,
+          passedInterviewDate: passedInterviewDate !== undefined && passedInterviewDate !== null ? passedInterviewDate : undefined,
           cycleId: inputCycleId,
           applicationStatus: applicationStatus !== undefined && applicationStatus !== null ? applicationStatus : undefined,
         }));

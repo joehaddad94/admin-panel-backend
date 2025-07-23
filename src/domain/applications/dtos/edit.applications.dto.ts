@@ -131,6 +131,20 @@ export class RowEditApplicationsDto {
 
   @ApiProperty({ required: false })
   @IsOptional()
+  @IsNumber({}, { message: 'Technical interview score must be a number' })
+  @Min(0, { message: 'Technical interview score must be at least 0' })
+  @Max(100, { message: 'Technical interview score must be at most 100' })
+  techInterviewScore?: number;
+
+  @ApiProperty({ required: false })
+  @IsOptional()
+  @IsNumber({}, { message: 'Soft interview score must be a number' })
+  @Min(0, { message: 'Soft interview score must be at least 0' })
+  @Max(100, { message: 'Soft interview score must be at most 100' })
+  softInterviewScore?: number;
+
+  @ApiProperty({ required: false })
+  @IsOptional()
   paid?: boolean;
 
   @ApiProperty({ required: false })
