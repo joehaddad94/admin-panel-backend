@@ -14,7 +14,7 @@ import {
   EditApplicationDto,
   EditApplicationsDto,
   EditFCSApplicationsDto,
-  RowEditApplicationDto,
+  RowEditApplicationsDto,
 } from './dtos/edit.applications.dto';
 import { InterviewScoresDto } from './dtos/interview.scores.dto';
 import { ApplyToFSEDto } from './dtos/apply.fse.dto';
@@ -34,7 +34,6 @@ export class ApplicationController {
   @Post('new')
   @UsePipes(new ValidationPipe({ whitelist: true }))
   findApplicationsNew(@Body() filtersDto: FiltersDto) {
-    console.log('🔍 Controller received body:', JSON.stringify(filtersDto, null, 2));
     return this.mediator.findApplicationsNew(filtersDto);
   }
 
@@ -52,7 +51,7 @@ export class ApplicationController {
 
   @Post('row-edit-applications')
   @UsePipes(new ValidationPipe({ whitelist: true }))
-  rowEditApplication(@Body() data: RowEditApplicationDto) {
+  rowEditApplication(@Body() data: RowEditApplicationsDto) {
     return this.mediator.rowEditApplications(data);
   }
 

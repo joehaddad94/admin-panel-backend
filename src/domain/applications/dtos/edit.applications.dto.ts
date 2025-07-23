@@ -113,7 +113,7 @@ export class EditFCSApplicationsDto {
   applicationStatus?: string;
 }
 
-export class RowEditApplicationDto {
+export class RowEditApplicationsDto {
   @ApiProperty()
   @IsNotEmpty({ message: 'ID must be provided' })
   ids: number[];
@@ -121,6 +121,13 @@ export class RowEditApplicationDto {
   @ApiProperty({ required: false })
   @IsOptional()
   isEligible?: boolean;
+
+  @ApiProperty({ required: false })
+  @IsOptional()
+  @IsNumber({}, { message: 'Exam score must be a number' })
+  @Min(0, { message: 'Exam score must be at least 0' })
+  @Max(100, { message: 'Exam score must be at most 100' })
+  examScore?: number;
 
   @ApiProperty({ required: false })
   @IsOptional()
@@ -135,5 +142,10 @@ export class RowEditApplicationDto {
   @IsOptional()
   @IsString({ message: 'Status must be a string' })
   applicationStatus?: string;
+
+  @ApiProperty()
+  @IsNotEmpty({ message: 'Cycle Id must be provided' })
+  @IsNumber({}, { message: 'Cycle Id must be a number' })
+  cycleId: number;
 }
 

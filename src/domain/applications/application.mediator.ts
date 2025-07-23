@@ -14,7 +14,7 @@ import {
   EditApplicationDto,
   EditApplicationsDto,
   EditFCSApplicationsDto,
-  RowEditApplicationDto,
+  RowEditApplicationsDto,
 } from './dtos/edit.applications.dto';
 import { convertToCamelCase } from 'src/core/helpers/camelCase';
 import { validateThresholdEntity } from 'src/core/helpers/validateThresholds';
@@ -855,140 +855,89 @@ export class ApplicationMediator {
     });
   };
 
-    rowEditApplications = async (data: RowEditApplicationDto) => {
+    rowEditApplications = async (data: RowEditApplicationsDto) => {
     return catcher(async () => {
-      const { ids, isEligible, paid, inputCycleId, applicationStatus } = data;
+      const { ids, isEligible, examScore, paid, inputCycleId, applicationStatus, cycleId } = data;
       const idsArray = Array.isArray(ids) ? ids : [ids];
 
-      console.log('🔧 rowEditApplications - Input data:', {
-        ids: idsArray,
-        isEligible,
-        paid,
-        inputCycleId,
-        applicationStatus
-      });
-
-      if (idsArray.length > 1) {
-        console.log('📝 Processing multiple applications:', idsArray.length);
-        
-        const updateData: any = {};
-        if (isEligible !== undefined) {
-          updateData.is_eligible = isEligible;
-          console.log('✅ Adding is_eligible to update:', isEligible);
-        }
-        if (paid !== undefined) {
-          updateData.paid = paid;
-          console.log('✅ Adding paid to update:', paid);
-        }
-        if (applicationStatus !== undefined) {
-          updateData.status = applicationStatus;
-          console.log('✅ Adding status to update:', applicationStatus);
-        }
-
-        console.log('📊 Final updateData:', updateData);
-
-        if (
-          (isEligible !== undefined && isEligible !== null) ||
-          (paid !== undefined && paid !== null) ||
-          (applicationStatus !== undefined && applicationStatus !== null)
-        ) {
-          console.log('🔄 Updating applications in database...');
-          const updateResult = await Application.update({ id: In(idsArray) }, updateData);
-          console.log('📈 Application update result:', updateResult);
-        }
-
-        if (inputCycleId !== undefined) {
-          console.log('🔄 Updating application cycles...');
-          const cycleUpdateResult = await ApplicationCycle.update(
-            { applicationId: In(idsArray) },
-            { cycleId: inputCycleId },
-          );
-          console.log('📈 Cycle update result:', cycleUpdateResult);
-        }
-
-        console.log('🔍 Fetching updated applications...');
-        const updatedApplications = await this.applicationsService.findMany(
-          { id: In(idsArray) },
-          ['applicationSection', 'applicationCycle'],
-        );
-        console.log('📋 Found updated applications:', updatedApplications.length);
-
-        const updatedPayload = updatedApplications.map((app) => ({
-          id: app.id,
-          paid: app.paid,
-          eligible: app.is_eligible,
-          sectionName: app.applicationSection?.section?.name || null,
-          cycleId: app.applicationCycle?.[0]?.cycleId || null,
-          applicationStatus: app.status,
-        }));
-
-        console.log('📤 Returning payload:', updatedPayload);
-
-        return {
-          message: 'Applications updated successfully',
-          updatedPayload,
-        };
-      }
-      
-      console.log('📝 Processing single application:', idsArray[0]);
-      
-      const application = await this.applicationsService.findOne(
-        { id: idsArray[0] },
-        ['applicationSection'],
-      );
-      console.log('🔍 Found application:', application ? 'Yes' : 'No');
-      throwNotFound({ entity: 'application', errorCheck: !application });
-
       const updateData: any = {};
+      let passedExam: boolean | undefined;
+      let passedExamDate: Date | undefined;
+      
+      const hasApplicationUpdates = 
+        (isEligible !== undefined && isEligible !== null) ||
+        (paid !== undefined && paid !== null) ||
+        (examScore !== undefined && examScore !== null) ||
+        (applicationStatus !== undefined && applicationStatus !== null);
+
       if (isEligible !== undefined && isEligible !== null) {
         updateData.is_eligible = isEligible;
-        console.log('✅ Adding is_eligible to update:', isEligible);
       }
       if (paid !== undefined && paid !== null) {
         updateData.paid = paid;
-        console.log('✅ Adding paid to update:', paid);
       }
       if (applicationStatus !== undefined && applicationStatus !== null) {
         updateData.status = applicationStatus;
-        console.log('✅ Adding status to update:', applicationStatus);
       }
 
-      console.log('📊 Final updateData for single app:', updateData);
+      if (examScore !== undefined && examScore !== null) {
+        if (!cycleId) {
+          throwError('Cycle ID is required when updating exam score', HttpStatus.BAD_REQUEST);
+        }
 
-      console.log('🔄 Updating single application in database...');
-      const updateResult = await this.applicationsService.update({ id: idsArray[0] }, updateData);
-      console.log('📈 Single application update result:', updateResult);
-      
-      // Verify the update by fetching the application again
-      console.log('🔍 Verifying update by fetching application again...');
-      const verifyApplication = await this.applicationsService.findOne({ id: idsArray[0] });
-      console.log('📋 Application after update:', {
-        id: verifyApplication.id,
-        is_eligible: verifyApplication.is_eligible,
-        paid: verifyApplication.paid,
-        status: verifyApplication.status
-      });
+        const options: GlobalEntities[] = ['thresholdCycle'];
+        const cycle = await this.cyclesService.findOne({ id: cycleId }, options);
+
+        if (!cycle) {
+          throwError('Cycle is not found', HttpStatus.BAD_REQUEST);
+        }
+
+        const { thresholdCycle } = cycle;
+        if (!thresholdCycle || !thresholdCycle.threshold) {
+          throwError(
+            'Please provide thresholds for this cycle',
+            HttpStatus.BAD_REQUEST,
+          );
+        } else {
+          validateThresholdEntity(thresholdCycle.threshold);
+        }
+
+        const result = calculatePassedExam(
+          examScore,
+          thresholdCycle.threshold.exam_passing_grade,
+        );
+        passedExam = result.passedExam;
+        passedExamDate = result.passedExamDate;
+        updateData.exam_score = examScore;
+        updateData.passed_exam = passedExam;
+        updateData.passed_exam_date = new Date();
+      }
+
+      if (hasApplicationUpdates) {
+        await Application.update({ id: In(idsArray) }, updateData);
+      }
 
       if (inputCycleId !== undefined) {
-        console.log('🔄 Updating single application cycle...');
-        const cycleUpdateResult = await ApplicationCycle.update(
-          { applicationId: idsArray[0] },
+        await ApplicationCycle.update(
+          { applicationId: In(idsArray) },
           { cycleId: inputCycleId },
         );
-        console.log('📈 Single cycle update result:', cycleUpdateResult);
       }
 
-      console.log('📤 Returning single application payload');
+        const updatedPayload = idsArray.map((id) => ({
+          id,
+          paid: paid !== undefined && paid !== null ? paid : undefined,
+          eligible: isEligible !== undefined && isEligible !== null ? isEligible : undefined,
+          examScore: examScore !== undefined && examScore !== null ? examScore : undefined,
+          passedExam: passedExam !== undefined && passedExam !== null ? passedExam === true ? 'Yes' : 'No' : undefined,
+          passedExamDate: passedExamDate !== undefined && passedExamDate !== null ? passedExamDate : undefined,
+          cycleId: inputCycleId,
+          applicationStatus: applicationStatus !== undefined && applicationStatus !== null ? applicationStatus : undefined,
+        }));
 
       return {
-        message: 'Application updated successfully',
-        updatedPayload: {
-          id: idsArray[0],
-          paid: paid,
-          eligible: isEligible,
-          cycleId: inputCycleId,
-          applicationStatus: applicationStatus,
-        },
+        message: idsArray.length > 1 ? 'Applications updated successfully' : 'Application updated successfully',
+        updatedPayload,
       };
     });
   };
