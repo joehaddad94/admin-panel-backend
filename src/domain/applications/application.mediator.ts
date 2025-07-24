@@ -984,6 +984,7 @@ export class ApplicationMediator {
           passedInterviewDate = result.passedInterviewDate;
           updateData.passed_interview = passedInterview;
           updateData.passed_interview_date = new Date();
+          passedInterview ? updateData.status = Status.ACCEPTED : updateData.status = Status.REJECTED;
         }
       }
 
@@ -1010,7 +1011,8 @@ export class ApplicationMediator {
           passedInterview: passedInterview !== undefined && passedInterview !== null ? passedInterview === true ? 'Yes' : 'No' : undefined,
           passedInterviewDate: passedInterviewDate !== undefined && passedInterviewDate !== null ? passedInterviewDate : undefined,
           cycleId: inputCycleId,
-          applicationStatus: applicationStatus !== undefined && applicationStatus !== null ? applicationStatus : undefined,
+          applicationStatus: applicationStatus !== undefined && applicationStatus !== null ? applicationStatus : 
+                           (passedInterview !== undefined && passedInterview !== null) ? (passedInterview ? Status.ACCEPTED : Status.REJECTED) : undefined,
         }));
 
       return {
