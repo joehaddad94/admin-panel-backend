@@ -81,4 +81,30 @@ export const programConfigs: Record<string, ProgramConfig> = {
       infoSessionRecordedLink: decisionDate.link_2,
     }),
   },
+  UIX: {
+    requiredFields: [
+      {
+        field: 'date_time_1',
+        message: 'Exam Date and time should be provided.',
+      },
+      {
+        field: 'link_4',
+        message: 'Exam Link should be provided.',
+      },
+    ],
+    templates: {
+      eligible: {
+        name: 'UIX/shortlisted.hbs',
+        subject: 'SE Factory Screening Process',
+      },
+      ineligible: {
+        name: 'UIX/notEligible.hbs',
+        subject: 'SE Factory Screening Process',
+      },
+    },
+    getTemplateVariables: (decisionDate) => ({
+      examDate: formatExamDate(decisionDate.date_time_1),
+      examLink: decisionDate.link_4,
+    }),
+  },
 }; 
