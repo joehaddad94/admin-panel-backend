@@ -32,6 +32,7 @@ import { Application } from 'src/core/data/database/entities/application.entity'
 import { programConfigs } from './configs/screening.email.configs';
 import { ApplicationSection } from 'src/core/data/database/relations/applications-sections.entity';
 import { statusEmailConfigs } from './configs/status.email.configs';
+import { interviewEmailConfigs } from './configs/interview.email.configs';
 import { ApplyToFSEDto } from './dtos/apply.fse.dto';
 import { ProgramService } from '../programs/program.service';
 import { ApplicationUser } from 'src/core/data/database/relations/application-user.entity';
@@ -1500,11 +1501,29 @@ export class ApplicationMediator {
     const interviewMeetLink =
       currentCycle.decisionDateCycle?.decisionDate?.link_1;
 
-    if (!interviewMeetLink) {
+    const cycleProgram = await this.programsService.findOne(
+      { cycleProgram: { cycle_id: currentCycle.id } },
+      ['cycleProgram'],
+    );
+
+    if (!cycleProgram) {
+      throwError('Program not found for this cycle', HttpStatus.BAD_REQUEST);
+    }
+
+    const programConfig = interviewEmailConfigs[cycleProgram.abbreviation];
+
+    if (!programConfig) {
       throwError(
-        'Interview meet link should be provided before sending emails.',
+        `No interview email configuration found for program: ${cycleProgram.abbreviation}`,
         HttpStatus.BAD_REQUEST,
       );
+    }
+
+    for (const requiredField of programConfig.requiredFields) {
+      const fieldValue = currentCycle.decisionDateCycle?.decisionDate?.[requiredField.field];
+      if (!fieldValue) {
+        throwError(requiredField.message, HttpStatus.BAD_REQUEST);
+      }
     }
 
     const applicationsByIds = await this.applicationsService.findMany(
@@ -1531,22 +1550,16 @@ export class ApplicationMediator {
         uniqueEmails.includes(emailObj.email) && !emailObj.passedExam,
     );
 
-    const passedTemplateName = 'FSE/passedExam.hbs';
-    const failedTemplateName = 'FSE/failedExam.hbs';
-    const passedSubject = 'SE Factory | Welcome to Stage 3';
-    const failedSubject = 'SE Factory | Full Stack Engineer';
     let passedMailerResponse;
     let failedMailerResponse;
 
-    const templateVariables = {
-      interviewMeetLink,
-    };
+    const templateVariables = programConfig.getTemplateVariables(interviewMeetLink);
 
     if (passedExamEmails.length > 0) {
       passedMailerResponse = await this.mailService.sendEmails(
         passedExamEmails.map((e) => e.email),
-        passedTemplateName,
-        passedSubject,
+        programConfig.templates.passed.name,
+        programConfig.templates.passed.subject,
         templateVariables,
       );
     }
@@ -1554,8 +1567,8 @@ export class ApplicationMediator {
     if (failedExamEmails.length > 0) {
       failedMailerResponse = await this.mailService.sendEmails(
         failedExamEmails.map((e) => e.email),
-        failedTemplateName,
-        failedSubject,
+        programConfig.templates.failed.name,
+        programConfig.templates.failed.subject,
         templateVariables,
       );
     }
