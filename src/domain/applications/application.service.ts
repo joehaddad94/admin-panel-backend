@@ -65,4 +65,14 @@ export class ApplicationService extends BaseService<
 
     return latestCycle;
   }
+
+  // Optimized batch update method for better performance
+  async batchUpdate(updates: Array<{ id: number; data: Partial<Application> }>): Promise<void> {
+    if (updates.length === 0) return;
+
+    // Use the repository's save method for batch updates
+    const entitiesToUpdate = updates.map(({ id, data }) => ({ id, ...data }));
+
+    await this.applicationRepository.save(...entitiesToUpdate);
+  }
 }

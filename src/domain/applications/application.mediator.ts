@@ -1080,7 +1080,9 @@ export class ApplicationMediator {
 
       const eligibleApplicationsToEmail = [];
       const ineligibleApplicationsToEmail = [];
+      const applicationsToUpdate = [];
 
+      // Process applications and collect updates
       for (const application of applicationsByCycle) {
         const email: string = application.applicationUser[0]?.user?.email;
         if (uniqueEmails.includes(email)) {
@@ -1088,13 +1090,11 @@ export class ApplicationMediator {
             if (!application.passed_screening) {
               application.passed_screening = true;
               application.passed_screening_date = new Date();
-              await this.applicationsService.update(
-                { id: application.id },
-                {
-                  passed_screening: true,
-                  passed_screening_date: new Date(),
-                },
-              );
+              applicationsToUpdate.push({
+                id: application.id,
+                passed_screening: true,
+                passed_screening_date: new Date(),
+              });
               eligibleApplicationsToEmail.push({
                 ...application,
                 passed_screening: 'Yes',
@@ -1110,13 +1110,11 @@ export class ApplicationMediator {
           } else {
             application.passed_screening = false;
             application.passed_screening_date = new Date();
-            await this.applicationsService.update(
-              { id: application.id },
-              {
-                passed_screening: false,
-                passed_screening_date: new Date(),
-              },
-            );
+            applicationsToUpdate.push({
+              id: application.id,
+              passed_screening: false,
+              passed_screening_date: new Date(),
+            });
             ineligibleApplicationsToEmail.push({
               ...application,
               passed_screening: 'No',
@@ -1124,6 +1122,18 @@ export class ApplicationMediator {
             });
           }
         }
+      }
+
+      // Batch update applications
+      if (applicationsToUpdate.length > 0) {
+        const batchUpdates = applicationsToUpdate.map((update) => ({
+          id: update.id,
+          data: {
+            passed_screening: update.passed_screening,
+            passed_screening_date: update.passed_screening_date,
+          },
+        }));
+        await this.applicationsService.batchUpdate(batchUpdates);
       }
 
       const eligibleEmailsToSend = eligibleApplicationsToEmail.map(
@@ -1137,25 +1147,44 @@ export class ApplicationMediator {
       let mailerResponseEligible: any;
       let mailerResponseIneligible: any;
 
+      // Send emails in parallel if both types exist
+      const emailPromises = [];
+
       if (eligibleEmailsToSend.length > 0) {
         const templateVariables =
           programConfig.getTemplateVariables(decisionDate);
 
-        mailerResponseEligible = await this.mailService.sendEmails(
-          eligibleEmailsToSend,
-          programConfig.templates.eligible.name,
-          programConfig.templates.eligible.subject,
-          templateVariables,
+        emailPromises.push(
+          this.mailService.sendEmails(
+            eligibleEmailsToSend,
+            programConfig.templates.eligible.name,
+            programConfig.templates.eligible.subject,
+            templateVariables,
+          ).then((response) => ({ type: 'eligible', response }))
         );
       }
 
       if (ineligibleEmailsToSend.length > 0) {
-        mailerResponseIneligible = await this.mailService.sendEmails(
-          ineligibleEmailsToSend,
-          programConfig.templates.ineligible.name,
-          programConfig.templates.ineligible.subject,
+        emailPromises.push(
+          this.mailService.sendEmails(
+            ineligibleEmailsToSend,
+            programConfig.templates.ineligible.name,
+            programConfig.templates.ineligible.subject,
+          ).then((response) => ({ type: 'ineligible', response }))
         );
       }
+
+      // Wait for all emails to be sent
+      const emailResults = await Promise.all(emailPromises);
+
+      // Process results
+      emailResults.forEach(({ type, response }) => {
+        if (type === 'eligible') {
+          mailerResponseEligible = response;
+        } else {
+          mailerResponseIneligible = response;
+        }
+      });
 
       const resultsEligible = mailerResponseEligible?.results || [];
       const resultsIneligible = mailerResponseIneligible?.results || [];
@@ -1167,38 +1196,36 @@ export class ApplicationMediator {
         resultsIneligible.filter((res) => !res.error).map((res) => res.email),
       );
 
+      // Batch update email sent status
+      const emailStatusUpdates = [];
+
       for (const application of eligibleApplicationsToEmail) {
         const email = application.applicationUser[0]?.user?.email;
-        if (sentEmailSetEligible.has(email)) {
-          await this.applicationsService.update(
-            { id: application.id },
-            { screening_email_sent: true },
-          );
-          application.screening_email_sent = 'Yes';
-        } else {
-          await this.applicationsService.update(
-            { id: application.id },
-            { screening_email_sent: false },
-          );
-          application.screening_email_sent = 'No';
-        }
+        const emailSent = sentEmailSetEligible.has(email);
+        emailStatusUpdates.push({
+          id: application.id,
+          screening_email_sent: emailSent,
+        });
+        application.screening_email_sent = emailSent ? 'Yes' : 'No';
       }
 
       for (const application of ineligibleApplicationsToEmail) {
         const email = application.applicationUser[0]?.user?.email;
-        if (sentEmailSetIneligible.has(email)) {
-          await this.applicationsService.update(
-            { id: application.id },
-            { screening_email_sent: true },
-          );
-          application.screening_email_sent = 'Yes';
-        } else {
-          await this.applicationsService.update(
-            { id: application.id },
-            { screening_email_sent: false },
-          );
-          application.screening_email_sent = 'No';
-        }
+        const emailSent = sentEmailSetIneligible.has(email);
+        emailStatusUpdates.push({
+          id: application.id,
+          screening_email_sent: emailSent,
+        });
+        application.screening_email_sent = emailSent ? 'Yes' : 'No';
+      }
+
+      // Batch update email sent status
+      if (emailStatusUpdates.length > 0) {
+        const batchEmailUpdates = emailStatusUpdates.map((update) => ({
+          id: update.id,
+          data: { screening_email_sent: update.screening_email_sent },
+        }));
+        await this.applicationsService.batchUpdate(batchEmailUpdates);
       }
 
       const camelCaseApplications = convertToCamelCase([
