@@ -29,7 +29,7 @@ import { In } from 'typeorm';
 import { InterviewScoresDto } from './dtos/interview.scores.dto';
 import { ApplicationCycle } from 'src/core/data/database/relations/application-cycle.entity';
 import { Application } from 'src/core/data/database/entities/application.entity';
-import { programConfigs } from './configs/interview.email.configs';
+import { programConfigs } from './configs/screening.email.configs';
 import { ApplicationSection } from 'src/core/data/database/relations/applications-sections.entity';
 import { statusEmailConfigs } from './configs/status.email.configs';
 import { ApplyToFSEDto } from './dtos/apply.fse.dto';
