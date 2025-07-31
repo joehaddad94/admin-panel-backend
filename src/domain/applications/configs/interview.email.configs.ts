@@ -76,7 +76,7 @@ export const programConfigs: Record<string, ProgramConfig> = {
       },
     },
     getTemplateVariables: (decisionDate) => ({
-      examDate: formatExamDate(decisionDate.date_time_1),
+      examDate: formatExamDate(decisionDate.date_time_1).format1,
       examLink: decisionDate.link_4,
       infoSessionRecordedLink: decisionDate.link_2,
     }),
@@ -103,7 +103,7 @@ export const programConfigs: Record<string, ProgramConfig> = {
       },
     },
     getTemplateVariables: (decisionDate) => ({
-      examDate: formatExamDate(decisionDate.date_time_1),
+      examDate: formatExamDate(decisionDate.date_time_1).format2,
       examLink: decisionDate.link_4,
     }),
   },
