@@ -40,4 +40,25 @@ export const interviewEmailConfigs: Record<string, InterviewEmailConfig> = {
       interviewMeetLink,
     }),
   },
+  'UIX': {
+    requiredFields: [
+      {
+        field: 'link_1',
+        message: 'Interview meet link should be provided before sending emails.',
+      },
+    ],
+    templates: {
+      passed: {
+        name: 'UIX/passedExam.hbs',
+        subject: 'SE Factory | Welcome to Stage 3',
+      },
+      failed: {
+        name: 'UIX/failedExam.hbs',
+        subject: 'SE Factory | Full Stack Engineer',
+      },
+    },
+    getTemplateVariables: (interviewMeetLink) => ({
+      interviewMeetLink,
+    }),
+  },
 };
