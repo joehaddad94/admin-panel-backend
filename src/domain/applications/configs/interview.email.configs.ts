@@ -55,7 +55,7 @@ export const interviewEmailConfigs: Record<string, InterviewEmailConfig> = {
       },
       failed: {
         name: 'UIX/failedExam.hbs',
-        subject: 'SE Factory | Full Stack Engineer',
+        subject: 'SE Factory | UI/UX Designer',
       },
     },
     getTemplateVariables: (interviewMeetLink, attachmentUrl, submissionUrl, interviewDateTime) => ({

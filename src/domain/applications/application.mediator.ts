@@ -1553,27 +1553,32 @@ export class ApplicationMediator {
     let passedMailerResponse;
     let failedMailerResponse;
 
-    const templateVariables = {
+    // Create separate template variables for passed and failed emails
+    const passedTemplateVariables = {
       ...programConfig.getTemplateVariables(interviewMeetLink, attachmentUrl, submissionUrl, interviewDateTime),
     };
 
-            if (passedExamEmails.length > 0) {
-          passedMailerResponse = await this.mailService.sendEmails(
-            passedExamEmails.map((e) => e.email),
-            programConfig.templates.passed.name,
-            programConfig.templates.passed.subject,
-            templateVariables,
-          );
-        }
+    const failedTemplateVariables = {
+      ...programConfig.getTemplateVariables(interviewMeetLink),
+    };
 
-        if (failedExamEmails.length > 0) {
-          failedMailerResponse = await this.mailService.sendEmails(
-            failedExamEmails.map((e) => e.email),
-            programConfig.templates.failed.name,
-            programConfig.templates.failed.subject,
-            templateVariables,
-          );
-        }
+    if (passedExamEmails.length > 0) {
+      passedMailerResponse = await this.mailService.sendEmails(
+        passedExamEmails.map((e) => e.email),
+        programConfig.templates.passed.name,
+        programConfig.templates.passed.subject,
+        passedTemplateVariables,
+      );
+    }
+
+    if (failedExamEmails.length > 0) {
+      failedMailerResponse = await this.mailService.sendEmails(
+        failedExamEmails.map((e) => e.email),
+        programConfig.templates.failed.name,
+        programConfig.templates.failed.subject,
+        failedTemplateVariables,
+      );
+    }
 
     const affectedApplications = await Promise.all(
       applicationsByIds.map(async (application) => {
