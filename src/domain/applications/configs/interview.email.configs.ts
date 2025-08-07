@@ -1,4 +1,5 @@
 import { Status } from 'src/core/data/types/applications/applications.types';
+import { formatExamDate } from 'src/core/helpers/formatDate';
 
 export interface InterviewEmailConfig {
   requiredFields: {
@@ -15,7 +16,7 @@ export interface InterviewEmailConfig {
       subject: string;
     };
   };
-  getTemplateVariables: (interviewMeetLink: string) => Record<string, any>;
+  getTemplateVariables: (interviewMeetLink: string, attachmentUrl?: string, submissionUrl?: string, interviewDateTime?: string) => Record<string, any>;
 }
 
 export const interviewEmailConfigs: Record<string, InterviewEmailConfig> = {
@@ -57,8 +58,11 @@ export const interviewEmailConfigs: Record<string, InterviewEmailConfig> = {
         subject: 'SE Factory | Full Stack Engineer',
       },
     },
-    getTemplateVariables: (interviewMeetLink) => ({
+    getTemplateVariables: (interviewMeetLink, attachmentUrl, submissionUrl, interviewDateTime) => ({
       interviewMeetLink,
+      attachmentUrl,
+      submissionUrl,
+      interviewDateTime: interviewDateTime ? formatExamDate(new Date(interviewDateTime)).format2 : undefined,
     }),
   },
 };

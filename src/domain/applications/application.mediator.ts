@@ -1483,7 +1483,7 @@ export class ApplicationMediator {
   };
 
   sendPassedExamEmails = async (data: SendingEmailsDto) => {
-    const { cycleId, emails } = data;
+    const { cycleId, emails, attachmentUrl, submissionUrl, interviewDateTime } = data;
 
     const applicationIds = emails.map((entry) => entry.ids);
     const uniqueEmails = emails.map((entry) => entry.emails);
@@ -1553,25 +1553,27 @@ export class ApplicationMediator {
     let passedMailerResponse;
     let failedMailerResponse;
 
-    const templateVariables = programConfig.getTemplateVariables(interviewMeetLink);
+    const templateVariables = {
+      ...programConfig.getTemplateVariables(interviewMeetLink, attachmentUrl, submissionUrl, interviewDateTime),
+    };
 
-    if (passedExamEmails.length > 0) {
-      passedMailerResponse = await this.mailService.sendEmails(
-        passedExamEmails.map((e) => e.email),
-        programConfig.templates.passed.name,
-        programConfig.templates.passed.subject,
-        templateVariables,
-      );
-    }
+            if (passedExamEmails.length > 0) {
+          passedMailerResponse = await this.mailService.sendEmails(
+            passedExamEmails.map((e) => e.email),
+            programConfig.templates.passed.name,
+            programConfig.templates.passed.subject,
+            templateVariables,
+          );
+        }
 
-    if (failedExamEmails.length > 0) {
-      failedMailerResponse = await this.mailService.sendEmails(
-        failedExamEmails.map((e) => e.email),
-        programConfig.templates.failed.name,
-        programConfig.templates.failed.subject,
-        templateVariables,
-      );
-    }
+        if (failedExamEmails.length > 0) {
+          failedMailerResponse = await this.mailService.sendEmails(
+            failedExamEmails.map((e) => e.email),
+            programConfig.templates.failed.name,
+            programConfig.templates.failed.subject,
+            templateVariables,
+          );
+        }
 
     const affectedApplications = await Promise.all(
       applicationsByIds.map(async (application) => {

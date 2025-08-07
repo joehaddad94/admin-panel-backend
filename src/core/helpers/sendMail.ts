@@ -13,7 +13,7 @@ export const sendBulkEmails = async (
   // Always use BCC for bulk emails to improve performance
   if (emails.length > 0) {
     try {
-      const result = await mailerService.sendMail({
+      const mailOptions: any = {
         from: '"SE Factory" <noreply@example.com>',
         to: 'selection@sefactory.io',
         cc: 'charbeld@sefactory.io, imadh@sefactory.io',
@@ -23,7 +23,11 @@ export const sendBulkEmails = async (
         context: {
           ...templateVariables,
         },
-      });
+      };
+
+
+
+      const result = await mailerService.sendMail(mailOptions);
 
       logger.log(`Bulk email sent with BCC to ${emails.length} recipients.`);
       return emails.map(({ email }) => ({ email, result }));
