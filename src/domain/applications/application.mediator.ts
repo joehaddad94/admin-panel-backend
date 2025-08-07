@@ -1725,7 +1725,7 @@ export class ApplicationMediator {
   };
 
   sendStatusEmail = async (data: SendingEmailsDto) => {
-    const { cycleId, emails } = data;
+    const { cycleId, emails, orientationInfo, submissionDateTime } = data;
 
     const cyclesWhereConditions = cycleId ? { id: cycleId } : {};
 
@@ -1801,6 +1801,8 @@ export class ApplicationMediator {
           templateVariables: programConfig.getTemplateVariables(
             decisionDate,
             application.applicationSection?.section,
+            orientationInfo,
+            submissionDateTime,
           ),
         };
       })

@@ -66,4 +66,22 @@ export class SendingEmailsDto {
   @IsOptional()
   @IsDateString({}, { message: 'Interview date time must be a valid date string' })
   interviewDateTime?: string;
+
+  @ApiProperty({
+    type: String,
+    description: 'Optional URL for orientation info',
+    required: false,
+  })
+  @IsOptional()
+  @IsString({ message: 'Orientation info must be a valid string' })
+  orientationInfo?: string;
+
+  @ApiProperty({
+    type: String,
+    description: 'Optional submission date and time (ISO 8601 format)',
+    required: false,
+  })
+  @IsOptional()
+  @IsDateString({}, { message: 'Submission date time must be a valid date string' })
+  submissionDateTime?: string;
 }

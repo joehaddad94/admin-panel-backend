@@ -1,4 +1,3 @@
-import { Status } from 'src/core/data/types/applications/applications.types';
 import { formatExamDate } from 'src/core/helpers/formatDate';
 
 export interface InterviewEmailConfig {
