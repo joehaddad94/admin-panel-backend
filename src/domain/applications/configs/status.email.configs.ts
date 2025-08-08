@@ -128,13 +128,7 @@ export const statusEmailConfigs: Record<string, StatusEmailConfig> = {
       statusConfirmationForm: decisionDate.link_3,
       orientationDate: formatReadableDate(decisionDate.date_1),
       classDebutDate: formatReadableDate(decisionDate.date_2),
-      submissionConfirmationDate: formatReadableDate(
-        new Date(
-          new Date(decisionDate.date_1).setDate(
-            new Date(decisionDate.date_1).getDate() - 3,
-          ),
-        ),
-      ),
+      submissionConfirmationDate: formatReadableDate(new Date(submissionDateTime)),
       orientationInfo,
       submissionDateTime: submissionDateTime ? formatReadableDate(new Date(submissionDateTime)) : undefined,
     }),
