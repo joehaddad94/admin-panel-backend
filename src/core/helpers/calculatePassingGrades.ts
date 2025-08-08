@@ -29,7 +29,7 @@ export const calculatePassedInterview = (
   passedInterview: boolean | null;
   applicationStatus?: Status;
   passedInterviewDate: Date | null;
-} => {
+} => {  
   if (
     techInterviewScore === undefined ||
     softInterviewScore === undefined ||

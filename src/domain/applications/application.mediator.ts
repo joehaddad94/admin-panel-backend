@@ -40,7 +40,7 @@ import { StatisticsMediator } from '../statistics/statistics.mediator';
 import { ApplicationInfo } from 'src/core/data/database/relations/application-info.entity';
 import { ApplicationProgram } from 'src/core/data/database/relations/application-program.entity';
 import { InformationService } from '../information/information.service';
-import { ImportFCSDto } from './dtos/Import.fcs.data.dto';
+import { ImportDataDto } from './dtos/Import.data.dto';
 import { SectionService } from '../sections/section.service';
 import { applyFilters, applySorting, ApplicationData } from '../../core/helpers/filter-sort.helper';
 
@@ -967,8 +967,22 @@ export class ApplicationMediator {
           updateData.soft_interview_score = softInterviewScore;
         }
 
-        // Calculate passed interview using optimized function that fetches missing score from DB
+        // Process each application individually for interview scores
         for (const applicationId of idsArray) {
+          console.log(`=== Processing application ${applicationId} ===`);
+          
+          const individualUpdateData = { ...updateData };
+          console.log('Initial individualUpdateData:', JSON.stringify(individualUpdateData, null, 2));
+
+          // Update individual scores first
+          if (techInterviewScore !== undefined && techInterviewScore !== null) {
+            individualUpdateData.tech_interview_score = techInterviewScore;
+          }
+          if (softInterviewScore !== undefined && softInterviewScore !== null) {
+            individualUpdateData.soft_interview_score = softInterviewScore;
+          }
+
+          // Calculate passed interview using optimized function that fetches missing score from DB
           const result = await calculatePassedInterviewOptimized(
             applicationId,
             techInterviewScore,
@@ -983,13 +997,22 @@ export class ApplicationMediator {
 
           passedInterview = result.passedInterview;
           passedInterviewDate = result.passedInterviewDate;
-          updateData.passed_interview = passedInterview;
-          updateData.passed_interview_date = new Date();
-          passedInterview ? updateData.status = Status.ACCEPTED : updateData.status = Status.REJECTED;
+          individualUpdateData.passed_interview = passedInterview;
+          individualUpdateData.passed_interview_date = new Date();
+          
+          // Only calculate status based on interview if applicationStatus is not provided
+          if (applicationStatus === undefined || applicationStatus === null) {
+            individualUpdateData.status = passedInterview ? Status.ACCEPTED : Status.REJECTED;
+          } else {
+            // Use the provided applicationStatus
+            individualUpdateData.status = applicationStatus;
+          }
+          
+          // Update this specific application
+          const updateResult = await Application.update({ id: applicationId }, individualUpdateData);
         }
-      }
-
-      if (hasApplicationUpdates) {
+      } else if (hasApplicationUpdates) {
+        // If no interview scores to process, update all applications with the same data
         await Application.update({ id: In(idsArray) }, updateData);
       }
 
@@ -1000,7 +1023,39 @@ export class ApplicationMediator {
         );
       }
 
-        const updatedPayload = idsArray.map((id) => ({
+      // Generate response payload based on whether interview scores were processed
+      let updatedPayload;
+
+      if ((techInterviewScore !== undefined && techInterviewScore !== null) ||
+          (softInterviewScore !== undefined && softInterviewScore !== null)) {
+        // For interview scores, each application might have different results
+        // We need to fetch the updated applications to get the actual results
+        const updatedApplications = await Application.find({ where: { id: In(idsArray) } });
+        
+        const applicationsMap = new Map(updatedApplications.map(app => [app.id, app]));
+
+        updatedPayload = idsArray.map((id) => {
+          const application = applicationsMap.get(id);
+          const payload = {
+            id,
+            paid: paid !== undefined && paid !== null ? paid : undefined,
+            eligible: isEligible !== undefined && isEligible !== null ? isEligible : undefined,
+            examScore: examScore !== undefined && examScore !== null ? examScore : undefined,
+            passedExam: passedExam !== undefined && passedExam !== null ? passedExam === true ? 'Yes' : 'No' : undefined,
+            passedExamDate: passedExamDate !== undefined && passedExamDate !== null ? passedExamDate : undefined,
+            techInterviewScore: techInterviewScore !== undefined && techInterviewScore !== null ? techInterviewScore : undefined,
+            softInterviewScore: softInterviewScore !== undefined && softInterviewScore !== null ? softInterviewScore : undefined,
+            passedInterview: application?.passed_interview !== undefined && application?.passed_interview !== null ? application.passed_interview === true ? 'Yes' : 'No' : undefined,
+            passedInterviewDate: application?.passed_interview_date !== undefined && application?.passed_interview_date !== null ? application.passed_interview_date : undefined,
+            cycleId: inputCycleId,
+            applicationStatus: applicationStatus !== undefined && applicationStatus !== null ? applicationStatus :
+                             (application?.status !== undefined && application?.status !== null) ? application.status : undefined,
+          };
+          return payload;
+        });
+      } else {
+        // For non-interview updates, all applications get the same values
+        updatedPayload = idsArray.map((id) => ({
           id,
           paid: paid !== undefined && paid !== null ? paid : undefined,
           eligible: isEligible !== undefined && isEligible !== null ? isEligible : undefined,
@@ -1012,9 +1067,9 @@ export class ApplicationMediator {
           passedInterview: passedInterview !== undefined && passedInterview !== null ? passedInterview === true ? 'Yes' : 'No' : undefined,
           passedInterviewDate: passedInterviewDate !== undefined && passedInterviewDate !== null ? passedInterviewDate : undefined,
           cycleId: inputCycleId,
-          applicationStatus: applicationStatus !== undefined && applicationStatus !== null ? applicationStatus : 
-                           (passedInterview !== undefined && passedInterview !== null) ? (passedInterview ? Status.ACCEPTED : Status.REJECTED) : undefined,
+          applicationStatus: applicationStatus !== undefined && applicationStatus !== null ? applicationStatus : undefined,
         }));
+      }
 
       return {
         message: idsArray.length > 1 ? 'Applications updated successfully' : 'Application updated successfully',
@@ -1928,7 +1983,7 @@ export class ApplicationMediator {
     });
   };
 
-  importFCSData = async (data: ImportFCSDto) => {
+  importData = async (data: ImportDataDto) => {
     return catcher(async () => {
       const { cycleId, importType, data: importData } = data;
 
