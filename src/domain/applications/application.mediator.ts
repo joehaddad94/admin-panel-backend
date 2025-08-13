@@ -2153,9 +2153,8 @@ export class ApplicationMediator {
 
           for (const entry of importData) {
             const email = String(entry.email).trim().toLowerCase();
-            const status = String(entry.status).trim().toUpperCase();
+            const status = String(entry.status).trim().toLowerCase().replace(/\b\w/g, (l) => l.toUpperCase());
 
-            // Find application by email
             const application = applications.find(
               (app) =>
                 (app.applicationInfo?.[0]?.info?.email || '')
@@ -2164,18 +2163,26 @@ export class ApplicationMediator {
             );
 
             if (application) {
-              // Update application status
-              await this.applicationsService.update(
-                { id: application.id },
-                { status },
-              );
-              updatedStatuses.push({
-                id: application.id,
-                email,
-                status,
-                firstName: application.applicationInfo[0]?.info?.first_name,
-                lastName: application.applicationInfo[0]?.info?.last_name,
-              });
+              try {
+                await this.applicationsService.update(
+                  { id: application.id },
+                  { status },
+                );
+                
+                updatedStatuses.push({
+                  id: application.id,
+                  email,
+                  status,
+                  firstName: application.applicationInfo[0]?.info?.first_name,
+                  lastName: application.applicationInfo[0]?.info?.last_name,
+                });
+              } catch (error) {
+                unmatchedStatusEntries.push({
+                  email,
+                  status,
+                  reason: `Update failed: ${error.message}`,
+                });
+              }
             } else {
               unmatchedStatusEntries.push({
                 email,
