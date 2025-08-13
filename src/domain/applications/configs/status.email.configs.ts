@@ -24,7 +24,7 @@ export interface StatusEmailConfig {
       getSubject?: (sectionName: string) => string;
     };
   };
-  getTemplateVariables: (decisionDate: any, section?: any) => Record<string, any>;
+  getTemplateVariables: (decisionDate: any, section?: any, orientationInfo?: string, submissionDateTime?: string) => Record<string, any>;
 }
 
 export const statusEmailConfigs: Record<string, StatusEmailConfig> = {
@@ -93,6 +93,44 @@ export const statusEmailConfigs: Record<string, StatusEmailConfig> = {
       sectionDays: formatSectionDays(section?.days),
       courseTimeStart: formatTime(section?.course_time_start),
       courseTimeEnd: formatTime(section?.course_time_end),
+    }),
+  },
+  UIX: {
+    requiredFields: [
+      {
+        field: 'link_3',
+        message: 'Status Confirmation Form should be provided.',
+      },
+      {
+        field: 'date_1',
+        message: 'Orientation Date should be provided.',
+      },
+      {
+        field: 'date_2',
+        message: 'Class Debut Date should be provided.',
+      },
+    ],
+    templates: {
+      [Status.ACCEPTED]: {
+        name: 'UIX/accepted.hbs',
+        subject: 'SE Factory | UIX Bootcamp Acceptance',
+      },
+      [Status.REJECTED]: {
+        name: 'UIX/rejected.hbs',
+        subject: 'SE Factory | UIX Application Status',
+      },
+      [Status.WAITING_LIST]: {
+        name: 'UIX/waitingList.hbs',
+        subject: 'SE Factory | UIX Application Status',
+      },
+    },
+    getTemplateVariables: (decisionDate, section, orientationInfo, submissionDateTime) => ({
+      statusConfirmationForm: decisionDate.link_3,
+      orientationDate: formatReadableDate(decisionDate.date_1),
+      classDebutDate: formatReadableDate(decisionDate.date_2),
+      submissionConfirmationDate: formatReadableDate(new Date(submissionDateTime)),
+      orientationInfo,
+      submissionDateTime: submissionDateTime ? formatReadableDate(new Date(submissionDateTime)) : undefined,
     }),
   },
 }; 

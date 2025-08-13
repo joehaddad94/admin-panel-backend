@@ -14,10 +14,11 @@ import {
   EditApplicationDto,
   EditApplicationsDto,
   EditFCSApplicationsDto,
+  RowEditApplicationsDto,
 } from './dtos/edit.applications.dto';
 import { InterviewScoresDto } from './dtos/interview.scores.dto';
 import { ApplyToFSEDto } from './dtos/apply.fse.dto';
-import { ImportFCSDto } from './dtos/Import.fcs.data.dto';
+import { ImportDataDto } from './dtos/Import.data.dto';
 
 @ApiTags('applications')
 @Controller('applications')
@@ -30,6 +31,12 @@ export class ApplicationController {
     return this.mediator.findApplications(filtersDto);
   }
 
+  @Post('new')
+  @UsePipes(new ValidationPipe({ whitelist: true }))
+  findApplicationsNew(@Body() filtersDto: FiltersDto) {
+    return this.mediator.findApplicationsNew(filtersDto);
+  }
+
   @Post('get-by-last-cycle')
   @UsePipes(new ValidationPipe({ whitelist: true }))
   getApplicationsByLatestCycle(@Body() filtersDto: FiltersDto) {
@@ -40,6 +47,12 @@ export class ApplicationController {
   @UsePipes(new ValidationPipe({ whitelist: true }))
   editApplication(@Body() data: EditApplicationDto) {
     return this.mediator.editApplication(data);
+  }
+
+  @Post('row-edit-applications')
+  @UsePipes(new ValidationPipe({ whitelist: true }))
+  rowEditApplication(@Body() data: RowEditApplicationsDto) {
+    return this.mediator.rowEditApplications(data);
   }
 
   @Post('edit-fcs-applications')
@@ -96,9 +109,9 @@ export class ApplicationController {
     return this.mediator.applyToFSE(data);
   }
 
-  @Post('import-fcs-data')
+  @Post('import-data')
   @UsePipes(new ValidationPipe({ whitelist: true }))
-  importFCSData(@Body() data: ImportFCSDto) {
-    return this.mediator.importFCSData(data);
+  importData(@Body() data: ImportDataDto) {
+    return this.mediator.importData(data);
   }
 }

@@ -112,3 +112,54 @@ export class EditFCSApplicationsDto {
   @IsString({ message: 'Status must be a string' })
   applicationStatus?: string;
 }
+
+export class RowEditApplicationsDto {
+  @ApiProperty()
+  @IsNotEmpty({ message: 'ID must be provided' })
+  ids: number[];
+
+  @ApiProperty({ required: false })
+  @IsOptional()
+  isEligible?: boolean;
+
+  @ApiProperty({ required: false })
+  @IsOptional()
+  @IsNumber({}, { message: 'Exam score must be a number' })
+  @Min(0, { message: 'Exam score must be at least 0' })
+  @Max(100, { message: 'Exam score must be at most 100' })
+  examScore?: number;
+
+  @ApiProperty({ required: false })
+  @IsOptional()
+  @IsNumber({}, { message: 'Technical interview score must be a number' })
+  @Min(0, { message: 'Technical interview score must be at least 0' })
+  @Max(100, { message: 'Technical interview score must be at most 100' })
+  techInterviewScore?: number;
+
+  @ApiProperty({ required: false })
+  @IsOptional()
+  @IsNumber({}, { message: 'Soft interview score must be a number' })
+  @Min(0, { message: 'Soft interview score must be at least 0' })
+  @Max(100, { message: 'Soft interview score must be at most 100' })
+  softInterviewScore?: number;
+
+  @ApiProperty({ required: false })
+  @IsOptional()
+  paid?: boolean;
+
+  @ApiProperty({ required: false })
+  @IsOptional()
+  @IsNumber({}, { message: 'Cycle Id must be a number' })
+  inputCycleId: number;
+
+  @ApiProperty({ required: false })
+  @IsOptional()
+  @IsString({ message: 'Status must be a string' })
+  applicationStatus?: string;
+
+  @ApiProperty()
+  @IsNotEmpty({ message: 'Cycle Id must be provided' })
+  @IsNumber({}, { message: 'Cycle Id must be a number' })
+  cycleId: number;
+}
+
