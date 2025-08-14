@@ -7,6 +7,7 @@ import { Admin } from '../../../core/data/database';
 describe('AdminRepository', () => {
   let repository: AdminRepository;
   let typeOrmRepository: Repository<Admin>;
+  let module: TestingModule;
 
   const mockTypeOrmRepository = {
     find: jest.fn(),
@@ -21,7 +22,7 @@ describe('AdminRepository', () => {
   };
 
   beforeEach(async () => {
-    const module: TestingModule = await Test.createTestingModule({
+    module = await Test.createTestingModule({
       providers: [
         AdminRepository,
         {
@@ -37,6 +38,13 @@ describe('AdminRepository', () => {
 
   afterEach(() => {
     jest.clearAllMocks();
+  });
+
+  afterAll(async () => {
+    jest.restoreAllMocks();
+    if (module) {
+      await module.close();
+    }
   });
 
   describe('instantiation', () => {

@@ -8,6 +8,7 @@ import { Admin } from '../../../core/data/database';
 describe('AdminService', () => {
   let service: AdminService;
   let repository: AdminRepository;
+  let module: TestingModule;
 
   const mockTypeOrmRepository = {
     find: jest.fn(),
@@ -34,7 +35,7 @@ describe('AdminService', () => {
   };
 
   beforeEach(async () => {
-    const module: TestingModule = await Test.createTestingModule({
+    module = await Test.createTestingModule({
       providers: [
         AdminService,
         {
@@ -50,6 +51,13 @@ describe('AdminService', () => {
 
   afterEach(() => {
     jest.clearAllMocks();
+  });
+
+  afterAll(async () => {
+    jest.restoreAllMocks();
+    if (module) {
+      await module.close();
+    }
   });
 
   describe('generateRandomPassword', () => {

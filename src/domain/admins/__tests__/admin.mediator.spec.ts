@@ -4,7 +4,6 @@ import { AdminService } from '../admin.service';
 import { MailService } from '../../mail/mail.service';
 import { ManualCreateDto, InviteDto } from '../dto/index';
 import { throwBadRequest } from '../../../core/settings/base/errors/errors';
-import { Admin } from '../../../core/data/database';
 
 // Mock the external dependencies
 jest.mock('../../../core/settings/base/errors/errors', () => ({
@@ -27,6 +26,7 @@ describe('AdminMediator', () => {
   let mediator: AdminMediator;
   let adminService: AdminService;
   let mailService: MailService;
+  let module: TestingModule;
 
   const mockAdminService = {
     findOne: jest.fn(),
@@ -60,7 +60,7 @@ describe('AdminMediator', () => {
   };
 
   beforeEach(async () => {
-    const module: TestingModule = await Test.createTestingModule({
+    module = await Test.createTestingModule({
       providers: [
         AdminMediator,
         {
@@ -81,6 +81,14 @@ describe('AdminMediator', () => {
 
   afterEach(() => {
     jest.clearAllMocks();
+  });
+
+  afterAll(async () => {
+    jest.restoreAllMocks();
+    jest.resetAllMocks();
+    if (module) {
+      await module.close();
+    }
   });
 
   describe('manualCreate', () => {

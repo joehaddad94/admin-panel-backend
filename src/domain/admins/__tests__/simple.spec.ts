@@ -2,6 +2,10 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { Injectable } from '@nestjs/common';
 
 describe('Simple Test', () => {
+  afterAll(() => {
+    jest.restoreAllMocks();
+  });
+
   it('should work', () => {
     expect(true).toBe(true);
   });

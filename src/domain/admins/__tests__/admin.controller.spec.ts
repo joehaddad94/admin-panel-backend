@@ -1,8 +1,6 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { AdminController } from '../admin.controller';
 import { AdminMediator } from '../admin.mediator';
-import { ManualCreateDto } from '../dto/index';
-import { ValidationPipe } from '@nestjs/common';
 
 // Mock the external dependencies
 jest.mock('../../../core/helpers/operation', () => ({
@@ -12,6 +10,7 @@ jest.mock('../../../core/helpers/operation', () => ({
 describe('AdminController', () => {
   let controller: AdminController;
   let mediator: AdminMediator;
+  let module: TestingModule;
 
   const mockAdminMediator = {
     manualCreate: jest.fn(),
@@ -39,7 +38,7 @@ describe('AdminController', () => {
   };
 
   beforeEach(async () => {
-    const module: TestingModule = await Test.createTestingModule({
+    module = await Test.createTestingModule({
       controllers: [AdminController],
       providers: [
         {
@@ -57,6 +56,13 @@ describe('AdminController', () => {
     jest.clearAllMocks();
   });
 
+  afterAll(async () => {
+    jest.restoreAllMocks();
+    if (module) {
+      await module.close();
+    }
+  });
+
   describe('createAdmin', () => {
     it('should create admin and send invitation successfully', async () => {
       mockAdminMediator.manualCreate.mockResolvedValue(mockAdminResponse);
@@ -72,15 +78,15 @@ describe('AdminController', () => {
     it('should handle validation errors', async () => {
       const invalidData = { name: '', email: 'invalid-email' };
       
-      // This test would typically be handled by the ValidationPipe
-      // We're just ensuring the method signature is correct
-      expect(controller.createAdmin).toBeDefined();
+      // Test that the method exists and can be called
+      expect(typeof controller.createAdmin).toBe('function');
+      expect(controller.createAdmin).toHaveLength(1); // Should accept one parameter
     });
 
     it('should use ValidationPipe with whitelist option', () => {
-      // Check that the endpoint is decorated with ValidationPipe
-      const createAdminMethod = controller.createAdmin;
-      expect(createAdminMethod).toBeDefined();
+      // Check that the endpoint is properly defined
+      expect(typeof controller.createAdmin).toBe('function');
+      expect(controller.createAdmin).toHaveLength(1);
     });
   });
 
@@ -154,7 +160,7 @@ describe('AdminController', () => {
     it('should delete single admin successfully', async () => {
       const mockDeleteResponse = {
         message: 'Admin(s) successfully deleted.',
-        deletedIds: ['1'],
+        deletedIds: [1],
       };
 
       mockAdminMediator.deleteAdmin.mockResolvedValue(mockDeleteResponse);
@@ -169,7 +175,7 @@ describe('AdminController', () => {
       const adminIds = ['1', '2', '3'];
       const mockDeleteResponse = {
         message: 'Admin(s) successfully deleted.',
-        deletedIds: adminIds,
+        deletedIds: [1, 2, 3],
       };
 
       mockAdminMediator.deleteAdmin.mockResolvedValue(mockDeleteResponse);
@@ -184,21 +190,20 @@ describe('AdminController', () => {
       const adminIds = ['1', '2'];
       const mockDeleteResponse = {
         message: 'Admin(s) successfully deleted.',
-        deletedIds: adminIds,
+        deletedIds: [1, 2],
       };
 
       mockAdminMediator.deleteAdmin.mockResolvedValue(mockDeleteResponse);
 
       const result = await controller.deleteAdmin(adminIds);
-
       expect(mockAdminMediator.deleteAdmin).toHaveBeenCalledWith(adminIds);
       expect(result).toEqual(mockDeleteResponse);
     });
 
     it('should use ValidationPipe with whitelist option', () => {
-      // Check that the endpoint is decorated with ValidationPipe
-      const deleteAdminMethod = controller.deleteAdmin;
-      expect(deleteAdminMethod).toBeDefined();
+      // Check that the endpoint is properly defined
+      expect(typeof controller.deleteAdmin).toBe('function');
+      expect(controller.deleteAdmin).toHaveLength(1);
     });
   });
 
@@ -206,11 +211,13 @@ describe('AdminController', () => {
     it('should have correct route prefix', () => {
       // The controller should be decorated with @Controller('admins')
       expect(controller).toBeDefined();
+      expect(controller.constructor.name).toBe('AdminController');
     });
 
     it('should have correct API tags', () => {
       // The controller should be decorated with @ApiTags('admins')
       expect(controller).toBeDefined();
+      expect(controller.constructor.name).toBe('AdminController');
     });
   });
 
