@@ -5,11 +5,15 @@ import {
   JoinColumn,
   PrimaryGeneratedColumn,
   BaseEntity,
+  Index,
 } from 'typeorm';
 import { Application } from '../entities/application.entity';
 import { Program } from '../entities/program.entity';
 
 @Entity('application_news_program_id_links')
+@Index(['applicationId']) // For joining with applications
+@Index(['programId']) // For filtering by program
+@Index(['programId', 'applicationId']) // Composite index for common queries
 export class ApplicationProgram extends BaseEntity {
   @PrimaryGeneratedColumn()
   id: number;

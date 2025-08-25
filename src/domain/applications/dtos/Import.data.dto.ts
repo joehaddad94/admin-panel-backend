@@ -29,7 +29,7 @@ class ImportDataItemDto {
     paid?: boolean;
 }
 
-export class ImportFCSDto {
+export class ImportDataDto {
     @ApiProperty()
     @IsNotEmpty()
     cycleId: number;

@@ -10,9 +10,10 @@ export const sendBulkEmails = async (
   subject: string,
   templateVariables?: Record<string, any>,
 ) => {
-  if (emails.length > 1) {
+  // Always use BCC for bulk emails to improve performance
+  if (emails.length > 0) {
     try {
-      const result = await mailerService.sendMail({
+      const mailOptions: any = {
         from: '"SE Factory" <noreply@example.com>',
         to: 'selection@sefactory.io',
         cc: 'charbeld@sefactory.io, imadh@sefactory.io',
@@ -22,7 +23,11 @@ export const sendBulkEmails = async (
         context: {
           ...templateVariables,
         },
-      });
+      };
+
+
+
+      const result = await mailerService.sendMail(mailOptions);
 
       logger.log(`Bulk email sent with BCC to ${emails.length} recipients.`);
       return emails.map(({ email }) => ({ email, result }));
@@ -32,27 +37,5 @@ export const sendBulkEmails = async (
     }
   }
 
-  const emailPromises = emails.map(async ({ email, name }) => {
-    try {
-      const result = await mailerService.sendMail({
-        from: '"SE Factory" <noreply@example.com>',
-        to: email,
-        cc: 'charbeld@sefactory.io, imadh@sefactory.io',
-        subject,
-        template,
-        context: {
-          name,
-          ...templateVariables,
-        },
-      });
-
-      logger.log(`Email sent to ${email}: ${result.messageId}`);
-      return { email, result };
-    } catch (error) {
-      logger.error(`Failed to send email to ${email}`, error.stack);
-      return { email, error: error.message };
-    }
-  });
-
-  return Promise.all(emailPromises);
+  return [];
 };

@@ -279,8 +279,6 @@ export class StatisticsService {
   }> {
     const { programId, cycleId } = params;
 
-    // Get the section distribution for accepted applications only
-    // Use a subquery to get only one section assignment per application
     const distributionQuery = `
       SELECT 
         COALESCE(s.name, 'Unassigned') as section_name,
@@ -308,7 +306,6 @@ export class StatisticsService {
       programId,
     ]);
 
-    // Calculate total from the distribution results to ensure consistency
     const totalAccepted = result.reduce(
       (sum, row) => sum + parseInt(row.count),
       0,

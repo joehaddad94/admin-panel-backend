@@ -1,84 +1,67 @@
-import { formatExamDate, formatReadableDate } from 'src/core/helpers/formatDate';
+import { formatExamDate } from 'src/core/helpers/formatDate';
 
-export interface ProgramConfig {
+export interface InterviewEmailConfig {
   requiredFields: {
     field: string;
     message: string;
   }[];
   templates: {
-    eligible: {
+    passed: {
       name: string;
       subject: string;
     };
-    ineligible: {
+    failed: {
       name: string;
       subject: string;
     };
   };
-  getTemplateVariables: (decisionDate: any) => Record<string, any>;
+  getTemplateVariables: (interviewMeetLink: string, attachmentUrl?: string, submissionUrl?: string, interviewDateTime?: string) => Record<string, any>;
 }
 
-export const programConfigs: Record<string, ProgramConfig> = {
-  FCS: {
+export const interviewEmailConfigs: Record<string, InterviewEmailConfig> = {
+  'FSE': {
     requiredFields: [
-      {
-        field: 'date_1',
-        message: 'Payment Deadline should be provided.',
-      },
-      {
-        field: 'link_4',
-        message: 'Commitment Form should be provided.',
-      },
       {
         field: 'link_1',
-        message: 'Whish application PDF file should be provided.',
+        message: 'Interview meet link should be provided before sending emails.',
       },
     ],
     templates: {
-      eligible: {
-        name: 'FCS/acceptance-mail.hbs',
-        subject: 'SE Factory FCS Screening Process',
+      passed: {
+        name: 'FSE/passedExam.hbs',
+        subject: 'SE Factory | Welcome to Stage 3',
       },
-      ineligible: {
-        name: 'FCS/rejection-mail.hbs',
-        subject: 'SE Factory FCS Screening Process',
+      failed: {
+        name: 'FSE/failedExam.hbs',
+        subject: 'SE Factory | Full Stack Engineer',
       },
     },
-    getTemplateVariables: (decisionDate) => ({
-      paymentDeadline: formatReadableDate(decisionDate.date_1),
-      commitmentForm: decisionDate.link_4,
-      wishApplication: decisionDate.link_1,
+    getTemplateVariables: (interviewMeetLink) => ({
+      interviewMeetLink,
     }),
   },
-  FSE: {
+  'UIX': {
     requiredFields: [
       {
-        field: 'date_time_1',
-        message: 'Exam Date and time should be provided.',
-      },
-      {
-        field: 'link_4',
-        message: 'Exam Link should be provided.',
-      },
-      {
-        field: 'link_2',
-        message: 'Info Session Recorded Link should be provided.',
+        field: 'link_1',
+        message: 'Interview meet link should be provided before sending emails.',
       },
     ],
     templates: {
-      eligible: {
-        name: 'FSE/shortlisted.hbs',
-        subject: 'SE Factory Screening Process',
+      passed: {
+        name: 'UIX/passedExam.hbs',
+        subject: 'SE Factory | Welcome to Stage 3',
       },
-      ineligible: {
-        name: 'FSE/notEligible.hbs',
-        subject: 'SE Factory Screening Process',
+      failed: {
+        name: 'UIX/failedExam.hbs',
+        subject: 'SE Factory | UI/UX Designer',
       },
     },
-    getTemplateVariables: (decisionDate) => ({
-      examDate: formatExamDate(decisionDate.date_time_1),
-      examLink: decisionDate.link_4,
-      infoSessionRecordedLink: decisionDate.link_2,
+    getTemplateVariables: (interviewMeetLink, attachmentUrl, submissionUrl, interviewDateTime) => ({
+      interviewMeetLink,
+      attachmentUrl,
+      submissionUrl,
+      interviewDateTime: interviewDateTime ? formatExamDate(new Date(interviewDateTime)).format2 : undefined,
     }),
   },
-}; 
+};

@@ -16,7 +16,7 @@ export const formatDate = (dateInput: string | Date) => {
   return dateInput.toLocaleDateString();
 };
 
-export function formatExamDate(date: Date): string {
+export function formatExamDate(date: Date): { format1: string; format2: string } {
   const timeZone = 'Asia/Beirut';
 
   const dateOptions: Intl.DateTimeFormatOptions = {
@@ -48,7 +48,13 @@ export function formatExamDate(date: Date): string {
     endTime,
   );
 
-  return `${formattedDate} from ${formattedTime} to ${formattedEndTime}`;
+  const format1 = `${formattedDate} from ${formattedTime} to ${formattedEndTime}`;
+  const format2 = `${formattedDate} at ${formattedTime}`;
+
+  return {
+    format1,
+    format2,
+  };
 }
 
 export function formatReadableDate(date: Date): string {
