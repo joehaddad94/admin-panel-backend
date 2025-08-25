@@ -10,7 +10,11 @@ import { throwBadRequest } from 'src/core/settings/base/errors/errors';
 
 @Injectable()
 export class AuthService extends BaseService<AuthRepository, Admin> {
-  private failedLoginCache = new Map<string, { attempts: number; lastAttempt: number }>();
+  private failedLoginCache = new Map<
+    string,
+    { attempts: number; lastAttempt: number }
+  >();
+  private tokenCache = new Map<string, { admin: any; timestamp: number }>();
 
   constructor(
     private readonly authRepository: AuthRepository,
@@ -86,29 +90,55 @@ export class AuthService extends BaseService<AuthRepository, Admin> {
   }
 
   async verifyToken(token: string) {
-    const payload = await this.jwtService.decode(token);
+    try {
+      // Check cache first (5 minute cache)
+      const cacheKey = `token_${token}`;
+      const cached = this.tokenCache.get(cacheKey);
+      const now = Date.now();
 
-    throwBadRequest({
-      message: 'Invalid token payload',
-      errorCheck: !payload,
-    });
+      if (cached && now - cached.timestamp < 5 * 60 * 1000) {
+        return cached.admin;
+      }
 
-    const currentTimestamp = Math.floor(Date.now() / 1000);
-    throwBadRequest({
-      message: 'Token has expired',
-      errorCheck: payload.exp && payload.exp < currentTimestamp,
-    });
+      // Use verify instead of decode for proper signature verification and expiration check
+      const payload = this.jwtService.verify(token);
 
-    const updated = await this.authRepository.findOne({
-      where: { id: payload.sub },
-    });
+      // Load only necessary fields for performance
+      const admin = await this.authRepository.findOne({
+        where: { id: payload.sub },
+        select: {
+          id: true,
+          email: true,
+          name: true,
+          is_active: true,
+          login_attempts: true,
+        },
+      });
 
-    throwBadRequest({
-      message: 'User not found for token',
-      errorCheck: !updated,
-    });
+      throwBadRequest({
+        message: 'User not found for token',
+        errorCheck: !admin,
+      });
 
-    return updated;
+      // Cache the result for 5 minutes
+      this.tokenCache.set(cacheKey, { admin, timestamp: now });
+
+      return admin;
+    } catch (error) {
+      if (error.name === 'TokenExpiredError') {
+        throwBadRequest({
+          message: 'Token has expired',
+          errorCheck: true,
+        });
+      }
+      if (error.name === 'JsonWebTokenError') {
+        throwBadRequest({
+          message: 'Invalid token',
+          errorCheck: true,
+        });
+      }
+      throw error;
+    }
   }
 
   async decrementLoginAttempts(admin: Admin): Promise<boolean> {
@@ -134,14 +164,14 @@ export class AuthService extends BaseService<AuthRepository, Admin> {
   recordFailedLoginAttempt(email: string): number {
     const now = Date.now();
     const cacheEntry = this.failedLoginCache.get(email);
-    
+
     if (cacheEntry) {
       cacheEntry.attempts += 1;
       cacheEntry.lastAttempt = now;
     } else {
       this.failedLoginCache.set(email, { attempts: 1, lastAttempt: now });
     }
-    
+
     return this.failedLoginCache.get(email)!.attempts;
   }
 
@@ -151,6 +181,25 @@ export class AuthService extends BaseService<AuthRepository, Admin> {
     for (const [email, entry] of this.failedLoginCache.entries()) {
       if (entry.lastAttempt < oneHourAgo) {
         this.failedLoginCache.delete(email);
+      }
+    }
+  }
+
+  // Clear token cache for a specific admin (call when admin data changes)
+  clearTokenCache(adminId: number) {
+    for (const [key, value] of this.tokenCache.entries()) {
+      if (value.admin.id === adminId) {
+        this.tokenCache.delete(key);
+      }
+    }
+  }
+
+  // Clean up old token cache entries (call this periodically)
+  cleanupTokenCache() {
+    const fiveMinutesAgo = Date.now() - 5 * 60 * 1000;
+    for (const [key, value] of this.tokenCache.entries()) {
+      if (value.timestamp < fiveMinutesAgo) {
+        this.tokenCache.delete(key);
       }
     }
   }

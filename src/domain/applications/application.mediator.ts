@@ -14,6 +14,7 @@ import {
   EditApplicationDto,
   EditApplicationsDto,
   EditFCSApplicationsDto,
+  RowEditApplicationsDto,
 } from './dtos/edit.applications.dto';
 import { convertToCamelCase } from 'src/core/helpers/camelCase';
 import { validateThresholdEntity } from 'src/core/helpers/validateThresholds';
@@ -22,25 +23,32 @@ import { formatReadableDate } from 'src/core/helpers/formatDate';
 import {
   calculatePassedExam,
   calculatePassedInterview,
+  calculatePassedInterviewOptimized,
 } from 'src/core/helpers/calculatePassingGrades';
 import { In } from 'typeorm';
 import { InterviewScoresDto } from './dtos/interview.scores.dto';
 import { ApplicationCycle } from 'src/core/data/database/relations/application-cycle.entity';
 import { Application } from 'src/core/data/database/entities/application.entity';
-import { programConfigs } from './configs/interview.email.configs';
+import { programConfigs } from './configs/screening.email.configs';
 import { ApplicationSection } from 'src/core/data/database/relations/applications-sections.entity';
 import { statusEmailConfigs } from './configs/status.email.configs';
+import { interviewEmailConfigs } from './configs/interview.email.configs';
 import { ApplyToFSEDto } from './dtos/apply.fse.dto';
 import { ProgramService } from '../programs/program.service';
 import { ApplicationUser } from 'src/core/data/database/relations/application-user.entity';
+import { StatisticsMediator } from '../statistics/statistics.mediator';
 import { ApplicationInfo } from 'src/core/data/database/relations/application-info.entity';
 import { ApplicationProgram } from 'src/core/data/database/relations/application-program.entity';
 import { InformationService } from '../information/information.service';
-import { ImportFCSDto } from './dtos/Import.fcs.data.dto';
+import { ImportDataDto } from './dtos/Import.data.dto';
 import { SectionService } from '../sections/section.service';
+import { applyFilters, applySorting, ApplicationData } from '../../core/helpers/filter-sort.helper';
 
 @Injectable()
 export class ApplicationMediator {
+  private cycleCache = new Map<string, { data: any; timestamp: number }>();
+  private readonly CACHE_DURATION = 60000; // 1 minute in milliseconds
+
   constructor(
     private readonly applicationsService: ApplicationService,
     private readonly cyclesService: CycleService,
@@ -48,7 +56,24 @@ export class ApplicationMediator {
     private readonly programsService: ProgramService,
     private readonly infoService: InformationService,
     private readonly sectionsService: SectionService,
+    private readonly statisticsMediator: StatisticsMediator,
   ) {}
+
+  private getCachedCycleData(cycleId: number): any | null {
+    const cacheKey = `cycle_${cycleId}`;
+    const cached = this.cycleCache.get(cacheKey);
+    
+    if (cached && (Date.now() - cached.timestamp) < this.CACHE_DURATION) {
+      return cached.data;
+    }
+    
+    return null;
+  }
+
+  private setCachedCycleData(cycleId: number, data: any): void {
+    const cacheKey = `cycle_${cycleId}`;
+    this.cycleCache.set(cacheKey, { data, timestamp: Date.now() });
+  }
 
   findApplications = async (
     filtersDto: FiltersDto,
@@ -113,106 +138,93 @@ export class ApplicationMediator {
         errorCheck: !applications,
       });
 
-      const mappedApplications = applications.map((app) => ({
-        id: app.id,
-        sefId: app.applicationUser[0].user.sef_id,
-        username: app.applicationUser[0].user.username,
-        email: app.applicationUser[0].user.email,
-        firstName: app.applicationInfo[0].info.first_name,
-        middleName: app.applicationInfo[0].info.middle_name,
-        lastName: app.applicationInfo[0].info.last_name,
-        fullName: `${app.applicationInfo[0].info.first_name} ${app.applicationInfo[0].info.last_name}`,
-        motherMaidenFirst: app.applicationInfo[0].info.mother_maiden_first,
-        motherMaidenLast: app.applicationInfo[0].info.mother_maiden_last,
-        gender: app.applicationInfo[0].info.gender,
-        dob: app.applicationInfo[0].info.dob,
-        mobile: app.applicationInfo[0].info.mobile,
-        countryOrigin: app.applicationInfo[0].info.country_origin,
-        countryResidence: app.applicationInfo[0].info.country_residence,
-        residencyStatus: app.applicationInfo[0].info.residency_status,
-        district: app.applicationInfo[0].info.district,
-        governate: app.applicationInfo[0].info.governate,
-        maritalStatus: app.applicationInfo[0].info.marital_status,
-        typeOfDisability: app.applicationInfo[0].info.type_of_disability,
-        disability: app.applicationInfo[0].info.disability,
-        employmentSituation: app.applicationInfo[0].info.employment_situation,
-        whichSocial: app.applicationInfo[0].info.which_social,
-        termsConditions: app.applicationInfo[0].info.terms_conditions,
-        degreeType: app.applicationInfo[0].info.degree_type,
-        educationStatus: app.applicationInfo[0].info.status,
-        institution: app.applicationInfo[0].info.institution,
-        fieldOfStudy: app.applicationInfo[0].info.field_of_study,
-        majorTitle: app.applicationInfo[0].info.major_title,
-        infoCreatedAt: app.applicationInfo[0].info.created_at,
-        programName: app.applicationProgram[0].program.program_name,
-        program: app.applicationProgram[0].program.abbreviation,
-        passedScreening:
-          app.passed_screening === true
-            ? 'Yes'
-            : app.passed_screening === false
-            ? 'No'
-            : '-',
-        screeningEmailSent:
-          app.screening_email_sent === true
-            ? 'Yes'
-            : app.screening_email_sent === false
-            ? 'No'
-            : '-',
-        applicationDate: new Date(app.created_at),
-        eligible:
-          app.applicationProgram[0].program.abbreviation === 'FCS'
-            ? app.is_eligible
-            : app.is_eligible === true
-            ? 'Yes'
-            : app.is_eligible === false
-            ? 'No'
-            : '-',
-        passedScreeningDate: new Date(app.passed_screening_date),
-        examScore: app.exam_score,
-        passedExam:
-          app.passed_exam === true
-            ? 'Yes'
-            : app.passed_exam === false
-            ? 'No'
-            : '-',
-        passedExamDate: new Date(app.passed_exam_date),
-        passedExamEmailSent:
-          app.passed_exam_email_sent === true
-            ? 'Yes'
-            : app.passed_exam_email_sent === false
-            ? 'No'
-            : '-',
-        techInterviewScore: app.tech_interview_score,
-        softInterviewScore: app.soft_interview_score,
-        passedInterviewDate: new Date(app.passed_interview_date),
-        passedInterview:
-          app.passed_interview === true
-            ? 'Yes'
-            : app.passed_interview === false
-            ? 'No'
-            : '-',
-        applicationStatus: app.status,
-        statusEmailSent:
-          app.status_email_sent === true
-            ? 'Yes'
-            : app.status_email_sent === false
-            ? 'No'
-            : '-',
-        remarks: app.remarks,
-        extras: app.extras,
-        cycleId: app.applicationCycle[0]?.cycleId,
-        cycleName: app.applicationCycle[0]?.cycle?.name,
-        paid: app.paid,
-        sectionName: app.applicationSection?.section?.name,
-        userId: app.applicationUser[0].user_id,
-        infoId: app.applicationInfo[0].info_id,
-        fcsGraduate:
-          app.fcs_graduate === true
-            ? 'Yes'
-            : app.fcs_graduate === false
-            ? 'No'
-            : '-',
-      }));
+      let mappedApplications: ApplicationData[] = applications.map((app) => {
+        const applicationInfo = app.applicationInfo?.[0]?.info;
+        const applicationUser = app.applicationUser?.[0]?.user;
+        const applicationProgram = app.applicationProgram?.[0]?.program;
+        
+        return {
+          id: app.id,
+          sefId: applicationUser?.sef_id,
+          username: applicationUser?.username,
+          email: applicationUser?.email,
+          firstName: applicationInfo?.first_name,
+          lastName: applicationInfo?.last_name,
+          fullName: applicationInfo ? `${applicationInfo.first_name || ''} ${applicationInfo.last_name || ''}`.trim() : '',
+          dob: applicationInfo?.dob,
+          countryOrigin: applicationInfo?.country_origin,
+          countryResidence: applicationInfo?.country_residence,
+          residencyStatus: applicationInfo?.residency_status,
+          educationStatus: applicationInfo?.status,
+          programName: applicationProgram?.program_name,
+          program: applicationProgram?.abbreviation,
+          passedScreening:
+            app.passed_screening === true
+              ? 'Yes'
+              : app.passed_screening === false
+              ? 'No'
+              : '-',
+          screeningEmailSent:
+            app.screening_email_sent === true
+              ? 'Yes'
+              : app.screening_email_sent === false
+              ? 'No'
+              : '-',
+          applicationDate: new Date(app.created_at),
+          eligible:
+            applicationProgram?.abbreviation === 'FCS'
+              ? app.is_eligible
+              : app.is_eligible === true
+              ? 'Yes'
+              : app.is_eligible === false
+              ? 'No'
+              : '-',
+          passedScreeningDate: new Date(app.passed_screening_date),
+          examScore: app.exam_score,
+          passedExam:
+            app.passed_exam === true
+              ? 'Yes'
+              : app.passed_exam === false
+              ? 'No'
+              : '-',
+          passedExamDate: new Date(app.passed_exam_date),
+          passedExamEmailSent:
+            app.passed_exam_email_sent === true
+              ? 'Yes'
+              : app.passed_exam_email_sent === false
+              ? 'No'
+              : '-',
+          techInterviewScore: app.tech_interview_score,
+          softInterviewScore: app.soft_interview_score,
+          passedInterviewDate: new Date(app.passed_interview_date),
+          passedInterview:
+            app.passed_interview === true
+              ? 'Yes'
+              : app.passed_interview === false
+              ? 'No'
+              : '-',
+          applicationStatus: app.status,
+          statusEmailSent:
+            app.status_email_sent === true
+              ? 'Yes'
+              : app.status_email_sent === false
+              ? 'No'
+              : '-',
+          remarks: app.remarks,
+          cycleId: app.applicationCycle?.[0]?.cycleId,
+          cycleName: app.applicationCycle?.[0]?.cycle?.name,
+          paid: app.paid,
+          sectionName: app.applicationSection?.section?.name,
+          userId: app.applicationUser?.[0]?.user_id,
+          infoId: app.applicationInfo?.[0]?.info_id,
+          fcsGraduate:
+            app.fcs_graduate === true
+              ? 'Yes'
+              : app.fcs_graduate === false
+              ? 'No'
+              : '-',
+        };
+      });
 
       mappedApplications.sort(
         (a, b) =>
@@ -864,6 +876,208 @@ export class ApplicationMediator {
     });
   };
 
+  rowEditApplications = async (data: RowEditApplicationsDto) => {
+    return catcher(async () => {
+      const { ids, isEligible, examScore, techInterviewScore, softInterviewScore, paid, inputCycleId, applicationStatus, cycleId } = data;
+      const idsArray = Array.isArray(ids) ? ids : [ids];
+
+      const updateData: any = {};
+      let passedExam: boolean | undefined;
+      let passedExamDate: Date | undefined;
+      let passedInterview: boolean | undefined;
+      let passedInterviewDate: Date | undefined;
+      let thresholdCycle: any = null;
+
+      const needsCycleData = (examScore !== undefined && examScore !== null) || 
+                           (techInterviewScore !== undefined && techInterviewScore !== null) ||
+                           (softInterviewScore !== undefined && softInterviewScore !== null);
+      
+      const hasApplicationUpdates = 
+        (isEligible !== undefined && isEligible !== null) ||
+        (paid !== undefined && paid !== null) ||
+        (examScore !== undefined && examScore !== null) ||
+        (techInterviewScore !== undefined && techInterviewScore !== null) ||
+        (softInterviewScore !== undefined && softInterviewScore !== null) ||
+        (applicationStatus !== undefined && applicationStatus !== null);
+
+      // Fetch cycle data once if needed
+      if (needsCycleData) {
+        if (!cycleId) {
+          throwError('Cycle ID is required when updating scores', HttpStatus.BAD_REQUEST);
+        }
+
+        // Try to get cached cycle data first
+        let cycle = this.getCachedCycleData(cycleId);
+        
+        if (!cycle) {
+          // Cache miss - fetch from database
+          const options: GlobalEntities[] = ['thresholdCycle'];
+          cycle = await this.cyclesService.findOne({ id: cycleId }, options);
+
+          if (!cycle) {
+            throwError('Cycle is not found', HttpStatus.BAD_REQUEST);
+          }
+
+          // Cache the cycle data for 1 minute
+          this.setCachedCycleData(cycleId, cycle);
+        }
+
+        thresholdCycle = cycle.thresholdCycle;
+        if (!thresholdCycle || !thresholdCycle.threshold) {
+          throwError(
+            'Please provide thresholds for this cycle',
+            HttpStatus.BAD_REQUEST,
+          );
+        } else {
+          validateThresholdEntity(thresholdCycle.threshold);
+        }
+      }
+
+      if (isEligible !== undefined && isEligible !== null) {
+        updateData.is_eligible = isEligible;
+      }
+      if (paid !== undefined && paid !== null) {
+        updateData.paid = paid;
+      }
+      if (applicationStatus !== undefined && applicationStatus !== null) {
+        updateData.status = applicationStatus;
+      }
+
+      if (examScore !== undefined && examScore !== null) {
+        const result = calculatePassedExam(
+          examScore,
+          thresholdCycle.threshold.exam_passing_grade,
+        );
+        passedExam = result.passedExam;
+        passedExamDate = result.passedExamDate;
+        updateData.exam_score = examScore;
+        updateData.passed_exam = passedExam;
+        updateData.passed_exam_date = new Date();
+      }
+
+      // Handle interview scores - can handle single scores by fetching missing score from DB
+      if ((techInterviewScore !== undefined && techInterviewScore !== null) || 
+          (softInterviewScore !== undefined && softInterviewScore !== null)) {
+        
+        // Update individual scores first
+        if (techInterviewScore !== undefined && techInterviewScore !== null) {
+          updateData.tech_interview_score = techInterviewScore;
+        }
+        if (softInterviewScore !== undefined && softInterviewScore !== null) {
+          updateData.soft_interview_score = softInterviewScore;
+        }
+
+        // Process each application individually for interview scores
+        for (const applicationId of idsArray) {
+          console.log(`=== Processing application ${applicationId} ===`);
+          
+          const individualUpdateData = { ...updateData };
+          console.log('Initial individualUpdateData:', JSON.stringify(individualUpdateData, null, 2));
+
+          // Update individual scores first
+          if (techInterviewScore !== undefined && techInterviewScore !== null) {
+            individualUpdateData.tech_interview_score = techInterviewScore;
+          }
+          if (softInterviewScore !== undefined && softInterviewScore !== null) {
+            individualUpdateData.soft_interview_score = softInterviewScore;
+          }
+
+          // Calculate passed interview using optimized function that fetches missing score from DB
+          const result = await calculatePassedInterviewOptimized(
+            applicationId,
+            techInterviewScore,
+            softInterviewScore,
+            {
+              weightTech: thresholdCycle.threshold.weight_tech,
+              weightSoft: thresholdCycle.threshold.weight_soft,
+              primaryPassingGrade: thresholdCycle.threshold.primary_passing_grade,
+              secondaryPassingGrade: thresholdCycle.threshold.secondary_passing_grade,
+            }
+          );
+
+          passedInterview = result.passedInterview;
+          passedInterviewDate = result.passedInterviewDate;
+          individualUpdateData.passed_interview = passedInterview;
+          individualUpdateData.passed_interview_date = new Date();
+          
+          // Only calculate status based on interview if applicationStatus is not provided
+          if (applicationStatus === undefined || applicationStatus === null) {
+            individualUpdateData.status = passedInterview ? Status.ACCEPTED : Status.REJECTED;
+          } else {
+            // Use the provided applicationStatus
+            individualUpdateData.status = applicationStatus;
+          }
+          
+          // Update this specific application
+          const updateResult = await Application.update({ id: applicationId }, individualUpdateData);
+        }
+      } else if (hasApplicationUpdates) {
+        // If no interview scores to process, update all applications with the same data
+        await Application.update({ id: In(idsArray) }, updateData);
+      }
+
+      if (inputCycleId !== undefined) {
+        await ApplicationCycle.update(
+          { applicationId: In(idsArray) },
+          { cycleId: inputCycleId },
+        );
+      }
+
+      // Generate response payload based on whether interview scores were processed
+      let updatedPayload;
+
+      if ((techInterviewScore !== undefined && techInterviewScore !== null) ||
+          (softInterviewScore !== undefined && softInterviewScore !== null)) {
+        // For interview scores, each application might have different results
+        // We need to fetch the updated applications to get the actual results
+        const updatedApplications = await Application.find({ where: { id: In(idsArray) } });
+        
+        const applicationsMap = new Map(updatedApplications.map(app => [app.id, app]));
+
+        updatedPayload = idsArray.map((id) => {
+          const application = applicationsMap.get(id);
+          const payload = {
+            id,
+            paid: paid !== undefined && paid !== null ? paid : undefined,
+            eligible: isEligible !== undefined && isEligible !== null ? isEligible : undefined,
+            examScore: examScore !== undefined && examScore !== null ? examScore : undefined,
+            passedExam: passedExam !== undefined && passedExam !== null ? passedExam === true ? 'Yes' : 'No' : undefined,
+            passedExamDate: passedExamDate !== undefined && passedExamDate !== null ? passedExamDate : undefined,
+            techInterviewScore: techInterviewScore !== undefined && techInterviewScore !== null ? techInterviewScore : undefined,
+            softInterviewScore: softInterviewScore !== undefined && softInterviewScore !== null ? softInterviewScore : undefined,
+            passedInterview: application?.passed_interview !== undefined && application?.passed_interview !== null ? application.passed_interview === true ? 'Yes' : 'No' : undefined,
+            passedInterviewDate: application?.passed_interview_date !== undefined && application?.passed_interview_date !== null ? application.passed_interview_date : undefined,
+            cycleId: inputCycleId,
+            applicationStatus: applicationStatus !== undefined && applicationStatus !== null ? applicationStatus :
+                             (application?.status !== undefined && application?.status !== null) ? application.status : undefined,
+          };
+          return payload;
+        });
+      } else {
+        // For non-interview updates, all applications get the same values
+        updatedPayload = idsArray.map((id) => ({
+          id,
+          paid: paid !== undefined && paid !== null ? paid : undefined,
+          eligible: isEligible !== undefined && isEligible !== null ? isEligible : undefined,
+          examScore: examScore !== undefined && examScore !== null ? examScore : undefined,
+          passedExam: passedExam !== undefined && passedExam !== null ? passedExam === true ? 'Yes' : 'No' : undefined,
+          passedExamDate: passedExamDate !== undefined && passedExamDate !== null ? passedExamDate : undefined,
+          techInterviewScore: techInterviewScore !== undefined && techInterviewScore !== null ? techInterviewScore : undefined,
+          softInterviewScore: softInterviewScore !== undefined && softInterviewScore !== null ? softInterviewScore : undefined,
+          passedInterview: passedInterview !== undefined && passedInterview !== null ? passedInterview === true ? 'Yes' : 'No' : undefined,
+          passedInterviewDate: passedInterviewDate !== undefined && passedInterviewDate !== null ? passedInterviewDate : undefined,
+          cycleId: inputCycleId,
+          applicationStatus: applicationStatus !== undefined && applicationStatus !== null ? applicationStatus : undefined,
+        }));
+      }
+
+      return {
+        message: idsArray.length > 1 ? 'Applications updated successfully' : 'Application updated successfully',
+        updatedPayload,
+      };
+    });
+  };
+
   sendPostScreeningEmails = async (data: SendingEmailsDto) => {
     return catcher(async () => {
       const { cycleId, emails } = data;
@@ -922,7 +1136,9 @@ export class ApplicationMediator {
 
       const eligibleApplicationsToEmail = [];
       const ineligibleApplicationsToEmail = [];
+      const applicationsToUpdate = [];
 
+      // Process applications and collect updates
       for (const application of applicationsByCycle) {
         const email: string = application.applicationUser[0]?.user?.email;
         if (uniqueEmails.includes(email)) {
@@ -930,13 +1146,11 @@ export class ApplicationMediator {
             if (!application.passed_screening) {
               application.passed_screening = true;
               application.passed_screening_date = new Date();
-              await this.applicationsService.update(
-                { id: application.id },
-                {
-                  passed_screening: true,
-                  passed_screening_date: new Date(),
-                },
-              );
+              applicationsToUpdate.push({
+                id: application.id,
+                passed_screening: true,
+                passed_screening_date: new Date(),
+              });
               eligibleApplicationsToEmail.push({
                 ...application,
                 passed_screening: 'Yes',
@@ -952,13 +1166,11 @@ export class ApplicationMediator {
           } else {
             application.passed_screening = false;
             application.passed_screening_date = new Date();
-            await this.applicationsService.update(
-              { id: application.id },
-              {
-                passed_screening: false,
-                passed_screening_date: new Date(),
-              },
-            );
+            applicationsToUpdate.push({
+              id: application.id,
+              passed_screening: false,
+              passed_screening_date: new Date(),
+            });
             ineligibleApplicationsToEmail.push({
               ...application,
               passed_screening: 'No',
@@ -966,6 +1178,18 @@ export class ApplicationMediator {
             });
           }
         }
+      }
+
+      // Batch update applications
+      if (applicationsToUpdate.length > 0) {
+        const batchUpdates = applicationsToUpdate.map((update) => ({
+          id: update.id,
+          data: {
+            passed_screening: update.passed_screening,
+            passed_screening_date: update.passed_screening_date,
+          },
+        }));
+        await this.applicationsService.batchUpdate(batchUpdates);
       }
 
       const eligibleEmailsToSend = eligibleApplicationsToEmail.map(
@@ -979,25 +1203,44 @@ export class ApplicationMediator {
       let mailerResponseEligible: any;
       let mailerResponseIneligible: any;
 
+      // Send emails in parallel if both types exist
+      const emailPromises = [];
+
       if (eligibleEmailsToSend.length > 0) {
         const templateVariables =
           programConfig.getTemplateVariables(decisionDate);
 
-        mailerResponseEligible = await this.mailService.sendEmails(
-          eligibleEmailsToSend,
-          programConfig.templates.eligible.name,
-          programConfig.templates.eligible.subject,
-          templateVariables,
+        emailPromises.push(
+          this.mailService.sendEmails(
+            eligibleEmailsToSend,
+            programConfig.templates.eligible.name,
+            programConfig.templates.eligible.subject,
+            templateVariables,
+          ).then((response) => ({ type: 'eligible', response }))
         );
       }
 
       if (ineligibleEmailsToSend.length > 0) {
-        mailerResponseIneligible = await this.mailService.sendEmails(
-          ineligibleEmailsToSend,
-          programConfig.templates.ineligible.name,
-          programConfig.templates.ineligible.subject,
+        emailPromises.push(
+          this.mailService.sendEmails(
+            ineligibleEmailsToSend,
+            programConfig.templates.ineligible.name,
+            programConfig.templates.ineligible.subject,
+          ).then((response) => ({ type: 'ineligible', response }))
         );
       }
+
+      // Wait for all emails to be sent
+      const emailResults = await Promise.all(emailPromises);
+
+      // Process results
+      emailResults.forEach(({ type, response }) => {
+        if (type === 'eligible') {
+          mailerResponseEligible = response;
+        } else {
+          mailerResponseIneligible = response;
+        }
+      });
 
       const resultsEligible = mailerResponseEligible?.results || [];
       const resultsIneligible = mailerResponseIneligible?.results || [];
@@ -1009,38 +1252,36 @@ export class ApplicationMediator {
         resultsIneligible.filter((res) => !res.error).map((res) => res.email),
       );
 
+      // Batch update email sent status
+      const emailStatusUpdates = [];
+
       for (const application of eligibleApplicationsToEmail) {
         const email = application.applicationUser[0]?.user?.email;
-        if (sentEmailSetEligible.has(email)) {
-          await this.applicationsService.update(
-            { id: application.id },
-            { screening_email_sent: true },
-          );
-          application.screening_email_sent = 'Yes';
-        } else {
-          await this.applicationsService.update(
-            { id: application.id },
-            { screening_email_sent: false },
-          );
-          application.screening_email_sent = 'No';
-        }
+        const emailSent = sentEmailSetEligible.has(email);
+        emailStatusUpdates.push({
+          id: application.id,
+          screening_email_sent: emailSent,
+        });
+        application.screening_email_sent = emailSent ? 'Yes' : 'No';
       }
 
       for (const application of ineligibleApplicationsToEmail) {
         const email = application.applicationUser[0]?.user?.email;
-        if (sentEmailSetIneligible.has(email)) {
-          await this.applicationsService.update(
-            { id: application.id },
-            { screening_email_sent: true },
-          );
-          application.screening_email_sent = 'Yes';
-        } else {
-          await this.applicationsService.update(
-            { id: application.id },
-            { screening_email_sent: false },
-          );
-          application.screening_email_sent = 'No';
-        }
+        const emailSent = sentEmailSetIneligible.has(email);
+        emailStatusUpdates.push({
+          id: application.id,
+          screening_email_sent: emailSent,
+        });
+        application.screening_email_sent = emailSent ? 'Yes' : 'No';
+      }
+
+      // Batch update email sent status
+      if (emailStatusUpdates.length > 0) {
+        const batchEmailUpdates = emailStatusUpdates.map((update) => ({
+          id: update.id,
+          data: { screening_email_sent: update.screening_email_sent },
+        }));
+        await this.applicationsService.batchUpdate(batchEmailUpdates);
       }
 
       const camelCaseApplications = convertToCamelCase([
@@ -1297,7 +1538,7 @@ export class ApplicationMediator {
   };
 
   sendPassedExamEmails = async (data: SendingEmailsDto) => {
-    const { cycleId, emails } = data;
+    const { cycleId, emails, attachmentUrl, submissionUrl, interviewDateTime } = data;
 
     const applicationIds = emails.map((entry) => entry.ids);
     const uniqueEmails = emails.map((entry) => entry.emails);
@@ -1315,11 +1556,29 @@ export class ApplicationMediator {
     const interviewMeetLink =
       currentCycle.decisionDateCycle?.decisionDate?.link_1;
 
-    if (!interviewMeetLink) {
+    const cycleProgram = await this.programsService.findOne(
+      { cycleProgram: { cycle_id: currentCycle.id } },
+      ['cycleProgram'],
+    );
+
+    if (!cycleProgram) {
+      throwError('Program not found for this cycle', HttpStatus.BAD_REQUEST);
+    }
+
+    const programConfig = interviewEmailConfigs[cycleProgram.abbreviation];
+
+    if (!programConfig) {
       throwError(
-        'Interview meet link should be provided before sending emails.',
+        `No interview email configuration found for program: ${cycleProgram.abbreviation}`,
         HttpStatus.BAD_REQUEST,
       );
+    }
+
+    for (const requiredField of programConfig.requiredFields) {
+      const fieldValue = currentCycle.decisionDateCycle?.decisionDate?.[requiredField.field];
+      if (!fieldValue) {
+        throwError(requiredField.message, HttpStatus.BAD_REQUEST);
+      }
     }
 
     const applicationsByIds = await this.applicationsService.findMany(
@@ -1346,32 +1605,33 @@ export class ApplicationMediator {
         uniqueEmails.includes(emailObj.email) && !emailObj.passedExam,
     );
 
-    const passedTemplateName = 'FSE/passedExam.hbs';
-    const failedTemplateName = 'FSE/failedExam.hbs';
-    const passedSubject = 'SE Factory | Welcome to Stage 3';
-    const failedSubject = 'SE Factory | Full Stack Engineer';
     let passedMailerResponse;
     let failedMailerResponse;
 
-    const templateVariables = {
-      interviewMeetLink,
+    // Create separate template variables for passed and failed emails
+    const passedTemplateVariables = {
+      ...programConfig.getTemplateVariables(interviewMeetLink, attachmentUrl, submissionUrl, interviewDateTime),
+    };
+
+    const failedTemplateVariables = {
+      ...programConfig.getTemplateVariables(interviewMeetLink),
     };
 
     if (passedExamEmails.length > 0) {
       passedMailerResponse = await this.mailService.sendEmails(
         passedExamEmails.map((e) => e.email),
-        passedTemplateName,
-        passedSubject,
-        templateVariables,
+        programConfig.templates.passed.name,
+        programConfig.templates.passed.subject,
+        passedTemplateVariables,
       );
     }
 
     if (failedExamEmails.length > 0) {
       failedMailerResponse = await this.mailService.sendEmails(
         failedExamEmails.map((e) => e.email),
-        failedTemplateName,
-        failedSubject,
-        templateVariables,
+        programConfig.templates.failed.name,
+        programConfig.templates.failed.subject,
+        failedTemplateVariables,
       );
     }
 
@@ -1520,7 +1780,7 @@ export class ApplicationMediator {
   };
 
   sendStatusEmail = async (data: SendingEmailsDto) => {
-    const { cycleId, emails } = data;
+    const { cycleId, emails, orientationInfo, submissionDateTime } = data;
 
     const cyclesWhereConditions = cycleId ? { id: cycleId } : {};
 
@@ -1596,6 +1856,8 @@ export class ApplicationMediator {
           templateVariables: programConfig.getTemplateVariables(
             decisionDate,
             application.applicationSection?.section,
+            orientationInfo,
+            submissionDateTime,
           ),
         };
       })
@@ -1721,53 +1983,57 @@ export class ApplicationMediator {
     });
   };
 
-  importFCSData = async (data: ImportFCSDto) => {
+  importData = async (data: ImportDataDto) => {
     return catcher(async () => {
       const { cycleId, importType, data: importData } = data;
-      
-      const applications = await this.applicationsService.findMany({
-        applicationCycle: { cycleId },
-      }, ['applicationCycle', 'applicationSection', 'applicationInfo']);
-      
+
+      const applications = await this.applicationsService.findMany(
+        {
+          applicationCycle: { cycleId },
+        },
+        ['applicationCycle', 'applicationSection', 'applicationInfo'],
+      );
+
       function normalizePhone(phone: string): string {
         return phone.replace(/[^0-9]/g, '').replace(/^0+/, '');
       }
-      
+
       switch (importType) {
-        case "paid":
+        case 'paid':
           const updatedApplications = [];
           const unmatchedEntries = [];
-          
+
           for (const entry of importData) {
             const phoneNumber = String(entry.phone);
             const paidStatus = entry.paid;
             const normalizedPhone = normalizePhone(phoneNumber);
-            
-            const application = applications.find(app => {
-              const dbPhone = normalizePhone(app.applicationInfo?.[0]?.info?.mobile || '');
+
+            const application = applications.find((app) => {
+              const dbPhone = normalizePhone(
+                app.applicationInfo?.[0]?.info?.mobile || '',
+              );
               return dbPhone === normalizedPhone;
             });
-            
+
             if (application) {
               const isPaid = Boolean(paidStatus);
-              
+
               await this.applicationsService.update(
                 { id: application.id },
-                { paid: isPaid }
+                { paid: isPaid },
               );
               updatedApplications.push({
                 id: application.id,
                 phoneNumber,
                 paid: isPaid,
                 firstName: application.applicationInfo[0]?.info?.first_name,
-                lastName: application.applicationInfo[0]?.info?.last_name
+                lastName: application.applicationInfo[0]?.info?.last_name,
               });
             } else {
-        
               unmatchedEntries.push({
                 phoneNumber,
                 paid: Boolean(paidStatus),
-                reason: 'No matching application found with this phone number'
+                reason: 'No matching application found with this phone number',
               });
             }
           }
@@ -1775,32 +2041,38 @@ export class ApplicationMediator {
           const response: any = {
             message: 'Payment status import completed',
             summary: {
-              totalProcessed: Array.isArray(importData) ? importData.length : Object.keys(importData).length,
+              totalProcessed: Array.isArray(importData)
+                ? importData.length
+                : Object.keys(importData).length,
               successfulUpdates: updatedApplications.length,
-              failedUpdates: unmatchedEntries.length
+              failedUpdates: unmatchedEntries.length,
             },
             updatedData: updatedApplications,
-            failedUpdates: unmatchedEntries
+            failedUpdates: unmatchedEntries,
           };
 
           if (unmatchedEntries.length > 0) {
-            const headers = ['Phone Number', 'Paid Status', 'Reason', 'Import Date'];
-            const rows = unmatchedEntries.map(entry => [
+            const headers = [
+              'Phone Number',
+              'Paid Status',
+              'Reason',
+              'Import Date',
+            ];
+            const rows = unmatchedEntries.map((entry) => [
               entry.phoneNumber,
               entry.paid ? 'Yes' : 'No',
               entry.reason,
-              new Date().toISOString()
+              new Date().toISOString(),
             ]);
             response.failedAttemptsCSV = [
               headers.join(','),
-              ...rows.map(row => row.join(','))
+              ...rows.map((row) => row.join(',')),
             ].join('\n');
           }
-          
-          
+
           return response;
-          
-        case "sections":
+
+        case 'sections':
           const updatedSections = [];
           const unmatchedSectionEntries = [];
 
@@ -1812,25 +2084,28 @@ export class ApplicationMediator {
             const sectionName = String(entry.section).trim().toLowerCase();
 
             // Find application by email
-            const application = applications.find(app =>
-              (app.applicationInfo?.[0]?.info?.email || '').trim().toLowerCase() === email
+            const application = applications.find(
+              (app) =>
+                (app.applicationInfo?.[0]?.info?.email || '')
+                  .trim()
+                  .toLowerCase() === email,
             );
 
             // Find section by name
-            const section = allSections.find(sec =>
-              (sec.name || '').trim().toLowerCase() === sectionName
+            const section = allSections.find(
+              (sec) => (sec.name || '').trim().toLowerCase() === sectionName,
             );
 
             if (application && section) {
               // Update applicationSection table
               await ApplicationSection.update(
                 { application_new_id: application.id },
-                { section_id: section.id }
+                { section_id: section.id },
               );
               updatedSections.push({
                 applicationId: application.id,
                 email,
-                sectionName: section.name
+                sectionName: section.name,
               });
             } else {
               unmatchedSectionEntries.push({
@@ -1838,7 +2113,7 @@ export class ApplicationMediator {
                 sectionName,
                 reason: !application
                   ? 'No matching application found with this email'
-                  : 'No matching section found with this section name'
+                  : 'No matching section found with this section name',
               });
             }
           }
@@ -1846,61 +2121,73 @@ export class ApplicationMediator {
           const sectionResponse: any = {
             message: 'Section import completed',
             summary: {
-              totalProcessed: Array.isArray(importData) ? importData.length : Object.keys(importData).length,
+              totalProcessed: Array.isArray(importData)
+                ? importData.length
+                : Object.keys(importData).length,
               successfulUpdates: updatedSections.length,
-              failedUpdates: unmatchedSectionEntries.length
+              failedUpdates: unmatchedSectionEntries.length,
             },
             updatedData: updatedSections,
-            failedUpdates: unmatchedSectionEntries
+            failedUpdates: unmatchedSectionEntries,
           };
 
           if (unmatchedSectionEntries.length > 0) {
             const headers = ['Email', 'Section Name', 'Reason', 'Import Date'];
-            const rows = unmatchedSectionEntries.map(entry => [
+            const rows = unmatchedSectionEntries.map((entry) => [
               entry.email,
               entry.sectionName,
               entry.reason,
-              new Date().toISOString()
+              new Date().toISOString(),
             ]);
             sectionResponse.failedAttemptsCSV = [
               headers.join(','),
-              ...rows.map(row => row.join(','))
+              ...rows.map((row) => row.join(',')),
             ].join('\n');
           }
 
           return sectionResponse;
-          
-        case "applicationStatus":
+
+        case 'applicationStatus':
           const updatedStatuses = [];
           const unmatchedStatusEntries = [];
 
           for (const entry of importData) {
             const email = String(entry.email).trim().toLowerCase();
-            const status = String(entry.status).trim().toUpperCase();
+            const status = String(entry.status).trim().toLowerCase().replace(/\b\w/g, (l) => l.toUpperCase());
 
-            // Find application by email
-            const application = applications.find(app =>
-              (app.applicationInfo?.[0]?.info?.email || '').trim().toLowerCase() === email
+            const application = applications.find(
+              (app) =>
+                (app.applicationInfo?.[0]?.info?.email || '')
+                  .trim()
+                  .toLowerCase() === email,
             );
 
             if (application) {
-              // Update application status
-              await this.applicationsService.update(
-                { id: application.id },
-                { status }
-              );
-              updatedStatuses.push({
-                id: application.id,
-                email,
-                status,
-                firstName: application.applicationInfo[0]?.info?.first_name,
-                lastName: application.applicationInfo[0]?.info?.last_name
-              });
+              try {
+                await this.applicationsService.update(
+                  { id: application.id },
+                  { status },
+                );
+                
+                updatedStatuses.push({
+                  id: application.id,
+                  email,
+                  status,
+                  firstName: application.applicationInfo[0]?.info?.first_name,
+                  lastName: application.applicationInfo[0]?.info?.last_name,
+                });
+              } catch (error) {
+                unmatchedStatusEntries.push({
+                  email,
+                  status,
+                  reason: `Update failed: ${error.message}`,
+                });
+              }
             } else {
               unmatchedStatusEntries.push({
                 email,
                 status,
-                reason: 'No matching application found with this email'
+                reason: 'No matching application found with this email',
               });
             }
           }
@@ -1908,30 +2195,251 @@ export class ApplicationMediator {
           const statusResponse: any = {
             message: 'Application status import completed',
             summary: {
-              totalProcessed: Array.isArray(importData) ? importData.length : Object.keys(importData).length,
+              totalProcessed: Array.isArray(importData)
+                ? importData.length
+                : Object.keys(importData).length,
               successfulUpdates: updatedStatuses.length,
-              failedUpdates: unmatchedStatusEntries.length
+              failedUpdates: unmatchedStatusEntries.length,
             },
             updatedData: updatedStatuses,
-            failedUpdates: unmatchedStatusEntries
+            failedUpdates: unmatchedStatusEntries,
           };
 
           if (unmatchedStatusEntries.length > 0) {
             const headers = ['Email', 'Status', 'Reason', 'Import Date'];
-            const rows = unmatchedStatusEntries.map(entry => [
+            const rows = unmatchedStatusEntries.map((entry) => [
               entry.email,
               entry.status,
               entry.reason,
-              new Date().toISOString()
+              new Date().toISOString(),
             ]);
             statusResponse.failedAttemptsCSV = [
               headers.join(','),
-              ...rows.map(row => row.join(','))
+              ...rows.map((row) => row.join(',')),
             ].join('\n');
           }
 
           return statusResponse;
       }
+    });
+  };
+
+  findApplicationsNew = async (
+    filtersDto: FiltersDto,
+    page = 1,
+    pageSize = 10000000,
+  ) => {
+    return catcher(async () => {
+      const {
+        programId,
+        page: dtoPage,
+        pageSize: dtoPageSize,
+        cycleId,
+        useAllCycles,
+        search,
+        filters,
+        sort,
+      } = filtersDto;
+
+      const currentPage = dtoPage ?? page;
+      const currentPageSize = dtoPageSize ?? pageSize;
+      let latestCycle;
+
+      const options: GlobalEntities[] = [
+        'applicationInfo',
+        'applicationProgram',
+        'applicationUser',
+        'applicationCycle',
+        'applicationProgram',
+        'applicationSection',
+      ];
+
+      const whereConditions: any = {};
+
+      if (programId) {
+        if (!whereConditions.applicationProgram) {
+          whereConditions.applicationProgram = {};
+        }
+        whereConditions.applicationProgram.programId = programId;
+      }
+
+      if (cycleId) {
+        if (!whereConditions.applicationCycle) {
+          whereConditions.applicationCycle = {};
+        }
+        whereConditions.applicationCycle.cycleId = cycleId;
+      } else if (!useAllCycles) {
+        latestCycle = await this.applicationsService.getLatestCycle(programId);
+        if (latestCycle) {
+          if (!whereConditions.applicationCycle) {
+            whereConditions.applicationCycle = {};
+          }
+          whereConditions.applicationCycle.cycleId = latestCycle.id;
+        }
+      }
+
+      const needsFullData = (sort && sort.length > 0) || (filters && filters.length > 0) || (search && search.trim() !== '');
+      
+      let applications, total;
+      
+      if (needsFullData) {
+        [applications, total] = await this.applicationsService.findAndCount(
+          whereConditions,
+          options,
+        );
+      } else {
+        [applications, total] = await this.applicationsService.findAndCount(
+          whereConditions,
+          options,
+          undefined,
+          (currentPage - 1) * currentPageSize,
+          currentPageSize,
+        );
+      }
+
+      throwNotFound({
+        entity: 'applications',
+        errorCheck: !applications,
+      });
+
+      let mappedApplications: ApplicationData[] = applications.map((app) => {
+        const applicationInfo = app.applicationInfo?.[0]?.info;
+        const applicationUser = app.applicationUser?.[0]?.user;
+        const applicationProgram = app.applicationProgram?.[0]?.program;
+        
+        return {
+          id: app.id,
+          sefId: applicationUser?.sef_id,
+          username: applicationUser?.username,
+          email: applicationUser?.email,
+          firstName: applicationInfo?.first_name,
+          lastName: applicationInfo?.last_name,
+          fullName: applicationInfo ? `${applicationInfo.first_name || ''} ${applicationInfo.last_name || ''}`.trim() : '',
+          dob: applicationInfo?.dob,
+          countryOrigin: applicationInfo?.country_origin,
+          countryResidence: applicationInfo?.country_residence,
+          residencyStatus: applicationInfo?.residency_status,
+          educationStatus: applicationInfo?.status,
+          programName: applicationProgram?.program_name,
+          program: applicationProgram?.abbreviation,
+          passedScreening:
+            app.passed_screening === true
+              ? 'Yes'
+              : app.passed_screening === false
+              ? 'No'
+              : '-',
+          screeningEmailSent:
+            app.screening_email_sent === true
+              ? 'Yes'
+              : app.screening_email_sent === false
+              ? 'No'
+              : '-',
+          applicationDate: new Date(app.created_at),
+          eligible:
+            applicationProgram?.abbreviation === 'FCS'
+              ? app.is_eligible
+              : app.is_eligible === true
+              ? 'Yes'
+              : app.is_eligible === false
+              ? 'No'
+              : '-',
+          passedScreeningDate: new Date(app.passed_screening_date),
+          examScore: app.exam_score,
+          passedExam:
+            app.passed_exam === true
+              ? 'Yes'
+              : app.passed_exam === false
+              ? 'No'
+              : '-',
+          passedExamDate: new Date(app.passed_exam_date),
+          passedExamEmailSent:
+            app.passed_exam_email_sent === true
+              ? 'Yes'
+              : app.passed_exam_email_sent === false
+              ? 'No'
+              : '-',
+          techInterviewScore: app.tech_interview_score,
+          softInterviewScore: app.soft_interview_score,
+          passedInterviewDate: new Date(app.passed_interview_date),
+          passedInterview:
+            app.passed_interview === true
+              ? 'Yes'
+              : app.passed_interview === false
+              ? 'No'
+              : '-',
+          applicationStatus: app.status,
+          statusEmailSent:
+            app.status_email_sent === true
+              ? 'Yes'
+              : app.status_email_sent === false
+              ? 'No'
+              : '-',
+          remarks: app.remarks,
+          cycleId: app.applicationCycle?.[0]?.cycleId,
+          cycleName: app.applicationCycle?.[0]?.cycle?.name,
+          paid: app.paid,
+          sectionName: app.applicationSection?.section?.name,
+          userId: app.applicationUser?.[0]?.user_id,
+          infoId: app.applicationInfo?.[0]?.info_id,
+          fcsGraduate:
+            app.fcs_graduate === true
+              ? 'Yes'
+              : app.fcs_graduate === false
+              ? 'No'
+              : '-',
+        };
+      });
+
+      if (search && search.trim()) {
+        const searchTerm = search.toLowerCase().trim();
+        mappedApplications = mappedApplications.filter((app) => {
+          return (
+            app.fullName?.toLowerCase().includes(searchTerm) ||
+            app.email?.toLowerCase().includes(searchTerm) ||
+            app.username?.toLowerCase().includes(searchTerm) ||
+            app.sefId?.toLowerCase().includes(searchTerm) ||
+            app.applicationStatus?.toLowerCase().includes(searchTerm)
+          );
+        });
+      }
+
+      if (filters && filters.length > 0) {
+        mappedApplications = applyFilters(mappedApplications, filters);
+      }
+
+      if (sort && sort.length > 0) {
+        mappedApplications = applySorting(mappedApplications, sort);
+      } else {
+        // Default sorting by application date if no sort criteria provided
+        mappedApplications.sort(
+          (a, b) =>
+            new Date(a.applicationDate).getTime() -
+            new Date(b.applicationDate).getTime(),
+        );
+      }
+
+      // Apply pagination only when we fetched all data
+      let finalApplications, finalTotal;
+      
+      if (needsFullData) {
+        // Apply pagination after sorting and filtering
+        const startIndex = (currentPage - 1) * currentPageSize;
+        const endIndex = startIndex + currentPageSize;
+        finalApplications = mappedApplications.slice(startIndex, endIndex);
+        finalTotal = mappedApplications.length;
+      } else {
+        // No pagination needed - we already have the correct page
+        finalApplications = mappedApplications;
+        finalTotal = total;
+      }
+
+      return {
+        applications: finalApplications,
+        total: finalTotal,
+        page: currentPage,
+        pageSize: currentPageSize,
+        latestCycle,
+      };
     });
   };
 }

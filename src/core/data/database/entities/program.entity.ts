@@ -6,11 +6,15 @@ import {
   BaseEntity,
   OneToMany,
   OneToOne,
+  Index,
 } from 'typeorm';
 import { ApplicationProgram } from '../relations/application-program.entity';
 import { CycleProgram } from '../relations/cycle-program.entity';
 
 @Entity('programs')
+@Index(['id'])
+@Index(['program_name'])
+@Index(['abbreviation'])
 export class Program extends BaseEntity {
   @PrimaryGeneratedColumn()
   id: number;
@@ -45,6 +49,7 @@ export class Program extends BaseEntity {
   @OneToMany(
     () => ApplicationProgram,
     (applicationProgram) => applicationProgram.program,
+    { eager: false }
   )
   applicationProgram: ApplicationProgram[];
 

@@ -44,6 +44,11 @@ export class MailService {
   ) => {
     const uniqueEmails = [...new Set(emails)];
 
+    // Early return if no emails to process
+    if (uniqueEmails.length === 0) {
+      return { results: [], foundEmails: [], notFoundEmails: [] };
+    }
+
     const validatedEmails = await this.usersService.findMany({
       email: In(uniqueEmails),
     });
@@ -57,6 +62,14 @@ export class MailService {
       (email) =>
         !foundEmails.some((validatedEmail) => validatedEmail.email === email),
     );
+
+    // Early return if no valid emails found
+    if (foundEmails.length === 0) {
+      this.logger.warn(
+        `No valid emails found in the database: ${notFoundEmails.join(', ')}`,
+      );
+      return { results: [], foundEmails: [], notFoundEmails };
+    }
 
     const results = await sendBulkEmails(
       this.mailerService,

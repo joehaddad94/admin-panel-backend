@@ -6,6 +6,9 @@ import {
   ValidateNested,
   IsNumber,
   IsString,
+  IsOptional,
+  IsUrl,
+  IsDateString,
 } from 'class-validator';
 import { Type } from 'class-transformer';
 
@@ -36,4 +39,49 @@ export class SendingEmailsDto {
   @ValidateNested({ each: true })
   @Type(() => EmailEntryDto)
   emails: EmailEntryDto[];
+
+  @ApiProperty({
+    type: String,
+    description: 'Optional URL to a file to include as attachment in the email',
+    required: false,
+  })
+  @IsOptional()
+  @IsUrl({}, { message: 'Attachment URL must be a valid URL' })
+  attachmentUrl?: string;
+
+  @ApiProperty({
+    type: String,
+    description: 'Optional URL for submission link',
+    required: false,
+  })
+  @IsOptional()
+  @IsUrl({}, { message: 'Submission URL must be a valid URL' })
+  submissionUrl?: string;
+
+  @ApiProperty({
+    type: String,
+    description: 'Optional interview date and time (ISO 8601 format)',
+    required: false,
+  })
+  @IsOptional()
+  @IsDateString({}, { message: 'Interview date time must be a valid date string' })
+  interviewDateTime?: string;
+
+  @ApiProperty({
+    type: String,
+    description: 'Optional URL for orientation info',
+    required: false,
+  })
+  @IsOptional()
+  @IsString({ message: 'Orientation info must be a valid string' })
+  orientationInfo?: string;
+
+  @ApiProperty({
+    type: String,
+    description: 'Optional submission date and time (ISO 8601 format)',
+    required: false,
+  })
+  @IsOptional()
+  @IsDateString({}, { message: 'Submission date time must be a valid date string' })
+  submissionDateTime?: string;
 }

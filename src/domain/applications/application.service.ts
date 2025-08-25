@@ -65,4 +65,12 @@ export class ApplicationService extends BaseService<
 
     return latestCycle;
   }
+
+  async batchUpdate(updates: Array<{ id: number; data: Partial<Application> }>): Promise<void> {
+    if (updates.length === 0) return;
+
+    const entitiesToUpdate = updates.map(({ id, data }) => ({ id, ...data }));
+
+    await this.applicationRepository.save(...entitiesToUpdate);
+  }
 }
