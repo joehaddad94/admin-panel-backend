@@ -13,6 +13,7 @@ async function bootstrap() {
       origin: [
         'https://sef-admin-panel-development.vercel.app',
         'https://sef-admin-panel.vercel.app',
+        'https://*.sef-hiring-portal.com',
         'http://localhost:3000',
       ],
       methods: 'GET,HEAD,PUT,PATCH,POST,DELETE,OPTIONS',
