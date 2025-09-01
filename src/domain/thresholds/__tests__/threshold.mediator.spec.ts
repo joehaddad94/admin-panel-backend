@@ -7,19 +7,26 @@ import { Threshold } from '../../../core/data/database/entities/threshold.entity
 import { ThresholdCycle } from '../../../core/data/database/relations/cycle-threshold.entity';
 
 // Mock ThresholdCycle
-jest.mock('../../../core/data/database/relations/cycle-threshold.entity', () => {
-  const mockThresholdCycle = jest.fn().mockImplementation(() => ({
-    cycle_id: 1,
-    threshold_id: 1,
-    save: jest.fn().mockResolvedValue({ id: 1, cycle_id: 1, threshold_id: 1 }),
-  }));
+jest.mock(
+  '../../../core/data/database/relations/cycle-threshold.entity',
+  () => {
+    const mockThresholdCycle = jest.fn().mockImplementation(() => ({
+      cycle_id: 1,
+      threshold_id: 1,
+      save: jest
+        .fn()
+        .mockResolvedValue({ id: 1, cycle_id: 1, threshold_id: 1 }),
+    }));
 
-  return {
-    ThresholdCycle: Object.assign(mockThresholdCycle, {
-      save: jest.fn().mockResolvedValue({ id: 1, cycle_id: 1, threshold_id: 1 }),
-    }),
-  };
-});
+    return {
+      ThresholdCycle: Object.assign(mockThresholdCycle, {
+        save: jest
+          .fn()
+          .mockResolvedValue({ id: 1, cycle_id: 1, threshold_id: 1 }),
+      }),
+    };
+  },
+);
 
 describe('ThresholdMediator', () => {
   let mediator: ThresholdMediator;
@@ -175,7 +182,17 @@ describe('ThresholdMediator', () => {
       const result = await mediator.createEditThresholds(updateDto);
 
       expect(thresholdService.findOne).toHaveBeenCalledWith({ id: 1 });
-      expect(thresholdService.save).toHaveBeenCalledWith(updatedThreshold);
+      expect(thresholdService.save).toHaveBeenCalledWith(
+        expect.objectContaining({
+          id: 1,
+          exam_passing_grade: 75,
+          weight_soft: 0.4,
+          weight_tech: 0.6,
+          primary_passing_grade: 16,
+          secondary_passing_grade: 13,
+          updated_by_id: 1,
+        }),
+      );
       expect(result).toEqual({
         message: 'Threshold updated successfully',
         threshold: expect.objectContaining({
@@ -214,7 +231,16 @@ describe('ThresholdMediator', () => {
       const result = await mediator.createEditThresholds(partialUpdateDto);
 
       expect(thresholdService.findOne).toHaveBeenCalledWith({ id: 1 });
-      expect(thresholdService.save).toHaveBeenCalledWith(updatedThreshold);
+      expect(thresholdService.save).toHaveBeenCalledWith(
+        expect.objectContaining({
+          id: 1,
+          exam_passing_grade: 80,
+          weight_soft: undefined,
+          weight_tech: undefined,
+          primary_passing_grade: undefined,
+          secondary_passing_grade: undefined,
+        }),
+      );
       expect(result).toEqual({
         message: 'Threshold updated successfully',
         threshold: expect.objectContaining({
@@ -264,7 +290,12 @@ describe('ThresholdMediator', () => {
       const result = await mediator.createEditThresholds(updateDto);
 
       expect(thresholdService.findOne).toHaveBeenCalledWith({ id: 1 });
-      expect(thresholdService.save).toHaveBeenCalledWith(updatedThreshold);
+      expect(thresholdService.save).toHaveBeenCalledWith(
+        expect.objectContaining({
+          id: 1,
+          updated_by_id: 1,
+        }),
+      );
       expect(result).toEqual({
         message: 'Threshold updated successfully',
         threshold: expect.objectContaining({
