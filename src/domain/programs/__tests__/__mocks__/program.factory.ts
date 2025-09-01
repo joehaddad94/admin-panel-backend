@@ -1,8 +1,8 @@
 import { Program } from '../../../../core/data/database/entities/program.entity';
 
 export class ProgramFactory {
-  static createMockProgram(overrides: Partial<Program> = {}): Program {
-    const defaultProgram: Program = {
+  static createMockProgram(overrides: Partial<Program> = {}): Partial<Program> {
+    const defaultProgram: Partial<Program> = {
       id: 1,
       program_name: 'Test Program',
       abbreviation: 'TP',
@@ -20,18 +20,23 @@ export class ProgramFactory {
     return { ...defaultProgram, ...overrides };
   }
 
-  static createMockProgramList(count: number, overrides: Partial<Program> = {}): Program[] {
+  static createMockProgramList(
+    count: number,
+    overrides: Partial<Program> = {},
+  ): Partial<Program>[] {
     return Array.from({ length: count }, (_, index) =>
       this.createMockProgram({
         id: index + 1,
         program_name: `Test Program ${index + 1}`,
         abbreviation: `TP${index + 1}`,
         ...overrides,
-      })
+      }),
     );
   }
 
-  static createMockProgramWithRelations(overrides: Partial<Program> = {}): Program {
+  static createMockProgramWithRelations(
+    overrides: Partial<Program> = {},
+  ): Partial<Program> {
     return this.createMockProgram({
       applicationProgram: [
         {
@@ -49,7 +54,9 @@ export class ProgramFactory {
     });
   }
 
-  static createMockProgramForCreate(overrides: Partial<Program> = {}): Partial<Program> {
+  static createMockProgramForCreate(
+    overrides: Partial<Program> = {},
+  ): Partial<Program> {
     return {
       program_name: 'New Program',
       abbreviation: 'NP',
@@ -59,7 +66,9 @@ export class ProgramFactory {
     };
   }
 
-  static createMockProgramForUpdate(overrides: Partial<Program> = {}): Partial<Program> {
+  static createMockProgramForUpdate(
+    overrides: Partial<Program> = {},
+  ): Partial<Program> {
     return {
       program_name: 'Updated Program',
       abbreviation: 'UP',
@@ -69,29 +78,35 @@ export class ProgramFactory {
     };
   }
 
-  static createMockProgramWithDifferentNames(): Program[] {
-    const names = ['Computer Science', 'Engineering', 'Business', 'Arts', 'Medicine'];
+  static createMockProgramWithDifferentNames(): Partial<Program>[] {
+    const names = [
+      'Computer Science',
+      'Engineering',
+      'Business',
+      'Arts',
+      'Medicine',
+    ];
     return names.map((name, index) =>
       this.createMockProgram({
         id: index + 1,
         program_name: name,
         abbreviation: name.substring(0, 2).toUpperCase(),
-      })
+      }),
     );
   }
 
-  static createMockProgramWithDifferentAbbreviations(): Program[] {
+  static createMockProgramWithDifferentAbbreviations(): Partial<Program>[] {
     const abbreviations = ['CS', 'ENG', 'BUS', 'ART', 'MED', 'LAW', 'EDU'];
     return abbreviations.map((abbr, index) =>
       this.createMockProgram({
         id: index + 1,
         program_name: `Program ${abbr}`,
         abbreviation: abbr,
-      })
+      }),
     );
   }
 
-  static createMockProgramWithDifferentDescriptions(): Program[] {
+  static createMockProgramWithDifferentDescriptions(): Partial<Program>[] {
     const descriptions = [
       'Computer Science program focusing on software development',
       'Engineering program with mechanical and electrical tracks',
@@ -105,7 +120,7 @@ export class ProgramFactory {
         description: desc,
         program_name: `Program ${index + 1}`,
         abbreviation: `P${index + 1}`,
-      })
+      }),
     );
   }
 
@@ -132,7 +147,7 @@ export class ProgramFactory {
     };
   }
 
-  static createMockProgramWithLongNames(): Program[] {
+  static createMockProgramWithLongNames(): Partial<Program>[] {
     const longNames = [
       'Bachelor of Science in Computer Science and Engineering',
       'Master of Business Administration in International Business',
@@ -144,12 +159,16 @@ export class ProgramFactory {
       this.createMockProgram({
         id: index + 1,
         program_name: name,
-        abbreviation: name.split(' ').map(word => word[0]).join('').substring(0, 5),
-      })
+        abbreviation: name
+          .split(' ')
+          .map((word) => word[0])
+          .join('')
+          .substring(0, 5),
+      }),
     );
   }
 
-  static createMockProgramWithSpecialCharacters(): Program[] {
+  static createMockProgramWithSpecialCharacters(): Partial<Program>[] {
     const specialNames = [
       'Program with Special Characters: @#$%',
       'Program with Numbers 123',
@@ -162,7 +181,7 @@ export class ProgramFactory {
         id: index + 1,
         program_name: name,
         abbreviation: `SP${index + 1}`,
-      })
+      }),
     );
   }
 }

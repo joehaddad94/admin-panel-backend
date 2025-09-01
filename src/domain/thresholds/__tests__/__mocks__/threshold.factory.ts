@@ -2,7 +2,9 @@ import { Threshold } from '../../../../core/data/database/entities/threshold.ent
 import { CreateEditThresholdsDto } from '../../dtos/create-edit.dto';
 
 export class ThresholdFactory {
-  static createMockThreshold(overrides: Partial<Threshold> = {}): Partial<Threshold> {
+  static createMockThreshold(
+    overrides: Partial<Threshold> = {},
+  ): Partial<Threshold> {
     const defaultThreshold: Partial<Threshold> = {
       id: 1,
       exam_passing_grade: 70,
@@ -19,12 +21,16 @@ export class ThresholdFactory {
         id: 1,
         cycle_id: 1,
         threshold_id: 1,
-      },
+        cycle: null,
+        threshold: null,
+      } as any,
     };
     return { ...defaultThreshold, ...overrides };
   }
 
-  static createMockCreateEditThresholdsDto(overrides: Partial<CreateEditThresholdsDto> = {}): CreateEditThresholdsDto {
+  static createMockCreateEditThresholdsDto(
+    overrides: Partial<CreateEditThresholdsDto> = {},
+  ): CreateEditThresholdsDto {
     const defaultDto: CreateEditThresholdsDto = {
       cycleId: 1,
       examPassingGrade: 70,
@@ -104,7 +110,9 @@ export class ThresholdFactory {
     };
   }
 
-  static createMockThresholdResponse(threshold: Partial<Threshold> = this.createMockThreshold()) {
+  static createMockThresholdResponse(
+    threshold: Partial<Threshold> = this.createMockThreshold(),
+  ) {
     return {
       message: 'Threshold created successfully',
       threshold: {
@@ -123,7 +131,9 @@ export class ThresholdFactory {
     };
   }
 
-  static createMockUpdateResponse(threshold: Partial<Threshold> = this.createMockThreshold()) {
+  static createMockUpdateResponse(
+    threshold: Partial<Threshold> = this.createMockThreshold(),
+  ) {
     return {
       message: 'Threshold updated successfully',
       threshold: {
