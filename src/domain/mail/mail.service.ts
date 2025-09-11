@@ -109,4 +109,29 @@ export class MailService {
       );
     }
   }
+
+  async sendReminderEmails(
+    emails: string[],
+    template: string,
+    subject: string,
+    templateVariables?: Record<string, any>,
+  ) {
+    try {
+      const results = await this.mailerService.sendMail({
+        from: '"SE Factory" <noreply@example.com>',
+        to: emails.join(', '),
+        subject,
+        template,
+        context: {
+          ...templateVariables,
+        },
+      });
+
+      this.logger.log(`Reminder emails sent to ${emails.length} recipients`);
+      return { success: true, messageId: results.messageId };
+    } catch (error) {
+      this.logger.error('Failed to send reminder emails', error.stack);
+      throw new Error(`Failed to send reminder emails: ${error.message}`);
+    }
+  }
 }

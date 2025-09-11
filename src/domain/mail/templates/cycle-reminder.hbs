@@ -1,0 +1,247 @@
+<html lang='en'>
+  <head>
+    <meta charset='UTF-8' />
+    <meta name='viewport' content='width=device-width, initial-scale=1.0' />
+    <title>Cycle Date Reminder</title>
+  </head>
+  <body style='display: flex; flex-direction: column'>
+    <table
+      cellspacing='0'
+      border='0'
+      cellpadding='0'
+      width='100%'
+      style="font-family: 'Open Sans', sans-serif; padding: 20px"
+    >
+      <tbody>
+        <tr>
+          <td>
+            <table
+              style='max-width: 670px; margin: 0 auto'
+              width='100%'
+              border='0'
+              align='center'
+              cellpadding='0'
+              cellspacing='0'
+            >
+              <tbody>
+                <tr>
+                  <td style='text-align: right'>
+                    <img
+                      src='https://lh4.googleusercontent.com/lQTJMHhmwIeHWOEWLzT4_7a3a7mMMZdEym_1Y5aud2oWl9h7CGazk_cwC5czoNrXMiU=w2400'
+                      alt='SEF'
+                      style='max-width: 85px; max-height: 85px'
+                      height='85'
+                      width='85'
+                    />
+                  </td>
+                </tr>
+                <tr>
+                  <td style='height: 20px'>&nbsp;</td>
+                </tr>
+                <tr>
+                  <td>
+                    <table
+                      style='background: #1f2937; border-radius: 8px; padding: 0'
+                      width='100%'
+                      border='0'
+                      cellpadding='0'
+                      cellspacing='0'
+                    >
+                      <tbody>
+                        <tr>
+                          <td style='padding: 36px 36px 0 36px'>
+                            <h1
+                              style='
+                                color: #fff;
+                                font-weight: 900;
+                                margin: 0;
+                                font-size: 32px;
+                                text-align: center;
+                              '
+                            >
+                              Cycle Date Reminder
+                            </h1>
+                            <p
+                              style='
+                                color: #d1d5db;
+                                font-size: 18px;
+                                line-height: 26px;
+                                margin: 16px 0 0 0;
+                                text-align: center;
+                              '
+                            >
+                              Action Required -
+                              {{totalCycles}}
+                              cycle(s) need attention
+                            </p>
+                          </td>
+                        </tr>
+                        <tr>
+                          <td style='padding: 24px 36px 36px 36px'>
+                            <div
+                              style='
+                                background: #374151;
+                                border-radius: 8px;
+                                padding: 20px;
+                                margin-bottom: 20px;
+                              '
+                            >
+                              <h2
+                                style='
+                                  color: #fff;
+                                  font-size: 22px;
+                                  margin: 0 0 16px 0;
+                                  font-weight: 600;
+                                '
+                              >
+                                Upcoming Cycle Dates
+                              </h2>
+                              <p
+                                style='
+                                  color: #d1d5db;
+                                  font-size: 16px;
+                                  margin: 0 0 16px 0;
+                                  line-height: 22px;
+                                '
+                              >
+                                The following cycles are approaching end dates
+                                in 2 days. Please review and adjust if
+                                necessary.
+                              </p>
+                            </div>
+
+                            {{#each cycles}}
+                              <div
+                                style='
+                                background: #4b5563;
+                                  border-left: 4px solid #4f46e5;
+                                border-radius: 4px;
+                                padding: 16px;
+                                margin-bottom: 16px;
+                              '
+                              >
+                                <h3
+                                  style='
+                                  color: #fff;
+                                  font-size: 18px;
+                                  margin: 0 0 8px 0;
+                                  font-weight: 600;
+                                '
+                                >
+                                  {{name}}
+                                </h3>
+                                <div
+                                  style='color: #9ca3af; font-size: 16px; line-height: 22px;'
+                                >
+                                  <p style='margin: 4px 0;'>
+                                    <strong>Start Date:</strong>
+                                    {{fromDate}}
+                                    <span
+                                      style='color: #22c55e; font-weight: 600;'
+                                    >
+                                      ({{daysUntilStart}}
+                                      days remaining)
+                                    </span>
+                                  </p>
+                                  <p style='margin: 4px 0;'>
+                                    <strong>End Date:</strong>
+                                    {{toDate}}
+                                    <span
+                                      style='color: #22c55e; font-weight: 600;'
+                                    >
+                                      ({{daysUntilEnd}}
+                                      days remaining)
+                                    </span>
+                                  </p>
+                                </div>
+                              </div>
+                            {{/each}}
+
+                            <div
+                              style='
+                                background: #374151;
+                                border-radius: 8px;
+                                padding: 20px;
+                                text-align: center;
+                                margin-top: 24px;
+                              '
+                            >
+                              <h3
+                                style='
+                                  color: #fff;
+                                  font-size: 20px;
+                                  margin: 0 0 12px 0;
+                                  font-weight: 600;
+                                '
+                              >
+                                Immediate Action Required
+                              </h3>
+                              <p
+                                style='
+                                  color: #d1d5db;
+                                  font-size: 16px;
+                                  margin: 0 0 20px 0;
+                                  line-height: 20px;
+                                '
+                              >
+                                Please log into the admin panel to review and
+                                update these cycle dates if needed.
+                              </p>
+                              <a
+                                href='https://sef-admin-panel.vercel.app/'
+                                style='
+                                  background: #22c55e;
+                                  color: #fff;
+                                  text-decoration: none;
+                                  padding: 14px 28px;
+                                  border-radius: 6px;
+                                  font-weight: 600;
+                                  font-size: 16px;
+                                  display: inline-block;
+                                '
+                              >
+                                Go to the SAS
+                              </a>
+                            </div>
+                          </td>
+                        </tr>
+                      </tbody>
+                    </table>
+                  </td>
+                </tr>
+                <tr>
+                  <td style='height: 20px'>&nbsp;</td>
+                </tr>
+                <tr>
+                  <td
+                    style='
+                      text-align: center;
+                                  color: #d1d5db;
+                      font-size: 14px;
+                      line-height: 18px;
+                    '
+                  >
+                    <p style='margin: 0 0 8px 0;'>
+                      This is an automated reminder from the SAS
+                    </p>
+                    <p style='margin: 0;'>
+                      Reminder sent on
+                      {{reminderDate}}
+                      |
+                      <a
+                        href='{{process.env.ADMIN_PANEL_URL}}'
+                        style='color: #667eea; text-decoration: none;'
+                      >
+                        Admin Panel
+                      </a>
+                    </p>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+  </body>
+</html>
