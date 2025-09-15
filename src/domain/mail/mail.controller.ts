@@ -11,7 +11,7 @@ export class MailController {
   async sendTestEmail(@Body() body: { email: string }) {
     const { email } = body;
 
-    if (!email) {
+    if (!email || !email.trim()) {
       this.logger.error('Email is missing in the request body.');
       return { error: 'Email is required.' };
     }
