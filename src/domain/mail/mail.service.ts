@@ -115,9 +115,10 @@ export class MailService {
     template: string,
     subject: string,
     templateVariables?: Record<string, any>,
+    cc?: string[],
   ) {
     try {
-      const results = await this.mailerService.sendMail({
+      const mailOptions: any = {
         from: '"SE Factory" <noreply@example.com>',
         to: emails.join(', '),
         subject,
@@ -125,9 +126,17 @@ export class MailService {
         context: {
           ...templateVariables,
         },
-      });
+      };
 
-      this.logger.log(`Reminder emails sent to ${emails.length} recipients`);
+      // Add CC if provided
+      if (cc && cc.length > 0) {
+        mailOptions.cc = cc.join(', ');
+      }
+
+      const results = await this.mailerService.sendMail(mailOptions);
+
+      const ccInfo = cc && cc.length > 0 ? ` (CC: ${cc.join(', ')})` : '';
+      this.logger.log(`Reminder emails sent to ${emails.length} recipients${ccInfo}`);
       return { success: true, messageId: results.messageId };
     } catch (error) {
       this.logger.error('Failed to send reminder emails', error.stack);

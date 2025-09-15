@@ -39,61 +39,100 @@ export class CycleReminderService {
   }
 
   /**
-   * Gets cycles that are 2 days away from their to_date
+   * Gets cycles that ended between 2 days ago and today (for reminder notifications)
    */
   private async getUpcomingCycleReminders(): Promise<Cycles[]> {
     const today = new Date();
     const twoDaysFromNow = addDays(today, 2);
 
     // Format dates for database query (YYYY-MM-DD)
+    const todayStr = format(today, 'yyyy-MM-dd');
     const twoDaysFromNowStr = format(twoDaysFromNow, 'yyyy-MM-dd');
 
     const cycles = await this.cycleRepository
       .createQueryBuilder('cycle')
-      .where('cycle.to_date = :twoDaysFromNow', { twoDaysFromNow: twoDaysFromNowStr })
+      .where('cycle.to_date >= :today AND cycle.to_date <= :twoDaysFromNow', { 
+        today: todayStr,
+        twoDaysFromNow: twoDaysFromNowStr
+      })
       .getMany();
 
     return cycles;
   }
 
   /**
-   * Sends reminder emails to all active admins about upcoming cycles
+   * Sends reminder emails to specific admins based on cycle type
    */
   private async sendCycleReminderEmails(cycles: Cycles[]): Promise<void> {
     try {
-      const admins = ['joe@sefactory.io'];
+      // Group cycles by type
+      const fseCycles = cycles.filter(cycle => cycle.code.includes('FSE'));
+      const fcsCycles = cycles.filter(cycle => cycle.code.includes('FCS'));
+      const uixCycles = cycles.filter(cycle => cycle.code.includes('UIX'));
 
-      if (admins.length === 0) {
-        this.logger.warn('No active admins found to send cycle reminders to');
-        return;
+      // Send emails based on cycle types
+      const emailPromises = [];
+
+      // Send FSE cycles to Sarah
+      if (fseCycles.length > 0) {
+        const fseCycleInfo = fseCycles.map((cycle) => ({
+          name: cycle.name,
+          code: cycle.code,
+          fromDate: format(new Date(cycle.from_date), 'MMM dd, yyyy'),
+          toDate: format(new Date(cycle.to_date), 'MMM dd, yyyy'),
+          daysUntilStart: this.calculateDaysUntil(new Date(cycle.from_date)),
+          daysUntilEnd: this.calculateDaysUntil(new Date(cycle.to_date)),
+        }));
+
+        emailPromises.push(
+          this.mailService.sendReminderEmails(
+            ['sarah@sefactory.io'],
+            'cycle-reminder',
+            'FSE Cycle Ended Reminder - Action Required',
+            {
+              cycles: fseCycleInfo,
+              totalCycles: fseCycles.length,
+              reminderDate: format(new Date(), 'MMM dd, yyyy'),
+              cycleType: 'FSE',
+            },
+            ['joe@sefactory.io'] // CC Joe
+          )
+        );
       }
 
-      const adminEmails = admins.map((admin) => admin);
+      // Send FCS and UIX cycles to Maria
+      const fcsUixCycles = [...fcsCycles, ...uixCycles];
+      if (fcsUixCycles.length > 0) {
+        const fcsUixCycleInfo = fcsUixCycles.map((cycle) => ({
+          name: cycle.name,
+          code: cycle.code,
+          fromDate: format(new Date(cycle.from_date), 'MMM dd, yyyy'),
+          toDate: format(new Date(cycle.to_date), 'MMM dd, yyyy'),
+          daysUntilStart: this.calculateDaysUntil(new Date(cycle.from_date)),
+          daysUntilEnd: this.calculateDaysUntil(new Date(cycle.to_date)),
+        }));
 
-      // Prepare cycle information for the email
-      const cycleInfo = cycles.map((cycle) => ({
-        name: cycle.name,
-        code: cycle.code,
-        fromDate: format(new Date(cycle.from_date), 'MMM dd, yyyy'),
-        toDate: format(new Date(cycle.to_date), 'MMM dd, yyyy'),
-        daysUntilStart: this.calculateDaysUntil(new Date(cycle.from_date)),
-        daysUntilEnd: this.calculateDaysUntil(new Date(cycle.to_date)),
-      }));
+        emailPromises.push(
+          this.mailService.sendReminderEmails(
+            ['maria@sefactory.io'],
+            'cycle-reminder',
+            'FCS/UIX Cycle Ended Reminder - Action Required',
+            {
+              cycles: fcsUixCycleInfo,
+              totalCycles: fcsUixCycles.length,
+              reminderDate: format(new Date(), 'MMM dd, yyyy'),
+              cycleType: 'FCS/UIX',
+            },
+            ['joe@sefactory.io'] // CC Joe
+          )
+        );
+      }
 
-      // Send bulk email to all admins
-      await this.mailService.sendReminderEmails(
-        adminEmails,
-        'cycle-reminder',
-        'Cycle Date Reminder - Action Required',
-        {
-          cycles: cycleInfo,
-          totalCycles: cycles.length,
-          reminderDate: format(new Date(), 'MMM dd, yyyy'),
-        },
-      );
+      // Wait for all emails to be sent
+      await Promise.all(emailPromises);
 
       this.logger.log(
-        `Cycle reminder emails sent to ${adminEmails.length} admins`,
+        `Cycle reminder emails sent: ${fseCycles.length} FSE cycles to Sarah, ${fcsUixCycles.length} FCS/UIX cycles to Maria, CC'd Joe on all emails`,
       );
     } catch (error) {
       this.logger.error('Error sending cycle reminder emails:', error);

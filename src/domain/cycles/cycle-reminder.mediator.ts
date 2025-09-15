@@ -1,7 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { CycleReminderService } from './cycle-reminder.service';
 import { catcher } from 'src/core/helpers/operation';
-import { Cycles } from '../../core/data/database/entities/cycle.entity';
 
 @Injectable()
 export class CycleReminderMediator {
