@@ -39,7 +39,7 @@ export class CycleReminderService {
   }
 
   /**
-   * Gets cycles that are 2 days away from their from_date or to_date
+   * Gets cycles that are 2 days away from their to_date
    */
   private async getUpcomingCycleReminders(): Promise<Cycles[]> {
     const today = new Date();
@@ -50,10 +50,7 @@ export class CycleReminderService {
 
     const cycles = await this.cycleRepository
       .createQueryBuilder('cycle')
-      .where(
-        '(cycle.from_date = :twoDaysFromNow OR cycle.to_date = :twoDaysFromNow)',
-        { twoDaysFromNow: twoDaysFromNowStr },
-      )
+      .where('cycle.to_date = :twoDaysFromNow', { twoDaysFromNow: twoDaysFromNowStr })
       .getMany();
 
     return cycles;
