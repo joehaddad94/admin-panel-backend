@@ -1,0 +1,33 @@
+{
+  "moduleFileExtensions": ["js", "json", "ts"],
+  "rootDir": "..",
+  "testRegex": ".*\\.spec\\.ts$",
+  "transform": {
+    "^.+\\.(t|j)s$": "ts-jest"
+  },
+  "collectCoverageFrom": [
+    "src/**/*.(t|j)s",
+    "!src/**/*.spec.ts",
+    "!src/**/__tests__/**",
+    "!src/**/__mocks__/**",
+    "!**/node_modules/**",
+    "!**/dist/**",
+    "!**/coverage/**"
+  ],
+  "coverageDirectory": "./coverage",
+  "coverageReporters": ["text", "lcov", "html"],
+  "testEnvironment": "node",
+  "setupFilesAfterEnv": [],
+  "moduleNameMapper": {
+    "^src/(.*)$": "<rootDir>/src/$1"
+  },
+  "moduleDirectories": ["node_modules", "src"],
+  "testPathIgnorePatterns": [
+    "/node_modules/",
+    "/dist/",
+    "/coverage/"
+  ],
+  "collectCoverage": false,
+  "verbose": true,
+  "testTimeout": 10000
+}

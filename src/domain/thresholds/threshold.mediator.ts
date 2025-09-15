@@ -1,10 +1,10 @@
 import { Injectable } from '@nestjs/common';
 import { ThresholdService } from './threshold.service';
 import { CreateEditThresholdsDto } from './dtos/create-edit.dto';
-import { catcher } from 'src/core/helpers/operation';
-import { Threshold } from 'src/core/data/database/entities/threshold.entity';
-import { ThresholdCycle } from 'src/core/data/database/relations/cycle-threshold.entity';
-import { convertToCamelCase } from 'src/core/helpers/camelCase';
+import { catcher } from '../../core/helpers/operation';
+import { Threshold } from '../../core/data/database/entities/threshold.entity';
+import { ThresholdCycle } from '../../core/data/database/relations/cycle-threshold.entity';
+import { convertToCamelCase } from '../../core/helpers/camelCase';
 import { ApplicationService } from '../applications/application.service';
 
 @Injectable()

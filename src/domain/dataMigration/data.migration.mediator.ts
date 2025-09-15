@@ -21,10 +21,7 @@ export class DataMigrationMediator {
       });
 
       if (rawData.length <= 1) {
-        throw new HttpException(
-          'Source file is empty or has no valid data',
-          HttpStatus.BAD_REQUEST,
-        );
+        throw new Error('Source file is empty or has no valid data');
       }
 
       const headers = rawData[0] as string[];
@@ -38,10 +35,7 @@ export class DataMigrationMediator {
         narrativeIndex === -1 ||
         amountIndex === -1
       ) {
-        throw new HttpException(
-          'Required headers not found in the source file',
-          HttpStatus.BAD_REQUEST,
-        );
+        throw new Error('Required headers not found in the source file');
       }
 
       const formattedData = [];
@@ -111,10 +105,7 @@ export class DataMigrationMediator {
       });
 
       if (rawData.length === 0) {
-        throw new HttpException(
-          'Source file is empty or has no valid data',
-          HttpStatus.BAD_REQUEST,
-        );
+        throw new Error('Source file is empty or has no valid data');
       }
 
       const headers = rawData[0] as string[];
@@ -130,10 +121,7 @@ export class DataMigrationMediator {
         debitIndex === -1 ||
         creditIndex === -1
       ) {
-        throw new HttpException(
-          'Required headers not found in the source file',
-          HttpStatus.BAD_REQUEST,
-        );
+        throw new Error('Required headers not found in the source file');
       }
 
       const formattedData = [];
