@@ -18,7 +18,9 @@ export class CycleReminderService {
     private readonly mailService: MailService,
   ) {}
 
-  @Cron(CronExpression.EVERY_DAY_AT_9AM)
+  @Cron('0 9 * * *', {
+    timeZone: 'Asia/Beirut'
+  })
   async checkCycleDateReminders() {
     // Only run in production environment
     if (process.env.NODE_ENV !== 'production') {
