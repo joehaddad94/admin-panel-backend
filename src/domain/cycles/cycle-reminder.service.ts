@@ -15,12 +15,19 @@ export class CycleReminderService {
     @InjectRepository(Cycles)
     private readonly cycleRepository: Repository<Cycles>,
     @InjectRepository(Admin)
-    private readonly adminRepository: Repository<Admin>,
     private readonly mailService: MailService,
   ) {}
 
-  @Cron(CronExpression.EVERY_DAY_AT_9AM)
+  @Cron('0 9 * * *', {
+    timeZone: 'Asia/Beirut'
+  })
   async checkCycleDateReminders() {
+    // Only run in production environment
+    if (process.env.NODE_ENV !== 'production') {
+      this.logger.log('Skipping cycle reminder check - not in production environment');
+      return;
+    }
+
     this.logger.log('Starting cycle date reminder check...');
 
     try {
