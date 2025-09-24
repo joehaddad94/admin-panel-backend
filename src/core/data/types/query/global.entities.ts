@@ -17,4 +17,5 @@ export type GlobalEntities =
   | 'thresholdCycle'
   | 'sectionCycle'
   | 'applicationMicrocamp'
-  | 'applicationSection';
+  | 'applicationSection'
+  | 'templateAdmin';

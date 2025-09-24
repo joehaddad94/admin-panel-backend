@@ -7,9 +7,10 @@ import { TemplateController } from './template.controller';
 import { TemplateMediator } from './template.mediator';
 import { TemplateService } from './template.service';
 import { JwtStrategy } from '../auth/jwt.strategy';
+import { AuthModule } from '../auth';
 
 @Module({
-  imports: [TypeOrmModule.forFeature([Templates])],
+  imports: [TypeOrmModule.forFeature([Templates]), AuthModule],
   controllers: [TemplateController],
   providers: [
     TemplateRepository,
