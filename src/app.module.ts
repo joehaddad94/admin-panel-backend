@@ -26,6 +26,7 @@ import { MicrocampModule } from './domain/microcamp/microcamp.module';
 import { MicrocampApplicationModule } from './domain/microcampApplications/microcamp-applications.module';
 import { StatisticsModule } from './domain/statistics/statistics.module';
 import { PerformanceModule } from './domain/performance/performance.module';
+import { TemplateModule } from './domain/templates/template.module';
 
 @Module({
   imports: [
@@ -60,6 +61,7 @@ import { PerformanceModule } from './domain/performance/performance.module';
     MicrocampApplicationModule,
     StatisticsModule,
     PerformanceModule,
+    TemplateModule,
   ],
   controllers: [AppController],
   providers: [AppService],
