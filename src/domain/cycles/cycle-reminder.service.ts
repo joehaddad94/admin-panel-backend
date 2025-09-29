@@ -14,7 +14,6 @@ export class CycleReminderService {
   constructor(
     @InjectRepository(Cycles)
     private readonly cycleRepository: Repository<Cycles>,
-    @InjectRepository(Admin)
     private readonly mailService: MailService,
   ) {}
 

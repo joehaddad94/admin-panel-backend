@@ -11,10 +11,12 @@ import {
   GetTemplatesDto,
 } from './dtos/templateFilters.dto';
 import { Templates } from 'src/core/data/database/entities/template.entity';
+import { TestSendEmailTemplateDto } from './dtos/testSendEmailTemplate.dto';
+import { MailService } from '../mail/mail.service';
 
 @Injectable()
 export class TemplateMediator {
-  constructor(private readonly templateService: TemplateService) {}
+  constructor(private readonly templateService: TemplateService, private readonly mailService: MailService) {}
 
   findTemplates = async (
     filters: GetTemplatesDto,
@@ -193,6 +195,27 @@ export class TemplateMediator {
       };
 
       return convertToCamelCase(flattenedTemplate);
+    });
+  };
+
+  testSendEmailTemplate = async (data: TestSendEmailTemplateDto) => {
+    return catcher(async () => {
+      const { templateId, emails } = data;
+
+      const template = await this.templateService.findOne({ id: templateId }, [
+        'templateAdmin',
+      ]);
+      
+      throwNotFound({
+        entity: 'template',
+        errorCheck: !template,
+      });
+
+      let templateSubject = "Testing Temaplate"
+
+      const response = await this.mailService.sendEmails(emails, template.name, templateSubject, template.design_json);
+
+      return response;
     });
   };
 }

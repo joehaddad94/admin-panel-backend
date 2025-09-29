@@ -16,6 +16,7 @@ import {
   DeleteTemplatesDto,
   GetTemplatesDto,
 } from './dtos/templateFilters.dto';
+import { TestSendEmailTemplateDto } from './dtos/testSendEmailTemplate.dto';
 
 @ApiTags('templates')
 @Controller('templates')
@@ -44,5 +45,11 @@ export class TemplateController {
   @UsePipes(new ValidationPipe({ whitelist: true }))
   async deleteTemplates(@Body() data: DeleteTemplatesDto) {
     return this.mediator.deleteTemplates(data);
+  }
+
+  @Post('test-send-email-template')
+  @UsePipes(new ValidationPipe({ whitelist: true }))
+  testSendEmailTemplate(@Body() data: TestSendEmailTemplateDto) {
+    return this.mediator.testSendEmailTemplate(data);
   }
 }

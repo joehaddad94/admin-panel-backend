@@ -8,9 +8,10 @@ import { TemplateMediator } from './template.mediator';
 import { TemplateService } from './template.service';
 import { JwtStrategy } from '../auth/jwt.strategy';
 import { AuthModule } from '../auth';
+import { MailModule } from '../mail/mail.module';
 
 @Module({
-  imports: [TypeOrmModule.forFeature([Templates]), AuthModule],
+  imports: [TypeOrmModule.forFeature([Templates]), AuthModule, MailModule],
   controllers: [TemplateController],
   providers: [
     TemplateRepository,

@@ -1,6 +1,5 @@
 import { MiddlewareConsumer, Module, NestModule } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
-import { ScheduleModule } from '@nestjs/schedule';
 import { Cycles } from 'src/core/data/database/entities/cycle.entity';
 import { Admin } from 'src/core/data/database/entities/admin.entity';
 import { CycleController } from './cycle.controller';
@@ -19,7 +18,6 @@ import { MailModule } from '../mail/mail.module';
 @Module({
   imports: [
     TypeOrmModule.forFeature([Cycles, Admin, CycleRepository]),
-    ScheduleModule.forRoot(),
     AuthModule,
     ProgramModule,
     MailModule,
