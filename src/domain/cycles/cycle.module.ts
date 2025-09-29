@@ -1,6 +1,5 @@
 import { MiddlewareConsumer, Module, NestModule } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
-import { ScheduleModule } from '@nestjs/schedule';
 import { Cycles } from 'src/core/data/database/entities/cycle.entity';
 import { Admin } from 'src/core/data/database/entities/admin.entity';
 import { CycleController } from './cycle.controller';
@@ -15,14 +14,14 @@ import AuthMiddleware from '../../core/settings/middlewares/auth.middleware';
 import { AuthModule } from '../auth';
 import { ProgramModule } from '../programs/program.module';
 import { MailModule } from '../mail/mail.module';
+import { forwardRef } from '@nestjs/common';
 
 @Module({
   imports: [
     TypeOrmModule.forFeature([Cycles, Admin, CycleRepository]),
-    ScheduleModule.forRoot(),
     AuthModule,
     ProgramModule,
-    MailModule,
+    forwardRef(() => MailModule),
   ],
   controllers: [CycleController, CycleReminderController],
   providers: [
