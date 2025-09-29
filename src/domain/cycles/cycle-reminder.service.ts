@@ -14,17 +14,27 @@ export class CycleReminderService {
   constructor(
     @InjectRepository(Cycles)
     private readonly cycleRepository: Repository<Cycles>,
-    @InjectRepository(Admin)
     private readonly mailService: MailService,
-  ) {}
+  ) {
+    this.logger.log('CycleReminderService initialized');
+    this.logger.log(`MailService type: ${typeof mailService}`);
+    this.logger.log(`MailService methods: ${Object.getOwnPropertyNames(Object.getPrototypeOf(mailService))}`);
+  }
 
   @Cron('0 9 * * *', {
     timeZone: 'Asia/Beirut'
   })
   async checkCycleDateReminders() {
+    const nodeEnv = process.env.NODE_ENV;
+    const currentTime = new Date().toISOString();
+    const beirutTime = new Date().toLocaleString('en-US', { timeZone: 'Asia/Beirut' });
+    
+    this.logger.log(`Cron job triggered at UTC: ${currentTime}, NODE_ENV: ${nodeEnv}`);
+    this.logger.log(`Current Beirut time: ${beirutTime}`);
+
     // Only run in production environment
-    if (process.env.NODE_ENV !== 'production') {
-      this.logger.log('Skipping cycle reminder check - not in production environment');
+    if (nodeEnv !== 'production') {
+      this.logger.log(`Skipping cycle reminder check - not in production environment (current: ${nodeEnv})`);
       return;
     }
 
@@ -32,16 +42,35 @@ export class CycleReminderService {
 
     try {
       const reminders = await this.getUpcomingCycleReminders();
+      this.logger.log(`Found ${reminders.length} cycles for reminder processing`);
 
       if (reminders.length === 0) {
         this.logger.log('No cycle reminders needed today');
         return;
       }
 
+      // Log details about found cycles
+      reminders.forEach((cycle, index) => {
+        this.logger.log(`Cycle ${index + 1}: ${cycle.name} (${cycle.code}) - Ends: ${cycle.to_date}`);
+      });
+
+      // Check if mailService is available
+      if (!this.mailService) {
+        this.logger.error('MailService is not available');
+        return;
+      }
+
+      if (typeof this.mailService.sendReminderEmails !== 'function') {
+        this.logger.error('sendReminderEmails method is not available on MailService');
+        this.logger.error(`Available methods: ${Object.getOwnPropertyNames(Object.getPrototypeOf(this.mailService))}`);
+        return;
+      }
+
       await this.sendCycleReminderEmails(reminders);
-      this.logger.log(`Sent ${reminders.length} cycle reminder emails`);
+      this.logger.log(`Successfully sent ${reminders.length} cycle reminder emails`);
     } catch (error) {
       this.logger.error('Error checking cycle date reminders:', error);
+      this.logger.error(`Full error details: ${JSON.stringify(error)}`);
     }
   }
 
@@ -56,6 +85,8 @@ export class CycleReminderService {
     const todayStr = format(today, 'yyyy-MM-dd');
     const twoDaysFromNowStr = format(twoDaysFromNow, 'yyyy-MM-dd');
 
+    this.logger.log(`Querying cycles ending between ${todayStr} and ${twoDaysFromNowStr}`);
+
     const cycles = await this.cycleRepository
       .createQueryBuilder('cycle')
       .where('cycle.to_date >= :today AND cycle.to_date <= :twoDaysFromNow', { 
@@ -64,6 +95,7 @@ export class CycleReminderService {
       })
       .getMany();
 
+    this.logger.log(`Query returned ${cycles.length} cycles`);
     return cycles;
   }
 
