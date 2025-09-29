@@ -26,6 +26,7 @@ import { MicrocampModule } from './domain/microcamp/microcamp.module';
 import { MicrocampApplicationModule } from './domain/microcampApplications/microcamp-applications.module';
 import { StatisticsModule } from './domain/statistics/statistics.module';
 import { PerformanceModule } from './domain/performance/performance.module';
+import { ScheduleModule } from '@nestjs/schedule';
 
 @Module({
   imports: [
@@ -34,6 +35,7 @@ import { PerformanceModule } from './domain/performance/performance.module';
       envFilePath: enivroment,
     }),
     TypeOrmModule.forRoot(dataSourceOptions),
+    ScheduleModule.forRoot(),
     JwtModule.register({
       global: true,
       secret: process.env.JWT_SECRET,
