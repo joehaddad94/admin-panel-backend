@@ -2,11 +2,11 @@ import { ApiProperty } from '@nestjs/swagger';
 import {
   IsNotEmpty,
   IsEmail,
-  IsInt,
   ArrayMinSize,
   ValidateNested,
+  IsNumber,
 } from 'class-validator';
-import { Type } from 'class-transformer';
+import { Transform, Type } from 'class-transformer';
 
 class ExamScore {
   @ApiProperty()
@@ -14,7 +14,8 @@ class ExamScore {
   email: string;
 
   @ApiProperty()
-  @IsInt({ message: 'Score must be an integer' })
+  @Transform(({ value }) => Number(value))
+  @IsNumber({}, { message: 'Score must be an number' })
   score: number;
 }
 
