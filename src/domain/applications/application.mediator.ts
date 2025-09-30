@@ -42,7 +42,11 @@ import { ApplicationProgram } from 'src/core/data/database/relations/application
 import { InformationService } from '../information/information.service';
 import { ImportDataDto } from './dtos/Import.data.dto';
 import { SectionService } from '../sections/section.service';
-import { applyFilters, applySorting, ApplicationData } from '../../core/helpers/filter-sort.helper';
+import {
+  applyFilters,
+  applySorting,
+  ApplicationData,
+} from '../../core/helpers/filter-sort.helper';
 
 @Injectable()
 export class ApplicationMediator {
@@ -62,11 +66,11 @@ export class ApplicationMediator {
   private getCachedCycleData(cycleId: number): any | null {
     const cacheKey = `cycle_${cycleId}`;
     const cached = this.cycleCache.get(cacheKey);
-    
-    if (cached && (Date.now() - cached.timestamp) < this.CACHE_DURATION) {
+
+    if (cached && Date.now() - cached.timestamp < this.CACHE_DURATION) {
       return cached.data;
     }
-    
+
     return null;
   }
 
@@ -142,7 +146,7 @@ export class ApplicationMediator {
         const applicationInfo = app.applicationInfo?.[0]?.info;
         const applicationUser = app.applicationUser?.[0]?.user;
         const applicationProgram = app.applicationProgram?.[0]?.program;
-        
+
         return {
           id: app.id,
           sefId: applicationUser?.sef_id,
@@ -150,7 +154,11 @@ export class ApplicationMediator {
           email: applicationUser?.email,
           firstName: applicationInfo?.first_name,
           lastName: applicationInfo?.last_name,
-          fullName: applicationInfo ? `${applicationInfo.first_name || ''} ${applicationInfo.last_name || ''}`.trim() : '',
+          fullName: applicationInfo
+            ? `${applicationInfo.first_name || ''} ${
+                applicationInfo.last_name || ''
+              }`.trim()
+            : '',
           dob: applicationInfo?.dob,
           countryOrigin: applicationInfo?.country_origin,
           countryResidence: applicationInfo?.country_residence,
@@ -878,7 +886,17 @@ export class ApplicationMediator {
 
   rowEditApplications = async (data: RowEditApplicationsDto) => {
     return catcher(async () => {
-      const { ids, isEligible, examScore, techInterviewScore, softInterviewScore, paid, inputCycleId, applicationStatus, cycleId } = data;
+      const {
+        ids,
+        isEligible,
+        examScore,
+        techInterviewScore,
+        softInterviewScore,
+        paid,
+        inputCycleId,
+        applicationStatus,
+        cycleId,
+      } = data;
       const idsArray = Array.isArray(ids) ? ids : [ids];
 
       const updateData: any = {};
@@ -888,11 +906,12 @@ export class ApplicationMediator {
       let passedInterviewDate: Date | undefined;
       let thresholdCycle: any = null;
 
-      const needsCycleData = (examScore !== undefined && examScore !== null) || 
-                           (techInterviewScore !== undefined && techInterviewScore !== null) ||
-                           (softInterviewScore !== undefined && softInterviewScore !== null);
-      
-      const hasApplicationUpdates = 
+      const needsCycleData =
+        (examScore !== undefined && examScore !== null) ||
+        (techInterviewScore !== undefined && techInterviewScore !== null) ||
+        (softInterviewScore !== undefined && softInterviewScore !== null);
+
+      const hasApplicationUpdates =
         (isEligible !== undefined && isEligible !== null) ||
         (paid !== undefined && paid !== null) ||
         (examScore !== undefined && examScore !== null) ||
@@ -903,12 +922,15 @@ export class ApplicationMediator {
       // Fetch cycle data once if needed
       if (needsCycleData) {
         if (!cycleId) {
-          throwError('Cycle ID is required when updating scores', HttpStatus.BAD_REQUEST);
+          throwError(
+            'Cycle ID is required when updating scores',
+            HttpStatus.BAD_REQUEST,
+          );
         }
 
         // Try to get cached cycle data first
         let cycle = this.getCachedCycleData(cycleId);
-        
+
         if (!cycle) {
           // Cache miss - fetch from database
           const options: GlobalEntities[] = ['thresholdCycle'];
@@ -956,9 +978,10 @@ export class ApplicationMediator {
       }
 
       // Handle interview scores - can handle single scores by fetching missing score from DB
-      if ((techInterviewScore !== undefined && techInterviewScore !== null) || 
-          (softInterviewScore !== undefined && softInterviewScore !== null)) {
-        
+      if (
+        (techInterviewScore !== undefined && techInterviewScore !== null) ||
+        (softInterviewScore !== undefined && softInterviewScore !== null)
+      ) {
         // Update individual scores first
         if (techInterviewScore !== undefined && techInterviewScore !== null) {
           updateData.tech_interview_score = techInterviewScore;
@@ -970,9 +993,12 @@ export class ApplicationMediator {
         // Process each application individually for interview scores
         for (const applicationId of idsArray) {
           console.log(`=== Processing application ${applicationId} ===`);
-          
+
           const individualUpdateData = { ...updateData };
-          console.log('Initial individualUpdateData:', JSON.stringify(individualUpdateData, null, 2));
+          console.log(
+            'Initial individualUpdateData:',
+            JSON.stringify(individualUpdateData, null, 2),
+          );
 
           // Update individual scores first
           if (techInterviewScore !== undefined && techInterviewScore !== null) {
@@ -990,26 +1016,33 @@ export class ApplicationMediator {
             {
               weightTech: thresholdCycle.threshold.weight_tech,
               weightSoft: thresholdCycle.threshold.weight_soft,
-              primaryPassingGrade: thresholdCycle.threshold.primary_passing_grade,
-              secondaryPassingGrade: thresholdCycle.threshold.secondary_passing_grade,
-            }
+              primaryPassingGrade:
+                thresholdCycle.threshold.primary_passing_grade,
+              secondaryPassingGrade:
+                thresholdCycle.threshold.secondary_passing_grade,
+            },
           );
 
           passedInterview = result.passedInterview;
           passedInterviewDate = result.passedInterviewDate;
           individualUpdateData.passed_interview = passedInterview;
           individualUpdateData.passed_interview_date = new Date();
-          
+
           // Only calculate status based on interview if applicationStatus is not provided
           if (applicationStatus === undefined || applicationStatus === null) {
-            individualUpdateData.status = passedInterview ? Status.ACCEPTED : Status.REJECTED;
+            individualUpdateData.status = passedInterview
+              ? Status.ACCEPTED
+              : Status.REJECTED;
           } else {
             // Use the provided applicationStatus
             individualUpdateData.status = applicationStatus;
           }
-          
+
           // Update this specific application
-          const updateResult = await Application.update({ id: applicationId }, individualUpdateData);
+          const updateResult = await Application.update(
+            { id: applicationId },
+            individualUpdateData,
+          );
         }
       } else if (hasApplicationUpdates) {
         // If no interview scores to process, update all applications with the same data
@@ -1026,30 +1059,71 @@ export class ApplicationMediator {
       // Generate response payload based on whether interview scores were processed
       let updatedPayload;
 
-      if ((techInterviewScore !== undefined && techInterviewScore !== null) ||
-          (softInterviewScore !== undefined && softInterviewScore !== null)) {
+      if (
+        (techInterviewScore !== undefined && techInterviewScore !== null) ||
+        (softInterviewScore !== undefined && softInterviewScore !== null)
+      ) {
         // For interview scores, each application might have different results
         // We need to fetch the updated applications to get the actual results
-        const updatedApplications = await Application.find({ where: { id: In(idsArray) } });
-        
-        const applicationsMap = new Map(updatedApplications.map(app => [app.id, app]));
+        const updatedApplications = await Application.find({
+          where: { id: In(idsArray) },
+        });
+
+        const applicationsMap = new Map(
+          updatedApplications.map((app) => [app.id, app]),
+        );
 
         updatedPayload = idsArray.map((id) => {
           const application = applicationsMap.get(id);
           const payload = {
             id,
             paid: paid !== undefined && paid !== null ? paid : undefined,
-            eligible: isEligible !== undefined && isEligible !== null ? isEligible : undefined,
-            examScore: examScore !== undefined && examScore !== null ? examScore : undefined,
-            passedExam: passedExam !== undefined && passedExam !== null ? passedExam === true ? 'Yes' : 'No' : undefined,
-            passedExamDate: passedExamDate !== undefined && passedExamDate !== null ? passedExamDate : undefined,
-            techInterviewScore: techInterviewScore !== undefined && techInterviewScore !== null ? techInterviewScore : undefined,
-            softInterviewScore: softInterviewScore !== undefined && softInterviewScore !== null ? softInterviewScore : undefined,
-            passedInterview: application?.passed_interview !== undefined && application?.passed_interview !== null ? application.passed_interview === true ? 'Yes' : 'No' : undefined,
-            passedInterviewDate: application?.passed_interview_date !== undefined && application?.passed_interview_date !== null ? application.passed_interview_date : undefined,
+            eligible:
+              isEligible !== undefined && isEligible !== null
+                ? isEligible
+                : undefined,
+            examScore:
+              examScore !== undefined && examScore !== null
+                ? examScore
+                : undefined,
+            passedExam:
+              passedExam !== undefined && passedExam !== null
+                ? passedExam === true
+                  ? 'Yes'
+                  : 'No'
+                : undefined,
+            passedExamDate:
+              passedExamDate !== undefined && passedExamDate !== null
+                ? passedExamDate
+                : undefined,
+            techInterviewScore:
+              techInterviewScore !== undefined && techInterviewScore !== null
+                ? techInterviewScore
+                : undefined,
+            softInterviewScore:
+              softInterviewScore !== undefined && softInterviewScore !== null
+                ? softInterviewScore
+                : undefined,
+            passedInterview:
+              application?.passed_interview !== undefined &&
+              application?.passed_interview !== null
+                ? application.passed_interview === true
+                  ? 'Yes'
+                  : 'No'
+                : undefined,
+            passedInterviewDate:
+              application?.passed_interview_date !== undefined &&
+              application?.passed_interview_date !== null
+                ? application.passed_interview_date
+                : undefined,
             cycleId: inputCycleId,
-            applicationStatus: applicationStatus !== undefined && applicationStatus !== null ? applicationStatus :
-                             (application?.status !== undefined && application?.status !== null) ? application.status : undefined,
+            applicationStatus:
+              applicationStatus !== undefined && applicationStatus !== null
+                ? applicationStatus
+                : application?.status !== undefined &&
+                  application?.status !== null
+                ? application.status
+                : undefined,
           };
           return payload;
         });
@@ -1058,21 +1132,55 @@ export class ApplicationMediator {
         updatedPayload = idsArray.map((id) => ({
           id,
           paid: paid !== undefined && paid !== null ? paid : undefined,
-          eligible: isEligible !== undefined && isEligible !== null ? isEligible : undefined,
-          examScore: examScore !== undefined && examScore !== null ? examScore : undefined,
-          passedExam: passedExam !== undefined && passedExam !== null ? passedExam === true ? 'Yes' : 'No' : undefined,
-          passedExamDate: passedExamDate !== undefined && passedExamDate !== null ? passedExamDate : undefined,
-          techInterviewScore: techInterviewScore !== undefined && techInterviewScore !== null ? techInterviewScore : undefined,
-          softInterviewScore: softInterviewScore !== undefined && softInterviewScore !== null ? softInterviewScore : undefined,
-          passedInterview: passedInterview !== undefined && passedInterview !== null ? passedInterview === true ? 'Yes' : 'No' : undefined,
-          passedInterviewDate: passedInterviewDate !== undefined && passedInterviewDate !== null ? passedInterviewDate : undefined,
+          eligible:
+            isEligible !== undefined && isEligible !== null
+              ? isEligible
+              : undefined,
+          examScore:
+            examScore !== undefined && examScore !== null
+              ? examScore
+              : undefined,
+          passedExam:
+            passedExam !== undefined && passedExam !== null
+              ? passedExam === true
+                ? 'Yes'
+                : 'No'
+              : undefined,
+          passedExamDate:
+            passedExamDate !== undefined && passedExamDate !== null
+              ? passedExamDate
+              : undefined,
+          techInterviewScore:
+            techInterviewScore !== undefined && techInterviewScore !== null
+              ? techInterviewScore
+              : undefined,
+          softInterviewScore:
+            softInterviewScore !== undefined && softInterviewScore !== null
+              ? softInterviewScore
+              : undefined,
+          passedInterview:
+            passedInterview !== undefined && passedInterview !== null
+              ? passedInterview === true
+                ? 'Yes'
+                : 'No'
+              : undefined,
+          passedInterviewDate:
+            passedInterviewDate !== undefined && passedInterviewDate !== null
+              ? passedInterviewDate
+              : undefined,
           cycleId: inputCycleId,
-          applicationStatus: applicationStatus !== undefined && applicationStatus !== null ? applicationStatus : undefined,
+          applicationStatus:
+            applicationStatus !== undefined && applicationStatus !== null
+              ? applicationStatus
+              : undefined,
         }));
       }
 
       return {
-        message: idsArray.length > 1 ? 'Applications updated successfully' : 'Application updated successfully',
+        message:
+          idsArray.length > 1
+            ? 'Applications updated successfully'
+            : 'Application updated successfully',
         updatedPayload,
       };
     });
@@ -1211,22 +1319,26 @@ export class ApplicationMediator {
           programConfig.getTemplateVariables(decisionDate);
 
         emailPromises.push(
-          this.mailService.sendEmails(
-            eligibleEmailsToSend,
-            programConfig.templates.eligible.name,
-            programConfig.templates.eligible.subject,
-            templateVariables,
-          ).then((response) => ({ type: 'eligible', response }))
+          this.mailService
+            .sendEmails(
+              eligibleEmailsToSend,
+              programConfig.templates.eligible.name,
+              programConfig.templates.eligible.subject,
+              templateVariables,
+            )
+            .then((response) => ({ type: 'eligible', response })),
         );
       }
 
       if (ineligibleEmailsToSend.length > 0) {
         emailPromises.push(
-          this.mailService.sendEmails(
-            ineligibleEmailsToSend,
-            programConfig.templates.ineligible.name,
-            programConfig.templates.ineligible.subject,
-          ).then((response) => ({ type: 'ineligible', response }))
+          this.mailService
+            .sendEmails(
+              ineligibleEmailsToSend,
+              programConfig.templates.ineligible.name,
+              programConfig.templates.ineligible.subject,
+            )
+            .then((response) => ({ type: 'ineligible', response })),
         );
       }
 
@@ -1331,15 +1443,22 @@ export class ApplicationMediator {
       const applicationsMap = new Map();
 
       applicationsByCycle.forEach((app) => {
-        const email = app.applicationInfo[0].info.email;
-        if (!applicationsMap.has(email)) {
-          applicationsMap.set(email, []);
+        // Check if applicationInfo exists and has data
+        if (
+          app.applicationInfo &&
+          app.applicationInfo[0] &&
+          app.applicationInfo[0].info
+        ) {
+          const email = app.applicationInfo[0].info.email;
+          if (!applicationsMap.has(email)) {
+            applicationsMap.set(email, []);
+          }
+          applicationsMap.get(email).push({
+            id: app.id,
+            passed_screening: app.passed_screening,
+            screening_email_sent: app.screening_email_sent,
+          });
         }
-        applicationsMap.get(email).push({
-          id: app.id,
-          passed_screening: app.passed_screening,
-          screening_email_sent: app.screening_email_sent,
-        });
       });
 
       const updateResults = await Promise.all(
@@ -1538,7 +1657,8 @@ export class ApplicationMediator {
   };
 
   sendPassedExamEmails = async (data: SendingEmailsDto) => {
-    const { cycleId, emails, attachmentUrl, submissionUrl, interviewDateTime } = data;
+    const { cycleId, emails, attachmentUrl, submissionUrl, interviewDateTime } =
+      data;
 
     const applicationIds = emails.map((entry) => entry.ids);
     const uniqueEmails = emails.map((entry) => entry.emails);
@@ -1575,7 +1695,8 @@ export class ApplicationMediator {
     }
 
     for (const requiredField of programConfig.requiredFields) {
-      const fieldValue = currentCycle.decisionDateCycle?.decisionDate?.[requiredField.field];
+      const fieldValue =
+        currentCycle.decisionDateCycle?.decisionDate?.[requiredField.field];
       if (!fieldValue) {
         throwError(requiredField.message, HttpStatus.BAD_REQUEST);
       }
@@ -1610,7 +1731,12 @@ export class ApplicationMediator {
 
     // Create separate template variables for passed and failed emails
     const passedTemplateVariables = {
-      ...programConfig.getTemplateVariables(interviewMeetLink, attachmentUrl, submissionUrl, interviewDateTime),
+      ...programConfig.getTemplateVariables(
+        interviewMeetLink,
+        attachmentUrl,
+        submissionUrl,
+        interviewDateTime,
+      ),
     };
 
     const failedTemplateVariables = {
@@ -2153,7 +2279,10 @@ export class ApplicationMediator {
 
           for (const entry of importData) {
             const email = String(entry.email).trim().toLowerCase();
-            const status = String(entry.status).trim().toLowerCase().replace(/\b\w/g, (l) => l.toUpperCase());
+            const status = String(entry.status)
+              .trim()
+              .toLowerCase()
+              .replace(/\b\w/g, (l) => l.toUpperCase());
 
             const application = applications.find(
               (app) =>
@@ -2168,7 +2297,7 @@ export class ApplicationMediator {
                   { id: application.id },
                   { status },
                 );
-                
+
                 updatedStatuses.push({
                   id: application.id,
                   email,
@@ -2220,6 +2349,50 @@ export class ApplicationMediator {
           }
 
           return statusResponse;
+
+        case 'examScores':
+          const examScoresData = importData.map((entry) => ({
+            email: entry.email,
+            score: (entry as any).score,
+          }));
+
+          const result = await this.importExamScores({
+            cycleId,
+            examScores: examScoresData,
+          });
+
+          const examScoreResponse: any = {
+            message: 'Exam scores import completed',
+            summary: {
+              totalProcessed: importData.length,
+              successfulUpdates: result.updatedData?.length || 0,
+              failedUpdates: result.warnings?.length || 0,
+            },
+            updatedData: result.updatedData || [],
+            failedUpdates: result.warnings || [],
+          };
+
+          if (result.warnings && result.warnings.length > 0) {
+            const headers = ['Email', 'Score', 'Reason', 'Import Date'];
+            const rows = result.warnings.map((warning: any) => [
+              warning.email || '',
+              warning.score || '',
+              warning.status || 'Unknown error',
+              new Date().toISOString(),
+            ]);
+            examScoreResponse.failedAttemptsCSV = [
+              headers.join(','),
+              ...rows.map((row) => row.join(',')),
+            ].join('\n');
+          }
+
+          return examScoreResponse;
+
+        default:
+          throwError(
+            `Unsupported import type: ${importType}`,
+            HttpStatus.BAD_REQUEST,
+          );
       }
     });
   };
@@ -2278,10 +2451,13 @@ export class ApplicationMediator {
         }
       }
 
-      const needsFullData = (sort && sort.length > 0) || (filters && filters.length > 0) || (search && search.trim() !== '');
-      
+      const needsFullData =
+        (sort && sort.length > 0) ||
+        (filters && filters.length > 0) ||
+        (search && search.trim() !== '');
+
       let applications, total;
-      
+
       if (needsFullData) {
         [applications, total] = await this.applicationsService.findAndCount(
           whereConditions,
@@ -2306,7 +2482,7 @@ export class ApplicationMediator {
         const applicationInfo = app.applicationInfo?.[0]?.info;
         const applicationUser = app.applicationUser?.[0]?.user;
         const applicationProgram = app.applicationProgram?.[0]?.program;
-        
+
         return {
           id: app.id,
           sefId: applicationUser?.sef_id,
@@ -2314,7 +2490,11 @@ export class ApplicationMediator {
           email: applicationUser?.email,
           firstName: applicationInfo?.first_name,
           lastName: applicationInfo?.last_name,
-          fullName: applicationInfo ? `${applicationInfo.first_name || ''} ${applicationInfo.last_name || ''}`.trim() : '',
+          fullName: applicationInfo
+            ? `${applicationInfo.first_name || ''} ${
+                applicationInfo.last_name || ''
+              }`.trim()
+            : '',
           dob: applicationInfo?.dob,
           countryOrigin: applicationInfo?.country_origin,
           countryResidence: applicationInfo?.country_residence,
@@ -2420,7 +2600,7 @@ export class ApplicationMediator {
 
       // Apply pagination only when we fetched all data
       let finalApplications, finalTotal;
-      
+
       if (needsFullData) {
         // Apply pagination after sorting and filtering
         const startIndex = (currentPage - 1) * currentPageSize;
