@@ -43,7 +43,8 @@ export function formatExamDate(date: Date): { format1: string; format2: string }
   );
 
   const endTime = new Date(date);
-  endTime.setHours(endTime.getHours() + 3);
+  // endTime.setHours(endTime.getHours() + 3);
+  endTime.setHours(endTime.getHours() + 1);
   const formattedEndTime = new Intl.DateTimeFormat('en-US', timeOptions).format(
     endTime,
   );
