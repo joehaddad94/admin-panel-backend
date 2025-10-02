@@ -1,6 +1,7 @@
 import { MiddlewareConsumer, Module, NestModule } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { Templates } from 'src/core/data/database/entities/template.entity';
+import { TemplateProgram } from 'src/core/data/database/relations/template-program.entity';
 import AuthMiddleware from 'src/core/settings/middlewares/auth.middleware';
 import { TemplateRepository } from './template.repository';
 import { TemplateController } from './template.controller';
@@ -12,7 +13,7 @@ import { MailModule } from '../mail/mail.module';
 import { ProgramModule } from '../programs/program.module';
 
 @Module({
-  imports: [TypeOrmModule.forFeature([Templates]), AuthModule, MailModule, ProgramModule],
+  imports: [TypeOrmModule.forFeature([Templates, TemplateProgram]), AuthModule, MailModule, ProgramModule],
   controllers: [TemplateController],
   providers: [
     TemplateRepository,

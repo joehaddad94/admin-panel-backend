@@ -110,14 +110,7 @@ export class TemplateMediator {
 
         template = (await this.templateService.save(template)) as Templates;
 
-        // Handle cycle relationship for updates
         if (programId) {
-          const program = await this.programService.findOne({ id: programId });
-          if (!program) {
-            throw new Error('Program with the provided ID does not exist.');
-          }
-
-          // Check if relationship already exists
           const existingTemplateProgram = await TemplateProgram.findOne({
             where: { template_id: template.id, program_id: programId }
           });
@@ -137,7 +130,6 @@ export class TemplateMediator {
 
         successMessage = 'Template successfully updated';
       } else {
-        // Create new template
         const existingTemplate = await this.templateService.findOne({
           name: name,
         });
@@ -163,15 +155,9 @@ export class TemplateMediator {
           throw new Error('Template could not be created');
         }
 
-        // Handle cycle relationship for new templates
         if (programId) {
-          const program = await this.programService.findOne({ id: programId });
-          if (!program) {
-            throw new Error('Program with the provided ID does not exist.');
-          }
-
           const templateProgram = new TemplateProgram();
-            templateProgram.template_id = template.id;
+          templateProgram.template_id = template.id;
           templateProgram.program_id = programId;
           await templateProgram.save();
 
