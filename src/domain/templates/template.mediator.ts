@@ -246,9 +246,15 @@ export class TemplateMediator {
         errorCheck: !template,
       });
 
-      let templateSubject = "Testing Temaplate"
+      let templateSubject = "Testing Template"
 
-      const response = await this.mailService.sendEmails(emails, template.name, templateSubject, template.design_json);
+
+      const response = await this.mailService.sendTestEmailWithTemplate(
+        emails, 
+        template.name, 
+        templateSubject, 
+        template.html_content
+      );
 
       return response;
     });
