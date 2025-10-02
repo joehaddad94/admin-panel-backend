@@ -6,6 +6,7 @@ import {
   PrimaryGeneratedColumn,
 } from 'typeorm';
 import { TemplateAdmin } from '../relations/template-admin.entity';
+import { TemplateProgram } from '../relations/template-program.entity';
 
 @Entity('templates')
 export class Templates extends BaseEntity {
@@ -38,4 +39,7 @@ export class Templates extends BaseEntity {
 
   @OneToMany(() => TemplateAdmin, (templateAdmin) => templateAdmin.template)
   templateAdmin: TemplateAdmin[];
+
+  @OneToMany(() => TemplateProgram, (templateProgram) => templateProgram.template)
+  templateProgram: TemplateProgram[];
 }

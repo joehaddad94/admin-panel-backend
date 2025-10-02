@@ -24,7 +24,7 @@ export class TemplateController {
   constructor(private readonly mediator: TemplateMediator) {}
 
   @Get()
-  @UsePipes(new ValidationPipe({ whitelist: true }))
+  @UsePipes(new ValidationPipe({ whitelist: true, transform: true }))
   getTemplates(@Query() filters: GetTemplatesDto) {
     return this.mediator.findTemplates(filters);
   }

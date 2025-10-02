@@ -18,4 +18,5 @@ export type GlobalEntities =
   | 'sectionCycle'
   | 'applicationMicrocamp'
   | 'applicationSection'
-  | 'templateAdmin';
+  | 'templateAdmin'
+  | 'templateProgram';

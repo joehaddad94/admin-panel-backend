@@ -10,6 +10,7 @@ import {
 } from 'typeorm';
 import { ApplicationProgram } from '../relations/application-program.entity';
 import { CycleProgram } from '../relations/cycle-program.entity';
+import { TemplateProgram } from '../relations/template-program.entity';
 
 @Entity('programs')
 @Index(['id'])
@@ -55,4 +56,7 @@ export class Program extends BaseEntity {
 
   @OneToOne(() => CycleProgram, (cycleProgram) => cycleProgram.program)
   cycleProgram: CycleProgram;
+
+  @OneToMany(() => TemplateProgram, (templateProgram) => templateProgram.program)
+  templateProgram: TemplateProgram[];
 }

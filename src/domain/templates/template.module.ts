@@ -9,9 +9,10 @@ import { TemplateService } from './template.service';
 import { JwtStrategy } from '../auth/jwt.strategy';
 import { AuthModule } from '../auth';
 import { MailModule } from '../mail/mail.module';
+import { ProgramModule } from '../programs/program.module';
 
 @Module({
-  imports: [TypeOrmModule.forFeature([Templates]), AuthModule, MailModule],
+  imports: [TypeOrmModule.forFeature([Templates]), AuthModule, MailModule, ProgramModule],
   controllers: [TemplateController],
   providers: [
     TemplateRepository,

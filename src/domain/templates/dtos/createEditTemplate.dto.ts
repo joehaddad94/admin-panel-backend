@@ -39,4 +39,9 @@ export class CreateEditTemplateDto {
   @IsOptional()
   @IsNumber()
   updatedById?: number;
+
+  @ApiProperty({ required: false })
+  @IsOptional()
+  @IsNumber()
+  programId?: number;
 }

@@ -13,10 +13,16 @@ import {
 import { Templates } from 'src/core/data/database/entities/template.entity';
 import { TestSendEmailTemplateDto } from './dtos/testSendEmailTemplate.dto';
 import { MailService } from '../mail/mail.service';
+import { TemplateProgram } from 'src/core/data/database/relations/template-program.entity';
+import { ProgramService } from '../programs/program.service';
 
 @Injectable()
 export class TemplateMediator {
-  constructor(private readonly templateService: TemplateService, private readonly mailService: MailService) {}
+  constructor(
+    private readonly templateService: TemplateService, 
+    private readonly mailService: MailService,
+    private readonly programService: ProgramService,
+  ) {}
 
   findTemplates = async (
     filters: GetTemplatesDto,
@@ -27,7 +33,7 @@ export class TemplateMediator {
       const skip = (page - 1) * pageSize;
       const take = pageSize;
 
-      const templateOptions: GlobalEntities[] = ['templateAdmin'];
+      const templateOptions: GlobalEntities[] = ['templateAdmin', 'templateProgram'];
 
       let where: any = {};
 
@@ -37,6 +43,10 @@ export class TemplateMediator {
 
       if (filters.isActive !== undefined) {
         where.is_active = filters.isActive === 'true';
+      }
+
+      if (filters.programId) {
+        where.templateProgram = { program_id: filters.programId };
       }
 
       const [found, total] = await this.templateService.findAndCount(
@@ -72,6 +82,7 @@ export class TemplateMediator {
         isActive = true,
         createdById,
         updatedById,
+        programId,  
       } = data;
 
       let template: Templates;
@@ -83,6 +94,7 @@ export class TemplateMediator {
         // Update existing template
         template = await this.templateService.findOne({ id: templateId }, [
           'templateAdmin',
+          'templateProgram',
         ]);
 
         if (!template) {
@@ -96,10 +108,31 @@ export class TemplateMediator {
         template.updated_at = new Date();
         template.updated_by_id = updatedById || template.updated_by_id;
 
-        await this.templateService.save(template);
+        template = (await this.templateService.save(template)) as Templates;
+
+        // Handle cycle relationship for updates
+        if (programId) {
+          const program = await this.programService.findOne({ id: programId });
+          if (!program) {
+            throw new Error('Program with the provided ID does not exist.');
+          }
+
+          // Check if relationship already exists
+          const existingTemplateProgram = await TemplateProgram.findOne({
+            where: { template_id: template.id, program_id: programId }
+          });
+
+          if (!existingTemplateProgram) {
+            const templateProgram = new TemplateProgram();
+            templateProgram.template_id = template.id;
+            templateProgram.program_id = programId;
+            await templateProgram.save();
+          }
+        }
+
         savedTemplate = await this.templateService.findOne(
           { id: template.id },
-          ['templateAdmin'],
+          ['templateAdmin', 'templateProgram'],
         );
 
         successMessage = 'Template successfully updated';
@@ -130,17 +163,33 @@ export class TemplateMediator {
           throw new Error('Template could not be created');
         }
 
+        // Handle cycle relationship for new templates
+        if (programId) {
+          const program = await this.programService.findOne({ id: programId });
+          if (!program) {
+            throw new Error('Program with the provided ID does not exist.');
+          }
+
+          const templateProgram = new TemplateProgram();
+            templateProgram.template_id = template.id;
+          templateProgram.program_id = programId;
+          await templateProgram.save();
+
+          template.templateProgram = [templateProgram];
+        }
+
         successMessage = 'Template created successfully';
 
         savedTemplate = await this.templateService.findOne(
           { id: template.id },
-          ['templateAdmin'],
+          ['templateAdmin', 'templateProgram'],
         );
       }
 
       flattenedTemplate = {
         ...savedTemplate,
         adminCount: savedTemplate.templateAdmin?.length || 0,
+        programCount: savedTemplate.templateProgram?.length || 0,
       };
 
       flattenedTemplate = convertToCamelCase(flattenedTemplate);
