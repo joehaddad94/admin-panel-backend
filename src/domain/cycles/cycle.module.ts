@@ -14,13 +14,14 @@ import AuthMiddleware from '../../core/settings/middlewares/auth.middleware';
 import { AuthModule } from '../auth';
 import { ProgramModule } from '../programs/program.module';
 import { MailModule } from '../mail/mail.module';
+import { forwardRef } from '@nestjs/common';
 
 @Module({
   imports: [
     TypeOrmModule.forFeature([Cycles, Admin, CycleRepository]),
     AuthModule,
     ProgramModule,
-    MailModule,
+    forwardRef(() => MailModule),
   ],
   controllers: [CycleController, CycleReminderController],
   providers: [
