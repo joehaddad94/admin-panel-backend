@@ -44,7 +44,6 @@ export class MailService {
   ) => {
     const uniqueEmails = [...new Set(emails)];
 
-    // Early return if no emails to process
     if (uniqueEmails.length === 0) {
       return { results: [], foundEmails: [], notFoundEmails: [] };
     }
@@ -110,6 +109,63 @@ export class MailService {
     }
   }
 
+  async sendTestEmailWithTemplate(
+    emails: string[],
+    templateName: string,
+    subject: string,
+    htmlContent: string,
+  ) {
+    const uniqueEmails = [...new Set(emails)];
+
+    if (uniqueEmails.length === 0) {
+      return { results: [], foundEmails: [], notFoundEmails: [] };
+    }
+
+    const validatedEmails = await this.usersService.findMany({
+      email: In(uniqueEmails),
+    });
+
+    const foundEmails = validatedEmails.map((validatedEmail) => ({
+      email: validatedEmail.email,
+      name: `${validatedEmail.first_name} ${validatedEmail.last_name}`,
+    }));
+
+    const notFoundEmails = uniqueEmails.filter(
+      (email) =>
+        !foundEmails.some((validatedEmail) => validatedEmail.email === email),
+    );
+
+    if (foundEmails.length === 0) {
+      this.logger.warn(
+        `No valid emails found in the database: ${notFoundEmails.join(', ')}`,
+      );
+      return { results: [], foundEmails: [], notFoundEmails };
+    }
+
+    try {
+      const mailOptions: any = {
+        from: '"SE Factory" <noreply@example.com>',
+        to: 'selection@sefactory.io',
+        cc: 'charbeld@sefactory.io, imadh@sefactory.io',
+        bcc: foundEmails.map(({ email }) => email),
+        subject: `${subject} - ${templateName}`,
+        html: htmlContent,
+      };
+
+      const result = await this.mailerService.sendMail(mailOptions);
+
+      this.logger.log(`Bulk test template email sent with BCC to ${foundEmails.length} recipients: ${result.messageId}`);
+      
+      const results = foundEmails.map(({ email }) => ({ email, result: 'sent' }));
+      
+      return { results, foundEmails, notFoundEmails };
+    } catch (error) {
+      this.logger.error('Failed to send bulk test template email', error.stack);
+      const results = foundEmails.map(({ email }) => ({ email, error: error.message }));
+      return { results, foundEmails, notFoundEmails };
+    }
+  }
+
   async sendReminderEmails(
     emails: string[],
     template: string,
@@ -128,7 +184,6 @@ export class MailService {
         },
       };
 
-      // Add CC if provided
       if (cc && cc.length > 0) {
         mailOptions.cc = cc.join(', ');
       }

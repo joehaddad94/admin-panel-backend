@@ -1,0 +1,262 @@
+import { Injectable } from '@nestjs/common';
+import { TemplateService } from './template.service';
+import { catcher } from 'src/core/helpers/operation';
+import { throwNotFound } from 'src/core/settings/base/errors/errors';
+import { GlobalEntities } from 'src/core/data/types';
+import { convertToCamelCase } from 'src/core/helpers/camelCase';
+import { In, Like } from 'typeorm';
+import { CreateEditTemplateDto } from './dtos/createEditTemplate.dto';
+import {
+  DeleteTemplatesDto,
+  GetTemplatesDto,
+} from './dtos/templateFilters.dto';
+import { Templates } from 'src/core/data/database/entities/template.entity';
+import { TestSendEmailTemplateDto } from './dtos/testSendEmailTemplate.dto';
+import { MailService } from '../mail/mail.service';
+import { TemplateProgram } from 'src/core/data/database/relations/template-program.entity';
+import { ProgramService } from '../programs/program.service';
+
+@Injectable()
+export class TemplateMediator {
+  constructor(
+    private readonly templateService: TemplateService, 
+    private readonly mailService: MailService,
+    private readonly programService: ProgramService,
+  ) {}
+
+  findTemplates = async (
+    filters: GetTemplatesDto,
+    page = 1,
+    pageSize = 100000000,
+  ) => {
+    return catcher(async () => {
+      const skip = (page - 1) * pageSize;
+      const take = pageSize;
+
+      const templateOptions: GlobalEntities[] = ['templateAdmin', 'templateProgram'];
+
+      let where: any = {};
+
+      if (filters.search) {
+        where.name = Like(`%${filters.search}%`);
+      }
+
+      if (filters.isActive !== undefined) {
+        where.is_active = filters.isActive === 'true';
+      }
+
+      if (filters.programId) {
+        where.templateProgram = { program_id: filters.programId };
+      }
+
+      const [found, total] = await this.templateService.findAndCount(
+        where,
+        templateOptions,
+        undefined,
+        skip,
+        take,
+      );
+
+      throwNotFound({
+        entity: 'templates',
+        errorCheck: !found,
+      });
+
+      let templates = found.map((template) => ({
+        ...template,
+        adminCount: template.templateAdmin?.length || 0,
+      }));
+
+      templates = convertToCamelCase(templates);
+      return { templates, total };
+    });
+  };
+
+  createEditTemplate = async (data: CreateEditTemplateDto) => {
+    return catcher(async () => {
+      const {
+        templateId,
+        name,
+        designJson,
+        htmlContent,
+        isActive = true,
+        createdById,
+        updatedById,
+        programId,  
+      } = data;
+
+      let template: Templates;
+      let savedTemplate: Templates;
+      let flattenedTemplate: any;
+      let successMessage: string;
+
+      if (templateId) {
+        // Update existing template
+        template = await this.templateService.findOne({ id: templateId }, [
+          'templateAdmin',
+          'templateProgram',
+        ]);
+
+        if (!template) {
+          throwNotFound({ entity: 'template', errorCheck: !template });
+        }
+
+        template.name = name;
+        template.design_json = designJson as any;
+        template.html_content = htmlContent;
+        template.is_active = isActive;
+        template.updated_at = new Date();
+        template.updated_by_id = updatedById || template.updated_by_id;
+
+        template = (await this.templateService.save(template)) as Templates;
+
+        if (programId) {
+          const existingTemplateProgram = await TemplateProgram.findOne({
+            where: { template_id: template.id, program_id: programId }
+          });
+
+          if (!existingTemplateProgram) {
+            const templateProgram = new TemplateProgram();
+            templateProgram.template_id = template.id;
+            templateProgram.program_id = programId;
+            await templateProgram.save();
+          }
+        }
+
+        savedTemplate = await this.templateService.findOne(
+          { id: template.id },
+          ['templateAdmin', 'templateProgram'],
+        );
+
+        successMessage = 'Template successfully updated';
+      } else {
+        const existingTemplate = await this.templateService.findOne({
+          name: name,
+        });
+
+        if (existingTemplate) {
+          throw new Error('Template name must be unique.');
+        }
+
+        template = this.templateService.create({
+          name: name,
+          design_json: designJson as any,
+          html_content: htmlContent,
+          is_active: isActive,
+          created_at: new Date(),
+          updated_at: new Date(),
+          created_by_id: createdById || 1, // Default to admin ID 1 if not provided
+          updated_by_id: updatedById || createdById || 1,
+        });
+
+        template = (await this.templateService.save(template)) as Templates;
+
+        if (!template || !template.id) {
+          throw new Error('Template could not be created');
+        }
+
+        if (programId) {
+          const templateProgram = new TemplateProgram();
+          templateProgram.template_id = template.id;
+          templateProgram.program_id = programId;
+          await templateProgram.save();
+
+          template.templateProgram = [templateProgram];
+        }
+
+        successMessage = 'Template created successfully';
+
+        savedTemplate = await this.templateService.findOne(
+          { id: template.id },
+          ['templateAdmin', 'templateProgram'],
+        );
+      }
+
+      flattenedTemplate = {
+        ...savedTemplate,
+        adminCount: savedTemplate.templateAdmin?.length || 0,
+        programCount: savedTemplate.templateProgram?.length || 0,
+      };
+
+      flattenedTemplate = convertToCamelCase(flattenedTemplate);
+      return {
+        message: successMessage,
+        template: flattenedTemplate,
+      };
+    });
+  };
+
+  deleteTemplates = async (data: DeleteTemplatesDto) => {
+    return catcher(async () => {
+      const { templateIds } = data;
+
+      const templateOptions: GlobalEntities[] = ['templateAdmin'];
+
+      const templates = await this.templateService.findMany(
+        { id: In(templateIds) },
+        templateOptions,
+      );
+
+      throwNotFound({
+        entity: 'templates',
+        errorCheck: !templates,
+      });
+
+      const templateIdsToDelete = templates.map((template) => template.id);
+
+      await this.templateService.delete({ id: In(templateIdsToDelete) });
+
+      return {
+        message: 'Template(s) successfully deleted',
+        deletedIds: templateIdsToDelete,
+      };
+    });
+  };
+
+  getTemplateById = async (id: number) => {
+    return catcher(async () => {
+      const template = await this.templateService.findOne({ id }, [
+        'templateAdmin',
+      ]);
+
+      throwNotFound({
+        entity: 'template',
+        errorCheck: !template,
+      });
+
+      const flattenedTemplate = {
+        ...template,
+        adminCount: template.templateAdmin?.length || 0,
+      };
+
+      return convertToCamelCase(flattenedTemplate);
+    });
+  };
+
+  testSendEmailTemplate = async (data: TestSendEmailTemplateDto) => {
+    return catcher(async () => {
+      const { templateId, emails } = data;
+
+      const template = await this.templateService.findOne({ id: templateId }, [
+        'templateAdmin',
+      ]);
+      
+      throwNotFound({
+        entity: 'template',
+        errorCheck: !template,
+      });
+
+      let templateSubject = "Testing Template"
+
+
+      const response = await this.mailService.sendTestEmailWithTemplate(
+        emails, 
+        template.name, 
+        templateSubject, 
+        template.html_content
+      );
+
+      return response;
+    });
+  };
+}
