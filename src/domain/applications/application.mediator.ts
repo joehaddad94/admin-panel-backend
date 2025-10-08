@@ -1414,9 +1414,15 @@ export class ApplicationMediator {
     const { cycleId, examScores } = data;
 
     try {
-      const cycle = await this.cyclesService.findOne({ id: cycleId }, [
-        'thresholdCycle',
-      ]);
+      // Use cached cycle data if available
+      let cycle = this.getCachedCycleData(cycleId);
+      if (!cycle) {
+        cycle = await this.cyclesService.findOne({ id: cycleId }, [
+          'thresholdCycle',
+        ]);
+        // Cache the cycle data
+        this.setCachedCycleData(cycleId, cycle);
+      }
 
       if (!cycle) {
         throwError('Cycle not found.', HttpStatus.BAD_REQUEST);
@@ -1461,57 +1467,75 @@ export class ApplicationMediator {
         }
       });
 
-      const updateResults = await Promise.all(
-        examScores.map(async ({ email, score }) => {
-          const applications = applicationsMap.get(email);
+      // Process all exam scores and prepare batch updates
+      const batchUpdates = [];
+      const updateResults = [];
 
-          if (!applications || applications.length === 0) {
-            return { email, score, status: 'Email not found' };
-          }
+      for (const { email, score } of examScores) {
+        const applications = applicationsMap.get(email);
 
-          if (applications.length > 1) {
-            Logger.warn(
-              `Multiple applications found for email: ${email}. Using the most recent.`,
-            );
+        if (!applications || applications.length === 0) {
+          updateResults.push({ email, score, status: 'Email not found' });
+          continue;
+        }
 
-            applications.sort((a, b) => {
-              const dateA = new Date(a.created_at).getTime() || 0;
-              const dateB = new Date(b.created_at).getTime() || 0;
-              return dateB - dateA;
-            });
-          }
+        if (applications.length > 1) {
+          Logger.warn(
+            `Multiple applications found for email: ${email}. Using the most recent.`,
+          );
 
-          const application = applications[0];
+          applications.sort((a, b) => {
+            const dateA = new Date(a.created_at).getTime() || 0;
+            const dateB = new Date(b.created_at).getTime() || 0;
+            return dateB - dateA;
+          });
+        }
 
-          if (
-            application.passed_screening &&
-            application.screening_email_sent
-          ) {
-            const passed_exam =
-              score >= cycle.thresholdCycle.threshold.exam_passing_grade;
-            const passed_exam_date = new Date();
+        const application = applications[0];
 
-            await this.applicationsService.update(
-              { id: application.id },
+        if (
+          application.passed_screening &&
+          application.screening_email_sent
+        ) {
+          const passed_exam =
+            score >= cycle.thresholdCycle.threshold.exam_passing_grade;
+          const passed_exam_date = new Date();
+
+          // Add to batch updates instead of individual update
+          batchUpdates.push({
+            id: application.id,
+            exam_score: score,
+            passed_exam,
+            passed_exam_date,
+          });
+
+          updateResults.push({
+            id: application.id,
+            email,
+            examScore: score,
+            passedExam: passed_exam ? 'Yes' : 'No',
+            passed_exam_date,
+          });
+        } else {
+          updateResults.push({ email, score, status: 'Application not eligible for exam update' });
+        }
+      }
+
+      // Execute batch updates if any
+      if (batchUpdates.length > 0) {
+        await Promise.all(
+          batchUpdates.map(update => 
+            this.applicationsService.update(
+              { id: update.id },
               {
-                exam_score: score,
-                passed_exam,
-                passed_exam_date,
-              },
-            );
-
-            return {
-              id: application.id,
-              email,
-              examScore: score,
-              passedExam: passed_exam ? 'Yes' : 'No',
-              passed_exam_date,
-            };
-          }
-
-          return { email, score, status: 'Application not eligible for exam update' };
-        }),
-      );
+                exam_score: update.exam_score,
+                passed_exam: update.passed_exam,
+                passed_exam_date: update.passed_exam_date,
+              }
+            )
+          )
+        );
+      }
 
       let updatedData = updateResults.filter((result) => result !== null);
       updatedData = convertToCamelCase(updatedData);
@@ -2113,12 +2137,16 @@ export class ApplicationMediator {
     return catcher(async () => {
       const { cycleId, importType, data: importData } = data;
 
-      const applications = await this.applicationsService.findMany(
-        {
-          applicationCycle: { cycleId },
-        },
-        ['applicationCycle', 'applicationSection', 'applicationInfo'],
-      );
+      // Only load applications if needed for the import type
+      let applications = null;
+      if (importType === 'paid') {
+        applications = await this.applicationsService.findMany(
+          {
+            applicationCycle: { cycleId },
+          },
+          ['applicationCycle', 'applicationSection', 'applicationInfo'],
+        );
+      }
 
       function normalizePhone(phone: string): string {
         return phone.replace(/[^0-9]/g, '').replace(/^0+/, '');
@@ -2128,26 +2156,35 @@ export class ApplicationMediator {
         case 'paid':
           const updatedApplications = [];
           const unmatchedEntries = [];
+          const batchUpdates = [];
+
+          // Pre-process applications into a phone map for faster lookup
+          const phoneMap = new Map();
+          applications.forEach((app) => {
+            const dbPhone = normalizePhone(
+              app.applicationInfo?.[0]?.info?.mobile || '',
+            );
+            if (dbPhone) {
+              phoneMap.set(dbPhone, app);
+            }
+          });
 
           for (const entry of importData) {
             const phoneNumber = String(entry.phone);
             const paidStatus = entry.paid;
             const normalizedPhone = normalizePhone(phoneNumber);
 
-            const application = applications.find((app) => {
-              const dbPhone = normalizePhone(
-                app.applicationInfo?.[0]?.info?.mobile || '',
-              );
-              return dbPhone === normalizedPhone;
-            });
+            const application = phoneMap.get(normalizedPhone);
 
             if (application) {
               const isPaid = Boolean(paidStatus);
 
-              await this.applicationsService.update(
-                { id: application.id },
-                { paid: isPaid },
-              );
+              // Add to batch updates instead of individual update
+              batchUpdates.push({
+                id: application.id,
+                paid: isPaid,
+              });
+
               updatedApplications.push({
                 id: application.id,
                 phoneNumber,
@@ -2162,6 +2199,18 @@ export class ApplicationMediator {
                 reason: 'No matching application found with this phone number',
               });
             }
+          }
+
+          // Execute batch updates
+          if (batchUpdates.length > 0) {
+            await Promise.all(
+              batchUpdates.map(update => 
+                this.applicationsService.update(
+                  { id: update.id },
+                  { paid: update.paid }
+                )
+              )
+            );
           }
 
           const response: any = {
