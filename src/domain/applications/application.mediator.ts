@@ -1466,7 +1466,7 @@ export class ApplicationMediator {
           const applications = applicationsMap.get(email);
 
           if (!applications || applications.length === 0) {
-            return { email, status: 'Email not found' };
+            return { email, score, status: 'Email not found' };
           }
 
           if (applications.length > 1) {
@@ -1509,7 +1509,7 @@ export class ApplicationMediator {
             };
           }
 
-          return { email, status: 'Application not eligible for exam update' };
+          return { email, score, status: 'Application not eligible for exam update' };
         }),
       );
 
