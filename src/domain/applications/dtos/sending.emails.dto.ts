@@ -84,4 +84,11 @@ export class SendingEmailsDto {
   @IsOptional()
   @IsDateString({}, { message: 'Submission date time must be a valid date string' })
   submissionDateTime?: string;
+
+  @ApiProperty({
+    type: String,
+    description: 'The ID of the template',
+  })
+  @IsNumber({}, { message: 'Template ID must be a number' })
+  templateId: number;
 }

@@ -39,6 +39,7 @@ describe('ApplicationController', () => {
   };
 
   const mockSendingEmailsDto = {
+    templateId: 1,
     cycleId: 1,
     emails: [
       { ids: 1, emails: 'test@example.com' },
@@ -46,6 +47,7 @@ describe('ApplicationController', () => {
   };
 
   const mockExamScoresDto = {
+    templateId: 1,
     cycleId: 1,
     examScores: [
       { email: 'test@example.com', score: 85 },
@@ -53,6 +55,7 @@ describe('ApplicationController', () => {
   };
 
   const mockInterviewScoresDto = {
+    templateId: 1,
     cycleId: 1,
     interviewScores: [
       { 
@@ -65,6 +68,7 @@ describe('ApplicationController', () => {
   };
 
   const mockEditApplicationDto = {
+    templateId: 1,
     id: 1,
     cycleId: 1,
     inputCycleId: 1,
@@ -72,6 +76,7 @@ describe('ApplicationController', () => {
   };
 
   const mockEditApplicationsDto = {
+    templateId: 1,
     ids: [1, 2],
     cycleId: 1,
     inputCycleId: 1,
@@ -81,6 +86,7 @@ describe('ApplicationController', () => {
   };
 
   const mockEditFCSApplicationsDto = {
+    templateId: 1,
     ids: [1, 2],
     inputCycleId: 1,
     applications: [
@@ -89,6 +95,7 @@ describe('ApplicationController', () => {
   };
 
   const mockRowEditApplicationsDto = {
+    templateId: 1,
     ids: [1, 2],
     cycleId: 1,
     inputCycleId: 1,
@@ -98,6 +105,7 @@ describe('ApplicationController', () => {
   };
 
   const mockApplyToFSEDto = {
+    templateId: 1,
     selectedApplicationsIds: [
       { userId: 1, infoId: 1 },
     ],
@@ -105,6 +113,7 @@ describe('ApplicationController', () => {
   };
 
   const mockImportDataDto = {
+    templateId: 1,
     cycleId: 1,
     importType: 'applications',
     data: [{ name: 'Test User', email: 'test@example.com' }],

@@ -1,7 +1,7 @@
 /* eslint-disable camelcase */
 import { HttpStatus, Injectable, Logger } from '@nestjs/common';
 import { ApplicationService } from './application.service';
-import { GlobalEntities } from '../../core/data/types';
+import { GlobalEntities, TemplateCategory } from '../../core/data/types';
 import { catcher } from '../../core/helpers/operation';
 import { throwNotFound } from '../../core/settings/base/errors/errors';
 import { FiltersDto } from '../reports/dtos/filters.dto';
@@ -36,7 +36,6 @@ import { interviewEmailConfigs } from './configs/interview.email.configs';
 import { ApplyToFSEDto } from './dtos/apply.fse.dto';
 import { ProgramService } from '../programs/program.service';
 import { ApplicationUser } from 'src/core/data/database/relations/application-user.entity';
-import { StatisticsMediator } from '../statistics/statistics.mediator';
 import { ApplicationInfo } from 'src/core/data/database/relations/application-info.entity';
 import { ApplicationProgram } from 'src/core/data/database/relations/application-program.entity';
 import { InformationService } from '../information/information.service';
@@ -47,6 +46,10 @@ import {
   applySorting,
   ApplicationData,
 } from '../../core/helpers/filter-sort.helper';
+import { TemplateService } from '../templates/template.service';
+import { Templates } from 'src/core/data/database/entities/template.entity';
+import { TemplateCategory as TemplateCategoryType } from 'src/core/data/types/template-category/template-category.type';
+import { TemplateCategoryLink } from 'src/core/data/database/relations/template-category.entity';
 
 @Injectable()
 export class ApplicationMediator {
@@ -60,7 +63,7 @@ export class ApplicationMediator {
     private readonly programsService: ProgramService,
     private readonly infoService: InformationService,
     private readonly sectionsService: SectionService,
-    private readonly statisticsMediator: StatisticsMediator,
+    private readonly templateService: TemplateService,
   ) {}
 
   private getCachedCycleData(cycleId: number): any | null {
@@ -2620,6 +2623,213 @@ export class ApplicationMediator {
         pageSize: currentPageSize,
         latestCycle,
       };
+    });
+  };
+
+  sendTemplateEmails = async (data: SendingEmailsDto) => {
+    return catcher(async () => {
+      const { templateId, cycleId, emails } = data;
+
+      const template = await this.templateService.findOne(
+        { id: templateId },
+        ['templateCategoryLink'],
+      );
+
+      throwNotFound({ entity: 'template', errorCheck: !template });
+
+      const categoryName = template.templateCategoryLink?.[0]?.templateCategory?.name;
+      const categoryUpper = categoryName?.toUpperCase().trim();
+
+      if (!categoryName) {
+        throwError('Template category not found', HttpStatus.BAD_REQUEST);
+      }
+
+      // Always send email using template content
+      const uniqueEmails: string[] = [...new Set(emails.map((entry) => entry.emails))];
+      
+      const mailerResponse = await this.mailService.sendTestEmailWithTemplate(
+        uniqueEmails,
+        template.name,
+        template.subject,
+        template.html_content as string,
+      );
+
+      // Get applications for updates
+      const applicationIds = emails.map((entry) => entry.ids);
+      const applications = await this.applicationsService.findMany(
+        { id: In(applicationIds) },
+        ['applicationUser', 'applicationInfo'],
+      );
+
+      // Track which emails were successfully sent
+      const sentEmailSet = new Set(
+        (mailerResponse.foundEmails || []).map((e: any) => e.email || e),
+      );
+
+      // Update database fields based on category
+      switch (categoryUpper) {
+        case TemplateCategoryType.SCREEENING:
+        case 'SCREENING': {
+        // For Screening: update passed_screening, passed_screening_date, screening_email_sent
+        const uniqueEmailsList = emails.map((entry) => entry.emails);
+        const applicationsWhereConditions = cycleId
+          ? { applicationCycle: { cycleId } }
+          : {};
+        
+        const applicationsByCycle = await this.applicationsService.findMany(
+          applicationsWhereConditions,
+          ['applicationInfo', 'applicationUser'],
+        );
+
+        const applicationsToUpdate = [];
+        const applicationsToEmail = [];
+
+        for (const application of applicationsByCycle) {
+          const email: string = application.applicationUser[0]?.user?.email;
+          if (uniqueEmailsList.includes(email)) {
+            const emailSent = sentEmailSet.has(email);
+            
+            if (application.is_eligible) {
+              if (!application.passed_screening) {
+                applicationsToUpdate.push({
+                  id: application.id,
+                  passed_screening: true,
+                  passed_screening_date: new Date(),
+                  screening_email_sent: emailSent,
+                });
+              } else if (!application.screening_email_sent) {
+                applicationsToUpdate.push({
+                  id: application.id,
+                  screening_email_sent: emailSent,
+                });
+              }
+              
+              applicationsToEmail.push({
+                ...application,
+                passed_screening: 'Yes',
+                screening_email_sent: emailSent ? 'Yes' : 'No',
+                status: application.applicationInfo[0]?.info?.status,
+              });
+            } else {
+              applicationsToUpdate.push({
+                id: application.id,
+                passed_screening: false,
+                passed_screening_date: new Date(),
+                screening_email_sent: emailSent,
+              });
+              
+              applicationsToEmail.push({
+                ...application,
+                passed_screening: 'No',
+                screening_email_sent: emailSent ? 'Yes' : 'No',
+                status: application.applicationInfo[0]?.info?.status,
+              });
+            }
+          }
+        }
+
+        // Batch update
+        if (applicationsToUpdate.length > 0) {
+          const batchUpdates = applicationsToUpdate.map((update) => ({
+            id: update.id,
+            data: {
+              passed_screening: update.passed_screening,
+              passed_screening_date: update.passed_screening_date,
+              screening_email_sent: update.screening_email_sent,
+            },
+          }));
+          await this.applicationsService.batchUpdate(batchUpdates);
+        }
+
+        const camelCaseApplications = convertToCamelCase(applicationsToEmail);
+
+        return {
+          message: 'Emails have been processed. Check the status for details.',
+          foundEmails: mailerResponse.foundEmails || [],
+          notFoundEmails: mailerResponse.notFoundEmails || [],
+          applications: camelCaseApplications,
+        };
+        }
+
+        case TemplateCategoryType.INTERVIEW:
+        case 'INTERVIEW': {
+          // For Interview: update passed_exam_email_sent
+        const affectedApplications = await Promise.all(
+          applications.map(async (application) => {
+            const email = application.applicationUser[0]?.user?.email;
+            const emailSent = sentEmailSet.has(email);
+
+            await this.applicationsService.update(
+              { id: application.id },
+              { passed_exam_email_sent: emailSent },
+            );
+
+            return {
+              id: application.id,
+              email,
+              passed_exam_email_sent: emailSent ? 'Yes' : 'No',
+            };
+          }),
+        );
+
+        const camelCaseApplications = convertToCamelCase(affectedApplications);
+
+        return {
+          message: 'Emails have been processed. Check the status for details.',
+          foundEmails: mailerResponse.foundEmails || [],
+          notFoundEmails: mailerResponse.notFoundEmails || [],
+          applications: camelCaseApplications,
+        };
+        }
+
+        case TemplateCategoryType.STATUS:
+        case 'STATUS': {
+          // For Status: update status_email_sent
+        const affectedApplications = await Promise.all(
+          applications.map(async (application) => {
+            const email = application.applicationUser[0]?.user?.email;
+            const emailSent = sentEmailSet.has(email);
+
+            await this.applicationsService.update(
+              { id: application.id },
+              { status_email_sent: emailSent },
+            );
+
+            return {
+              id: application.id,
+              email,
+              status_email_sent: emailSent ? 'Yes' : 'No',
+            };
+          }),
+        );
+
+        const camelCaseApplications = convertToCamelCase(affectedApplications);
+
+        return {
+          message: 'Emails have been processed. Check the status for details.',
+          foundEmails: mailerResponse.foundEmails || [],
+          notFoundEmails: mailerResponse.notFoundEmails || [],
+          applications: camelCaseApplications,
+        };
+        }
+
+        default: {
+          // OTHER category - just send email, no database updates needed
+        const affectedApplications = applications.map((application) => ({
+          id: application.id,
+          email: application.applicationUser[0]?.user?.email,
+        }));
+
+        const camelCaseApplications = convertToCamelCase(affectedApplications);
+
+        return {
+          message: 'Emails have been processed. Check the status for details.',
+          foundEmails: mailerResponse.foundEmails || [],
+          notFoundEmails: mailerResponse.notFoundEmails || [],
+          applications: camelCaseApplications,
+        };
+        }
+      }
     });
   };
 }

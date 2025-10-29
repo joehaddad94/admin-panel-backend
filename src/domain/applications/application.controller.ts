@@ -114,4 +114,10 @@ export class ApplicationController {
   importData(@Body() data: ImportDataDto) {
     return this.mediator.importData(data);
   }
+
+  @Post('send-template-emails')
+  @UsePipes(new ValidationPipe({ whitelist: true }))
+  sendTemplateEmails(@Body() data: SendingEmailsDto) {
+    return this.mediator.sendTemplateEmails(data);
+  }
 }

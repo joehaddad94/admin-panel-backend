@@ -14,6 +14,7 @@ import { ProgramModule } from '../programs/program.module';
 import { InformationModule } from '../information/information.module';
 import { SectionModule } from '../sections/section.module';
 import { StatisticsModule } from '../statistics/statistics.module';
+import { TemplateModule } from '../templates/template.module';
 
 @Module({
   imports: [
@@ -25,6 +26,7 @@ import { StatisticsModule } from '../statistics/statistics.module';
     InformationModule,
     SectionModule,
     StatisticsModule,
+    TemplateModule,
   ],
   controllers: [ApplicationController],
   providers: [
