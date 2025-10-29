@@ -4,7 +4,7 @@ import { catcher } from 'src/core/helpers/operation';
 import { throwNotFound } from 'src/core/settings/base/errors/errors';
 import { GlobalEntities } from 'src/core/data/types';
 import { convertToCamelCase } from 'src/core/helpers/camelCase';
-import { In, Like } from 'typeorm';
+import { In, Like, DataSource } from 'typeorm';
 import { CreateEditTemplateDto } from './dtos/createEditTemplate.dto';
 import {
   DeleteTemplatesDto,
@@ -15,13 +15,15 @@ import { TestSendEmailTemplateDto } from './dtos/testSendEmailTemplate.dto';
 import { MailService } from '../mail/mail.service';
 import { TemplateProgram } from 'src/core/data/database/relations/template-program.entity';
 import { ProgramService } from '../programs/program.service';
+import { TemplateCategoryLink } from 'src/core/data/database/relations/template-category.entity';
 
 @Injectable()
 export class TemplateMediator {
   constructor(
-    private readonly templateService: TemplateService, 
+    private readonly templateService: TemplateService,
     private readonly mailService: MailService,
     private readonly programService: ProgramService,
+    private readonly dataSource: DataSource,
   ) {}
 
   findTemplates = async (
@@ -33,7 +35,7 @@ export class TemplateMediator {
       const skip = (page - 1) * pageSize;
       const take = pageSize;
 
-      const templateOptions: GlobalEntities[] = ['templateAdmin', 'templateProgram'];
+      const templateOptions: GlobalEntities[] = ['templateAdmin', 'templateProgram', 'templateCategoryLink'];
 
       let where: any = {};
 
@@ -77,114 +79,170 @@ export class TemplateMediator {
       const {
         templateId,
         name,
+        subject,
         designJson,
         htmlContent,
         isActive = true,
         createdById,
         updatedById,
-        programId,  
+        programId,
+        templateCategoryId,
       } = data;
 
-      let template: Templates;
-      let savedTemplate: Templates;
-      let flattenedTemplate: any;
-      let successMessage: string;
+      // Use transaction for data consistency
+      return await this.dataSource.transaction(async (transactionalEntityManager) => {
+        let template: Templates;
+        let successMessage: string;
+        const relations = ['templateAdmin', 'templateProgram', 'templateCategoryLink'];
 
-      if (templateId) {
-        // Update existing template
-        template = await this.templateService.findOne({ id: templateId }, [
-          'templateAdmin',
-          'templateProgram',
-        ]);
-
-        if (!template) {
-          throwNotFound({ entity: 'template', errorCheck: !template });
-        }
-
-        template.name = name;
-        template.design_json = designJson as any;
-        template.html_content = htmlContent;
-        template.is_active = isActive;
-        template.updated_at = new Date();
-        template.updated_by_id = updatedById || template.updated_by_id;
-
-        template = (await this.templateService.save(template)) as Templates;
-
-        if (programId) {
-          const existingTemplateProgram = await TemplateProgram.findOne({
-            where: { template_id: template.id, program_id: programId }
+        if (templateId) {
+          // Update existing template
+          template = await transactionalEntityManager.findOne(Templates, {
+            where: { id: templateId },
+            relations,
           });
 
-          if (!existingTemplateProgram) {
-            const templateProgram = new TemplateProgram();
-            templateProgram.template_id = template.id;
-            templateProgram.program_id = programId;
-            await templateProgram.save();
+          throwNotFound({ entity: 'template', errorCheck: !template });
+
+          // Update template properties
+          Object.assign(template, {
+            name,
+            subject,
+            design_json: designJson,
+            html_content: htmlContent,
+            is_active: isActive,
+            updated_at: new Date(),
+            updated_by_id: updatedById || template.updated_by_id,
+          });
+
+          await transactionalEntityManager.save(Templates, template);
+
+          // Handle program association
+          if (programId) {
+            await this.upsertTemplateProgram(
+              transactionalEntityManager,
+              template.id,
+              programId,
+            );
           }
+
+          // Handle category association
+          if (templateCategoryId) {
+            await this.upsertTemplateCategoryLink(
+              transactionalEntityManager,
+              template.id,
+              templateCategoryId,
+            );
+          }
+
+          successMessage = 'Template successfully updated';
+        } else {
+          // Create new template - check uniqueness
+          const existingTemplate = await transactionalEntityManager.findOne(Templates, {
+            where: { name },
+          });
+
+          if (existingTemplate) {
+            throw new Error('Template name must be unique.');
+          }
+
+          // Create template
+          template = transactionalEntityManager.create(Templates, {
+            name,
+            subject,
+            design_json: designJson,
+            html_content: htmlContent,
+            is_active: isActive,
+            created_at: new Date(),
+            updated_at: new Date(),
+            created_by_id: createdById,
+            updated_by_id: updatedById || createdById,
+          });
+
+          template = await transactionalEntityManager.save(Templates, template);
+
+          if (!template?.id) {
+            throw new Error('Template could not be created');
+          }
+
+          // Handle program association
+          if (programId) {
+            await this.upsertTemplateProgram(
+              transactionalEntityManager,
+              template.id,
+              programId,
+            );
+          }
+
+          // Handle category association
+          if (templateCategoryId) {
+            await this.upsertTemplateCategoryLink(
+              transactionalEntityManager,
+              template.id,
+              templateCategoryId,
+            );
+          }
+
+          successMessage = 'Template created successfully';
         }
 
-        savedTemplate = await this.templateService.findOne(
-          { id: template.id },
-          ['templateAdmin', 'templateProgram'],
-        );
-
-        successMessage = 'Template successfully updated';
-      } else {
-        const existingTemplate = await this.templateService.findOne({
-          name: name,
+        // Load final template with all relations in one query
+        const savedTemplate = await transactionalEntityManager.findOne(Templates, {
+          where: { id: template.id },
+          relations,
         });
 
-        if (existingTemplate) {
-          throw new Error('Template name must be unique.');
-        }
-
-        template = this.templateService.create({
-          name: name,
-          design_json: designJson as any,
-          html_content: htmlContent,
-          is_active: isActive,
-          created_at: new Date(),
-          updated_at: new Date(),
-          created_by_id: createdById || 1, // Default to admin ID 1 if not provided
-          updated_by_id: updatedById || createdById || 1,
+        // Build response
+        const flattenedTemplate = convertToCamelCase({
+          ...savedTemplate,
+          adminCount: savedTemplate.templateAdmin?.length || 0,
+          programCount: savedTemplate.templateProgram?.length || 0,
+          categoryCount: savedTemplate.templateCategoryLink?.length || 0,
         });
 
-        template = (await this.templateService.save(template)) as Templates;
-
-        if (!template || !template.id) {
-          throw new Error('Template could not be created');
-        }
-
-        if (programId) {
-          const templateProgram = new TemplateProgram();
-          templateProgram.template_id = template.id;
-          templateProgram.program_id = programId;
-          await templateProgram.save();
-
-          template.templateProgram = [templateProgram];
-        }
-
-        successMessage = 'Template created successfully';
-
-        savedTemplate = await this.templateService.findOne(
-          { id: template.id },
-          ['templateAdmin', 'templateProgram'],
-        );
-      }
-
-      flattenedTemplate = {
-        ...savedTemplate,
-        adminCount: savedTemplate.templateAdmin?.length || 0,
-        programCount: savedTemplate.templateProgram?.length || 0,
-      };
-
-      flattenedTemplate = convertToCamelCase(flattenedTemplate);
-      return {
-        message: successMessage,
-        template: flattenedTemplate,
-      };
+        return {
+          message: successMessage,
+          template: flattenedTemplate,
+        };
+      });
     });
   };
+
+  private async upsertTemplateProgram(
+    entityManager: any,
+    templateId: number,
+    programId: number,
+  ): Promise<void> {
+    const existing = await entityManager.findOne(TemplateProgram, {
+      where: { template_id: templateId, program_id: programId },
+    });
+
+    if (!existing) {
+      const templateProgram = entityManager.create(TemplateProgram, {
+        template_id: templateId,
+        program_id: programId,
+      });
+      await entityManager.save(TemplateProgram, templateProgram);
+    }
+  }
+
+  private async upsertTemplateCategoryLink(
+    entityManager: any,
+    templateId: number,
+    templateCategoryId: number,
+  ): Promise<void> {
+    const existing = await entityManager.findOne(TemplateCategoryLink, {
+      where: { template_id: templateId, template_category_id: templateCategoryId },
+    });
+
+    if (!existing) {
+      const templateCategoryLink = entityManager.create(TemplateCategoryLink, {
+        template_id: templateId,
+        template_category_id: templateCategoryId,
+      });
+      await entityManager.save(TemplateCategoryLink, templateCategoryLink);
+    }
+  }
 
   deleteTemplates = async (data: DeleteTemplatesDto) => {
     return catcher(async () => {

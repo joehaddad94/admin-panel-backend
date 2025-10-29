@@ -8,3 +8,5 @@ export * from './questions/questions.answer';
 export * from './questions/type';
 
 export * from './admin/roles';
+
+export * from './template-category/template-category.type';
