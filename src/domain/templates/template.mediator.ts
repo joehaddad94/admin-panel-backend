@@ -197,7 +197,6 @@ export class TemplateMediator {
           ...savedTemplate,
           adminCount: savedTemplate.templateAdmin?.length || 0,
           programCount: savedTemplate.templateProgram?.length || 0,
-          categoryCount: savedTemplate.templateCategoryLink?.length || 0,
         });
 
         return {

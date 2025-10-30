@@ -3,6 +3,7 @@ import {
   Column,
   Entity,
   OneToMany,
+  OneToOne,
   PrimaryGeneratedColumn,
 } from 'typeorm';
 import { TemplateAdmin } from '../relations/template-admin.entity';
@@ -47,6 +48,6 @@ export class Templates extends BaseEntity {
   @OneToMany(() => TemplateProgram, (templateProgram) => templateProgram.template)
   templateProgram: TemplateProgram[];
 
-  @OneToMany(() => TemplateCategoryLink, (templateCategoryLink) => templateCategoryLink.template)
-  templateCategoryLink: TemplateCategoryLink[];
+  @OneToOne(() => TemplateCategoryLink, (templateCategoryLink) => templateCategoryLink.template)
+  templateCategoryLink: TemplateCategoryLink;
 }

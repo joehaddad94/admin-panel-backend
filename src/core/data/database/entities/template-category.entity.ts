@@ -1,4 +1,4 @@
-import { BaseEntity, Column, Entity, OneToMany, PrimaryGeneratedColumn } from "typeorm";
+import { BaseEntity, Column, Entity, OneToOne, PrimaryGeneratedColumn } from "typeorm";
 import { TemplateCategoryLink } from "../relations/template-category.entity";
 
 @Entity('template_categories')
@@ -21,6 +21,6 @@ export class TemplateCategory extends BaseEntity {
   @Column()
   updated_by_id: number;
 
-  @OneToMany(() => TemplateCategoryLink, (templateCategoryLink) => templateCategoryLink.templateCategory)
-  templateCategoryLink: TemplateCategoryLink[];
+  @OneToOne(() => TemplateCategoryLink, (templateCategoryLink) => templateCategoryLink.templateCategory)
+  templateCategoryLink: TemplateCategoryLink;
 }

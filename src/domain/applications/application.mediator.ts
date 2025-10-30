@@ -2637,7 +2637,7 @@ export class ApplicationMediator {
 
       throwNotFound({ entity: 'template', errorCheck: !template });
 
-      const categoryName = template.templateCategoryLink?.[0]?.templateCategory?.name;
+      const categoryName = template.templateCategoryLink?.templateCategory?.name;
       const categoryUpper = categoryName?.toUpperCase().trim();
 
       if (!categoryName) {
@@ -2668,7 +2668,7 @@ export class ApplicationMediator {
 
       // Update database fields based on category
       switch (categoryUpper) {
-        case TemplateCategoryType.SCREEENING:
+        case TemplateCategory.SCREEENING:
         case 'SCREENING': {
         // For Screening: update passed_screening, passed_screening_date, screening_email_sent
         const uniqueEmailsList = emails.map((entry) => entry.emails);
@@ -2751,8 +2751,10 @@ export class ApplicationMediator {
         };
         }
 
-        case TemplateCategoryType.INTERVIEW:
-        case 'INTERVIEW': {
+        case TemplateCategory.INTERVIEW:
+        case TemplateCategory.SCHEDULE:
+        case 'INTERVIEW':
+        case 'SCHEDULE': {
           // For Interview: update passed_exam_email_sent
         const affectedApplications = await Promise.all(
           applications.map(async (application) => {
@@ -2782,7 +2784,7 @@ export class ApplicationMediator {
         };
         }
 
-        case TemplateCategoryType.STATUS:
+        case TemplateCategory.STATUS:
         case 'STATUS': {
           // For Status: update status_email_sent
         const affectedApplications = await Promise.all(
