@@ -3,10 +3,12 @@ import {
   Column,
   Entity,
   OneToMany,
+  OneToOne,
   PrimaryGeneratedColumn,
 } from 'typeorm';
 import { TemplateAdmin } from '../relations/template-admin.entity';
 import { TemplateProgram } from '../relations/template-program.entity';
+import { TemplateCategoryLink } from '../relations/template-category.entity';
 
 @Entity('templates')
 export class Templates extends BaseEntity {
@@ -15,6 +17,9 @@ export class Templates extends BaseEntity {
 
   @Column({ type: 'varchar', length: 255 })
   name: string;
+
+  @Column({ type: 'varchar', length: 255 })
+  subject: string;
 
   @Column({ type: 'text' })
   design_json: JSON;
@@ -42,4 +47,7 @@ export class Templates extends BaseEntity {
 
   @OneToMany(() => TemplateProgram, (templateProgram) => templateProgram.template)
   templateProgram: TemplateProgram[];
+
+  @OneToOne(() => TemplateCategoryLink, (templateCategoryLink) => templateCategoryLink.template)
+  templateCategoryLink: TemplateCategoryLink;
 }

@@ -18,6 +18,10 @@ export class CreateEditTemplateDto {
   name: string;
 
   @ApiProperty()
+  @IsString()
+  subject: string;
+
+  @ApiProperty()
   @IsObject()
   designJson: object;
 
@@ -44,4 +48,8 @@ export class CreateEditTemplateDto {
   @IsOptional()
   @IsNumber()
   programId?: number;
+
+  @ApiProperty()
+  @IsNumber()
+  templateCategoryId: number;
 }

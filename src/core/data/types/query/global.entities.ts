@@ -19,4 +19,5 @@ export type GlobalEntities =
   | 'applicationMicrocamp'
   | 'applicationSection'
   | 'templateAdmin'
-  | 'templateProgram';
+  | 'templateProgram'
+  | 'templateCategoryLink';
