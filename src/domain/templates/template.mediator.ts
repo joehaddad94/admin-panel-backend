@@ -4,7 +4,7 @@ import { catcher } from 'src/core/helpers/operation';
 import { throwNotFound } from 'src/core/settings/base/errors/errors';
 import { GlobalEntities } from 'src/core/data/types';
 import { convertToCamelCase } from 'src/core/helpers/camelCase';
-import { In, Like, DataSource } from 'typeorm';
+import { In, ILike, DataSource } from 'typeorm';
 import { CreateEditTemplateDto } from './dtos/createEditTemplate.dto';
 import {
   DeleteTemplatesDto,
@@ -40,7 +40,7 @@ export class TemplateMediator {
       let where: any = {};
 
       if (filters.search) {
-        where.name = Like(`%${filters.search}%`);
+        where.name = ILike(`%${filters.search}%`);
       }
 
       if (filters.isActive !== undefined) {
