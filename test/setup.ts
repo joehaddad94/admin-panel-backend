@@ -4,6 +4,7 @@ import 'reflect-metadata';
 // Mock environment variables for testing
 process.env.NODE_ENV = 'test';
 process.env.VERIFY_CLIENT_URL = 'https://test.example.com/verify';
+process.env.JWT_SECRET = 'test-jwt-secret-key-for-testing-purposes-only';
 
 // Global Jest configuration
 beforeAll(() => {
@@ -23,7 +24,9 @@ jest.mock('bcrypt', () => ({
 }));
 
 // Mock crypto module with proper hoisting
-const mockRandomFillSync = jest.fn().mockReturnValue(new Uint8Array([1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12]));
+const mockRandomFillSync = jest
+  .fn()
+  .mockReturnValue(new Uint8Array([1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12]));
 const mockRandomBytes = jest.fn().mockReturnValue({
   toString: jest.fn().mockReturnValue('test-token-base64'),
 });
@@ -71,4 +74,3 @@ process.on('unhandledRejection', (reason, promise) => {
 process.on('uncaughtException', (error) => {
   console.error('Uncaught Exception:', error);
 });
-

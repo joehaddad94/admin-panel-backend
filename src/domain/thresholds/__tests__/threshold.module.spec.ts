@@ -18,7 +18,10 @@ describe('ThresholdModule', () => {
         ThresholdService,
         ThresholdMediator,
         ThresholdRepository,
-        JwtStrategy,
+        {
+          provide: JwtStrategy,
+          useValue: { validate: jest.fn() },
+        },
         {
           provide: getRepositoryToken(Threshold),
           useValue: {
