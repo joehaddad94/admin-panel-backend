@@ -1,5 +1,12 @@
 /* eslint-disable camelcase */
-import { BaseEntity, Column, Entity, PrimaryGeneratedColumn } from 'typeorm';
+import {
+  BaseEntity,
+  Column,
+  Entity,
+  OneToMany,
+  PrimaryGeneratedColumn,
+} from 'typeorm';
+import { TemplateAdmin } from '../relations/template-admin.entity';
 
 @Entity('panel_admins')
 export class Admin extends BaseEntity {
@@ -38,4 +45,7 @@ export class Admin extends BaseEntity {
 
   @Column()
   updated_by_id: number;
+
+  @OneToMany(() => TemplateAdmin, (templateAdmin) => templateAdmin.admin)
+  templateAdmin: TemplateAdmin[];
 }

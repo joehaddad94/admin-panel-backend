@@ -64,7 +64,10 @@ export class SendingEmailsDto {
     required: false,
   })
   @IsOptional()
-  @IsDateString({}, { message: 'Interview date time must be a valid date string' })
+  @IsDateString(
+    {},
+    { message: 'Interview date time must be a valid date string' },
+  )
   interviewDateTime?: string;
 
   @ApiProperty({
@@ -82,6 +85,18 @@ export class SendingEmailsDto {
     required: false,
   })
   @IsOptional()
-  @IsDateString({}, { message: 'Submission date time must be a valid date string' })
+  @IsDateString(
+    {},
+    { message: 'Submission date time must be a valid date string' },
+  )
   submissionDateTime?: string;
+
+  @ApiProperty({
+    type: Number,
+    description: 'The ID of the template',
+    required: false,
+  })
+  @IsOptional()
+  @IsNumber({}, { message: 'Template ID must be a number' })
+  templateId?: number;
 }

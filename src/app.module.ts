@@ -26,6 +26,8 @@ import { MicrocampModule } from './domain/microcamp/microcamp.module';
 import { MicrocampApplicationModule } from './domain/microcampApplications/microcamp-applications.module';
 import { StatisticsModule } from './domain/statistics/statistics.module';
 import { PerformanceModule } from './domain/performance/performance.module';
+import { TemplateModule } from './domain/templates/template.module';
+import { TemplateCategoryModule } from './domain/templateCategories/template-category.module';
 import { ScheduleModule } from '@nestjs/schedule';
 
 @Module({
@@ -62,6 +64,8 @@ import { ScheduleModule } from '@nestjs/schedule';
     MicrocampApplicationModule,
     StatisticsModule,
     PerformanceModule,
+    TemplateModule,
+    TemplateCategoryModule,
   ],
   controllers: [AppController],
   providers: [AppService],

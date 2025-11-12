@@ -17,7 +17,10 @@ describe('SectionModule', () => {
         SectionService,
         SectionMediator,
         SectionRepository,
-        JwtStrategy,
+        {
+          provide: JwtStrategy,
+          useValue: { validate: jest.fn() },
+        },
         {
           provide: getRepositoryToken(Sections),
           useValue: {
@@ -110,7 +113,7 @@ describe('SectionModule', () => {
       const service = module.get<SectionService>(SectionService);
       const mediator = module.get<SectionMediator>(SectionMediator);
       const repository = module.get<SectionRepository>(SectionRepository);
-      
+
       expect(service).toBeDefined();
       expect(mediator).toBeDefined();
       expect(repository).toBeDefined();
@@ -128,21 +131,21 @@ describe('SectionModule', () => {
     it('should inject SectionMediator into SectionController', () => {
       const controller = module.get<SectionController>(SectionController);
       const mediator = module.get<SectionMediator>(SectionMediator);
-      
+
       expect(controller['mediator']).toBe(mediator);
     });
 
     it('should inject SectionRepository into SectionService', () => {
       const service = module.get<SectionService>(SectionService);
       const repository = module.get<SectionRepository>(SectionRepository);
-      
+
       expect(service['sectionRepository']).toBe(repository);
     });
 
     it('should inject SectionService into SectionMediator', () => {
       const mediator = module.get<SectionMediator>(SectionMediator);
       const service = module.get<SectionService>(SectionService);
-      
+
       expect(mediator['sectionService']).toBe(service);
     });
   });
