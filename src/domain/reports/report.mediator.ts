@@ -213,10 +213,12 @@ export class ReportMediator {
               'Institution': info.institution,
               'Field of Study': info.field_of_study,
               'Major Title': info.major_title,
-              'Created At': info.created_at,
+              'Information Created At': info.created_at,
               'Program ID': application?.applicationProgram?.[0]?.program.id || '',
               'Program Name': application?.applicationProgram?.[0]?.program.program_name || '',
               'Program Abbreviation': application?.applicationProgram?.[0]?.program.abbreviation || '',
+              'Application Created At': application?.created_at || '',
+              'Is Eligible': application?.is_eligible || '',
               'Passed Screening': application?.passed_screening || '',
               'Screening Pass Date': application?.passed_screening_date || '',
               'Passed Exam': application?.passed_exam || '',
@@ -226,6 +228,7 @@ export class ReportMediator {
               'Application Status': application?.status || '',
               'Remarks': application?.remarks || '',
               'Additional Information': application?.extras || '',
+              'Cycle Name': application?.applicationCycle?.[0]?.cycle.name || '',
             };
           });
         } else {
@@ -261,6 +264,8 @@ export class ReportMediator {
               'Program ID': '',
               'Program Name': '',
               'Program Abbreviation': '',
+              'Application Created At': '',
+              'Is Eligible': '',
               'Passed Screening': '',
               'Screening Pass Date': '',
               'Passed Exam': '',
@@ -270,6 +275,7 @@ export class ReportMediator {
               'Application Status': '',
               'Remarks': '',
               'Additional Information': '',
+              'Cycle Name': '',
             },
           ];
         }
