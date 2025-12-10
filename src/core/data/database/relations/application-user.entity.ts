@@ -1,3 +1,4 @@
+/* eslint-disable camelcase */
 import {
   Entity,
   Column,
@@ -14,10 +15,10 @@ export class ApplicationUser extends BaseEntity {
   @PrimaryGeneratedColumn()
   id: number;
 
-  @Column({ type: 'int' })
+  @Column({ type: 'int', nullable: true })
   application_new_id: number;
 
-  @Column({ type: 'int' })
+  @Column({ type: 'int', nullable: true })
   user_id: number;
 
   @ManyToOne(() => Application, (application) => application.applicationUser)

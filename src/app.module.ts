@@ -3,20 +3,32 @@ import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { ConfigModule } from '@nestjs/config';
-import { dataSourceOptions } from '@core/config/db/db.data.source';
-import { enivroment } from '@core/config/server/enviroment';
-import { AuthModule } from '@domain/auth';
+import { dataSourceOptions } from './core/config/db/db.data.source';
+import { enivroment } from './core/config/server/enviroment';
+import { AuthModule } from './domain/auth';
 import { JwtModule } from '@nestjs/jwt';
-import { StudentModule } from '@domain/students';
-import { QuizModule } from '@domain/quizes';
-import { QuestionModule } from '@domain/questions';
-import { ApplicationModule } from '@domain/applications/application.module';
-import { UserModule } from '@domain/users/user.module';
-import { InformationModule } from '@domain/information/information.module';
-import { ReportModule } from '@domain/reports/report.module';
-import { DataMigrationModule } from '@domain/dataMigration/data.migration.module';
+import { StudentModule } from './domain/students';
+import { QuizModule } from './domain/quizes';
+import { ApplicationModule } from './domain/applications/application.module';
+import { UserModule } from './domain/users/user.module';
+import { InformationModule } from './domain/information/information.module';
+import { ReportModule } from './domain/reports/report.module';
+import { DataMigrationModule } from './domain/dataMigration/data.migration.module';
 import { ServeStaticModule } from '@nestjs/serve-static';
 import { join } from 'path';
+import { QuestionModule } from './domain/questions/question.module';
+import { ProgramModule } from './domain/programs/program.module';
+import { MailModule } from './domain/mail/mail.module';
+import { AdminModule } from './domain/admins';
+import { CycleModule } from './domain/cycles/cycle.module';
+import { DecisionDateModule } from './domain/decisionDates/decision-date.module';
+import { ThresholdModule } from './domain/thresholds/threshold.module';
+import { HealthCheckModule } from './domain/healthCheck/health.module';
+import { SectionModule } from './domain/sections/section.module';
+import { MicrocampModule } from './domain/microcamp/microcamp.module';
+import { MicrocampApplicationModule } from './domain/microcampApplications/microcamp-applications.module';
+import { StatisticsModule } from './domain/statistics/statistics.module';
+import { PerformanceModule } from './domain/performance/performance.module';
 
 @Module({
   imports: [
@@ -34,6 +46,7 @@ import { join } from 'path';
       rootPath: join(__dirname, 'public'),
     }),
     AuthModule,
+    AdminModule,
     StudentModule,
     QuizModule,
     QuestionModule,
@@ -42,6 +55,17 @@ import { join } from 'path';
     InformationModule,
     ReportModule,
     DataMigrationModule,
+    ProgramModule,
+    MailModule,
+    CycleModule,
+    DecisionDateModule,
+    ThresholdModule,
+    HealthCheckModule,
+    SectionModule,
+    MicrocampModule,
+    MicrocampApplicationModule,
+    StatisticsModule,
+    PerformanceModule,
   ],
   controllers: [AppController],
   providers: [AppService],

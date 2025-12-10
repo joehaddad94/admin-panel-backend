@@ -39,6 +39,8 @@ lerna-debug.log*
 .env.*
 
 # database migrations
-**/db/migrations
+# **/db/migrations
 
 .vercel
+
+secrets.txt

@@ -1,11 +1,11 @@
 import { Injectable } from '@nestjs/common';
-import { StudentService } from '@domain/students/student.service';
-import { CreateStudentDto } from '@domain/students';
+import { CreateStudentDto } from './dto/create.student.dto';
+import { StudentService } from './student.service';
+import { catcher } from '../../core/helpers/operation';
 import {
   throwBadRequest,
   throwNotFound,
-} from '@core/settings/base/errors/errors';
-import { catcher } from '@core/helpers/operation';
+} from '../../core/settings/base/errors/errors';
 
 @Injectable()
 export class StudentMediator {

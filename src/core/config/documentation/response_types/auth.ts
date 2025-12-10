@@ -1,4 +1,4 @@
-import { AdminRole, adminRoleValues } from '@core/data/types/admin/roles';
+/* eslint-disable camelcase */
 import { ApiProperty } from '@nestjs/swagger';
 
 export class AdminResponse {
@@ -11,16 +11,16 @@ export class AdminResponse {
   @ApiProperty()
   email: string;
 
-  @ApiProperty({ enum: adminRoleValues })
-  role: AdminRole;
-
   @ApiProperty()
-  inActive: boolean;
+  is_active: boolean;
 }
 
 export class TokenResponse {
   @ApiProperty()
   token: string;
+
+  @ApiProperty({ type: AdminResponse })
+  name: string;
 
   @ApiProperty({ type: AdminResponse })
   user: AdminResponse;

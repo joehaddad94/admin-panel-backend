@@ -1,0 +1,33 @@
+# Ignore IDE/editor specific files and folders
+**/.classpath
+**/.project
+**/.settings
+**/.toolstarget
+**/.vs
+**/.vscode
+
+# Ignore version control directories and files
+**/.git
+**/.gitignore
+
+# Ignore environment files and secrets
+**/.env
+**/secrets.dev.yaml
+**/values.dev.yaml
+
+# Ignore build artifacts and dependencies
+**/node_modules
+**/npm-debug.log
+**/build
+**/dist
+**/next
+**/cache
+**/docker-compose*
+**/compose.y*ml
+**/Dockerfile*
+
+# Ignore other specific unwanted files
+**/*.dbmdl
+**/*.jfm
+LICENSE
+README.md

@@ -1,18 +1,39 @@
-import { Body, Controller, Get, Post } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  HttpException,
+  HttpStatus,
+  Post,
+} from '@nestjs/common';
 import { ReportMediator } from './report.mediator';
 import { FiltersDto } from './dtos/filters.dto';
+import { ReportType } from './dtos/report-type.enum';
+import { ApiTags } from '@nestjs/swagger';
 
+@ApiTags('reports')
 @Controller('reports')
 export class ReportController {
   constructor(private readonly mediator: ReportMediator) {}
 
-  @Post('applications')
-  applicationReport(@Body() FiltersDto: FiltersDto) {
-    return this.mediator.applicationReport(FiltersDto);
-  }
+  @Post()
+  generateReport(@Body() filtersDto: FiltersDto) {
+    const { reportType } = filtersDto;
 
-  @Post('information')
-  informationReport(@Body() FiltersDto: FiltersDto) {
-    return this.mediator.informationReport(FiltersDto);
+    switch (reportType) {
+      case ReportType.APPLICATIONS:
+        return this.mediator.applicationReport(filtersDto);
+
+      case ReportType.INFORMATION:
+        return this.mediator.informationReport(filtersDto);
+
+      case ReportType.USERS:
+        return this.mediator.usersReport(filtersDto);
+
+      case ReportType.MICROCAMP_APPLICATIONS:
+        return this.mediator.microcampApplicationsReport(filtersDto);
+
+      default:
+        throw new HttpException('Invalid report type', HttpStatus.BAD_REQUEST);
+    }
   }
 }

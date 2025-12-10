@@ -1,21 +1,24 @@
+/* eslint-disable camelcase */
 import {
   Entity,
   PrimaryGeneratedColumn,
   Column,
   BaseEntity,
   OneToMany,
+  OneToOne,
 } from 'typeorm';
 import { ApplicationProgram } from '../relations/application-program.entity';
+import { CycleProgram } from '../relations/cycle-program.entity';
 
 @Entity('programs')
 export class Program extends BaseEntity {
   @PrimaryGeneratedColumn()
   id: number;
 
-  @Column({ type: 'varchar' })
+  @Column({ type: 'varchar', nullable: true })
   program_name: string;
 
-  @Column({ type: 'varchar' })
+  @Column({ type: 'varchar', nullable: true })
   abbreviation: string;
 
   @Column({ type: 'text', nullable: true })
@@ -44,4 +47,7 @@ export class Program extends BaseEntity {
     (applicationProgram) => applicationProgram.program,
   )
   applicationProgram: ApplicationProgram[];
+
+  @OneToOne(() => CycleProgram, (cycleProgram) => cycleProgram.program)
+  cycleProgram: CycleProgram;
 }

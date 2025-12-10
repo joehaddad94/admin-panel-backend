@@ -1,26 +1,41 @@
-import { AdminRole, adminRoleValues } from '@core/data/types/admin/roles';
+/* eslint-disable camelcase */
 import { BaseEntity, Column, Entity, PrimaryGeneratedColumn } from 'typeorm';
 
-@Entity()
+@Entity('panel_admins')
 export class Admin extends BaseEntity {
   @PrimaryGeneratedColumn()
   id: number;
 
-  @Column({ type: 'varchar' })
+  @Column()
   name: string;
 
-  @Column({ type: 'varchar' })
+  @Column({ unique: true })
   email: string;
 
-  @Column({ type: 'varchar', select: false, nullable: true })
-  password?: string;
+  @Column()
+  password: string;
 
-  @Column({ enum: adminRoleValues })
-  role: AdminRole;
+  @Column({ type: 'timestamp' })
+  created_at: Date;
 
-  @Column({ type: 'boolean' })
-  isActive: boolean;
+  @Column({ type: 'timestamp' })
+  updated_at: Date;
 
-  @Column({ type: 'varchar', nullable: true })
-  verificationKey?: string;
+  @Column({ nullable: true })
+  is_active: boolean;
+
+  @Column({ nullable: true, unique: true })
+  reset_token: string;
+
+  @Column({ type: 'timestamp', nullable: true })
+  reset_token_expiry: Date;
+
+  @Column()
+  login_attempts: number;
+
+  @Column()
+  created_by_id: number;
+
+  @Column()
+  updated_by_id: number;
 }

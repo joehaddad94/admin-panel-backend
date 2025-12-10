@@ -12,6 +12,13 @@ export const initOpenApi = (app) => {
   SwaggerModule.setup('api/docs', app, document, {
     useGlobalPrefix: true,
     swaggerUrl: 'api/docs',
+    customCssUrl: [
+      'https://cdnjs.cloudflare.com/ajax/libs/swagger-ui/5.17.14/swagger-ui.min.css',
+    ],
+    customJs: [
+      'https://cdnjs.cloudflare.com/ajax/libs/swagger-ui/5.17.14/swagger-ui-standalone-preset.min.js',
+      'https://cdnjs.cloudflare.com/ajax/libs/swagger-ui/5.17.14/swagger-ui-bundle.min.js',
+    ],
     // customCss:
     //   'body{background-color: #232323;color:white;} .swagger-ui .topbar { display: none } .opblock-summary{border-color: #4d4dff} .opblock.opblock-get{background-color:#4d4dff21;} .swagger-ui a.nostyle:visited{color:white} .swagger-ui a.nostyle{color:white}',
   });

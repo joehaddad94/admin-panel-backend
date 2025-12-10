@@ -1,10 +1,10 @@
 import { Injectable } from '@nestjs/common';
-import { QuizService } from '@domain/quizes/quiz.service';
-import { CreateQuizDto } from '@domain/quizes';
-import { StudentService } from '@domain/students/student.service';
-import { throwNotFound } from '@core/settings/base/errors/errors';
-import { catcher } from '@core/helpers/operation';
-import { QuizQuestionsService } from '@domain/quizQuestions/quiz.questions.service';
+import { QuizQuestionsService } from '../quizQuestions/quiz.questions.service';
+import { StudentService } from '../students/student.service';
+import { CreateQuizDto } from './dtos/create.quiz.dto';
+import { QuizService } from './quiz.service';
+import { catcher } from '../../core/helpers/operation';
+import { throwNotFound } from '../../core/settings/base/errors/errors';
 
 @Injectable()
 export class QuizMediator {

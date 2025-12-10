@@ -1,3 +1,4 @@
+/* eslint-disable camelcase */
 import {
   BaseEntity,
   Column,
@@ -10,7 +11,7 @@ import {
 import { QuizQuestions } from '../relations/quiz-question.entity';
 import { Question } from './question.entity';
 import { Student } from './student.entity';
-import { cascade } from '@core/data/constants/query.consts';
+import { cascade } from '../../constants/query.consts';
 
 @Entity()
 export class Quiz extends BaseEntity {
