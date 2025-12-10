@@ -390,22 +390,6 @@ src/domain/example/
 - Follow NestJS conventions
 - Document new APIs
 
-## 📄 License
-
-This project is proprietary software. All rights reserved.
-
-## 🆘 Support
-
-For support and questions:
-- Create an issue in the repository
-- Contact the development team
-- Check the API documentation at `/api-docs`
-
-## 🔗 Related Projects
-
-- **Frontend**: SEF Admin Panel Frontend (React/Next.js)
-- **Mobile App**: SEF Mobile Application
-- **Documentation**: SEF Documentation Portal
 
 ---
 
